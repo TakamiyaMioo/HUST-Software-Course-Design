@@ -1,4 +1,3 @@
-//
 package com.example.demo.controller;
 
 import com.example.demo.entity.SentLog;
@@ -37,11 +36,9 @@ public class HelloController {
     @Autowired
     private ContactRepository contactRepository;
     @Autowired
-    private SentLogRepository sentLogRepository; // 仅保留作为本地发信备份
+    private SentLogRepository sentLogRepository; 
     @Autowired
     private DraftRepository draftRepository;
-
-    // --- 基础页面与登录登出 ---
 
     @GetMapping("/")
     public String root() {
@@ -62,74 +59,86 @@ public class HelloController {
         return "redirect:/";
     }
 
-    // --- 核心邮件列表视图 (IMAP) ---
+    // --- 核心邮件列表视图 (修改：增加 searchType) ---
 
     // 1. 收件箱
     @GetMapping("/inbox")
-    public ModelAndView inbox(HttpSession session, @RequestParam(defaultValue = "1") int page) {
-        return getFolderView(session, "收件箱", "/inbox", page);
+    public ModelAndView inbox(HttpSession session, 
+                              @RequestParam(defaultValue = "1") int page,
+                              @RequestParam(defaultValue = "date") String sort,
+                              @RequestParam(defaultValue = "desc") String order,
+                              @RequestParam(required = false) String keyword,
+                              @RequestParam(defaultValue = "all") String searchType) {
+        return getFolderView(session, "收件箱", "/inbox", page, sort, order, keyword, searchType);
     }
 
     // 2. 已发送
     @GetMapping("/sent")
-    public ModelAndView sentBox(HttpSession session, @RequestParam(defaultValue = "1") int page) {
-        return getFolderView(session, "已发送", "/sent", page);
+    public ModelAndView sentBox(HttpSession session, 
+                                @RequestParam(defaultValue = "1") int page,
+                                @RequestParam(defaultValue = "date") String sort,
+                                @RequestParam(defaultValue = "desc") String order,
+                                @RequestParam(required = false) String keyword,
+                                @RequestParam(defaultValue = "all") String searchType) {
+        return getFolderView(session, "已发送", "/sent", page, sort, order, keyword, searchType);
     }
 
-    // 3. 已删除 (原垃圾箱)
+    // 3. 已删除
     @GetMapping("/trash")
-    public ModelAndView trashBox(HttpSession session, @RequestParam(defaultValue = "1") int page) {
-        // Service层会自动映射为 "Deleted Messages" 或 "已删除"
-        return getFolderView(session, "已删除", "/trash", page);
+    public ModelAndView trashBox(HttpSession session, 
+                                 @RequestParam(defaultValue = "1") int page,
+                                 @RequestParam(defaultValue = "date") String sort,
+                                 @RequestParam(defaultValue = "desc") String order,
+                                 @RequestParam(required = false) String keyword,
+                                 @RequestParam(defaultValue = "all") String searchType) {
+        return getFolderView(session, "已删除", "/trash", page, sort, order, keyword, searchType);
     }
 
     /**
      * 公共方法：构建文件夹视图
-     * 包含：邮件列表、分页参数、以及通讯录(用于转发弹窗)
      */
-    private ModelAndView getFolderView(HttpSession session, String folderName, String baseUrl, int page) {
+    private ModelAndView getFolderView(HttpSession session, String folderName, String baseUrl, 
+                                       int page, String sort, String order, String keyword, String searchType) {
         UserAccount user = (UserAccount) session.getAttribute("currentUser");
         if (user == null)
             return new ModelAndView("redirect:/");
 
         ModelAndView mav = new ModelAndView("inbox");
 
-        // 1. 从服务器拉取邮件列表
-        Map<String, Object> result = mailService.receiveEmails(user, folderName, page, 10);
+        // 1. 传递 keyword 和 searchType 到 Service
+        Map<String, Object> result = mailService.receiveEmails(user, folderName, page, 10, sort, order, keyword, searchType);
 
         mav.addObject("emails", result.get("list"));
         mav.addObject("currentFolder", folderName);
 
-        // 2. 计算分页
         int totalCount = (int) result.get("totalCount");
         int totalPages = (int) Math.ceil((double) totalCount / 10);
         mav.addObject("currentPage", page);
         mav.addObject("totalPages", totalPages);
         mav.addObject("baseUrl", baseUrl);
 
-        // 3. 【关键】传入通讯录，供前端转发弹窗的自动补全使用
+        mav.addObject("sort", sort);
+        mav.addObject("order", order);
+        mav.addObject("keyword", keyword); 
+        mav.addObject("searchType", searchType); // 回传搜索类型
+
         mav.addObject("contacts", contactRepository.findAll());
 
         return mav;
     }
 
-    // --- 邮件详情与附件 ---
-
-    // 获取邮件正文 (AJAX 懒加载)
+    // --- 邮件详情 ---
     @GetMapping("/email/detail")
     @ResponseBody
     public Map<String, Object> getEmailDetail(@RequestParam String folder, @RequestParam Long uid,
             HttpSession session) {
         UserAccount user = (UserAccount) session.getAttribute("currentUser");
         Map<String, Object> resp = new HashMap<>();
-
         if (user == null) {
             resp.put("error", "未登录");
             return resp;
         }
-
         EmailInfo detail = mailService.getEmailDetail(user, folder, uid);
-
         if (detail != null) {
             resp.put("content", detail.getContent());
             resp.put("files", detail.getFilenames());
@@ -140,13 +149,11 @@ public class HelloController {
         return resp;
     }
 
-    // 下载附件
     @GetMapping("/download")
     public ResponseEntity<Resource> downloadFile(@RequestParam String filename) {
         try {
             Path path = Paths.get(MailService.SAVE_PATH + filename);
             Resource resource = new UrlResource(path.toUri());
-
             if (resource.exists() || resource.isReadable()) {
                 String encodedFileName = URLEncoder.encode(resource.getFilename(), StandardCharsets.UTF_8.toString());
                 encodedFileName = encodedFileName.replaceAll("\\+", "%20");
@@ -162,25 +169,17 @@ public class HelloController {
         }
     }
 
-    // --- 写信、回复与转发 ---
-
-    // 写信页面 (支持草稿编辑、回复引用)
-    // 注意：转发功能现已移至弹窗处理 (/mail/forward)，此处仅保留回复逻辑
+    // --- 写信、回复 ---
     @GetMapping("/sendPage")
     public ModelAndView sendPage(HttpSession session,
             @RequestParam(required = false) Long draftId,
             @RequestParam(required = false) Long replyUid,
             @RequestParam(required = false) String folder) {
-
         UserAccount user = (UserAccount) session.getAttribute("currentUser");
-        if (user == null)
-            return new ModelAndView("redirect:/");
-
+        if (user == null) return new ModelAndView("redirect:/");
         ModelAndView mav = new ModelAndView("send");
         mav.addObject("contacts", contactRepository.findAll());
         mav.addObject("currentFolder", "写信");
-
-        // 1. 如果是编辑草稿
         if (draftId != null) {
             draftRepository.findById(draftId).ifPresent(draft -> {
                 mav.addObject("draftReceiver", draft.getReceiver());
@@ -189,24 +188,17 @@ public class HelloController {
             });
             return mav;
         }
-
-        // 2. 如果是回复邮件 (带引用)
         if (replyUid != null && folder != null) {
             EmailInfo originalEmail = mailService.getEmailDetail(user, folder, replyUid);
-
             if (originalEmail != null) {
-                // 构建引用块
                 String senderStr = originalEmail.getSender();
                 if (originalEmail.getAddress() != null && !originalEmail.getAddress().isEmpty()) {
                     senderStr += " &lt;" + originalEmail.getAddress() + "&gt;";
                 }
-
-                // 处理收件人转义
                 String recipientsStr = originalEmail.getRecipients();
                 if (recipientsStr != null) {
                     recipientsStr = recipientsStr.replace("<", "&lt;").replace(">", "&gt;");
                 }
-
                 String splitLine = "<br><br><br><div style='background:#f2f2f2; padding:10px; font-size:12px; color:#333; line-height:1.6; border-radius:5px;'>"
                         + "<div>------------------ 原始邮件 ------------------</div>"
                         + "<div><b>发件人:</b> " + senderStr + "</div>"
@@ -214,11 +206,8 @@ public class HelloController {
                         + "<div><b>收件人:</b> " + (recipientsStr != null ? recipientsStr : "未知") + "</div>"
                         + "<div><b>主题:</b> " + originalEmail.getTitle() + "</div>"
                         + "</div><br>";
-
                 String fullContent = splitLine + originalEmail.getContent();
                 mav.addObject("draftContent", fullContent);
-
-                // 自动填入收件人和主题
                 mav.addObject("draftReceiver", originalEmail.getAddress());
                 mav.addObject("draftTitle", "Re: " + originalEmail.getTitle());
             }
@@ -226,7 +215,6 @@ public class HelloController {
         return mav;
     }
 
-    // 执行发送邮件 (常规 SMTP)
     @PostMapping("/sendMail")
     public ModelAndView sendMail(@RequestParam String to,
             @RequestParam String subject,
@@ -234,20 +222,12 @@ public class HelloController {
             @RequestParam(value = "file", required = false) MultipartFile file,
             HttpSession session) {
         UserAccount user = (UserAccount) session.getAttribute("currentUser");
-        if (user == null)
-            return new ModelAndView("redirect:/");
-
-        // 发送并同步到 IMAP 已发送文件夹
+        if (user == null) return new ModelAndView("redirect:/");
         mailService.sendMailWithAttachment(user, to, subject, text, file);
-
-        // 本地备份
         sentLogRepository.save(new SentLog(to, subject, text));
-
         return new ModelAndView("redirect:/inbox");
     }
 
-    // 【新增】处理弹窗转发 (AJAX)
-    // 后台自动拉取原邮件并拼接引用发送
     @PostMapping("/mail/forward")
     @ResponseBody
     public Map<String, Object> forwardMail(@RequestParam String folder,
@@ -257,20 +237,14 @@ public class HelloController {
             HttpSession session) {
         UserAccount user = (UserAccount) session.getAttribute("currentUser");
         Map<String, Object> resp = new HashMap<>();
-
         if (user == null) {
             resp.put("success", false);
             resp.put("error", "登录已过期");
             return resp;
         }
-
         try {
-            // 调用 Service 的转发方法
             mailService.forwardMail(user, folder, uid, to, comment);
-
-            // 本地备份
             sentLogRepository.save(new SentLog(to, "Fwd: (转发邮件)", comment));
-
             resp.put("success", true);
         } catch (Exception e) {
             e.printStackTrace();
@@ -280,16 +254,13 @@ public class HelloController {
         return resp;
     }
 
-    // --- 草稿箱管理 ---
-
     @PostMapping("/saveDraft")
     public String saveDraft(@RequestParam(required = false) String to,
             @RequestParam(required = false) String subject,
             @RequestParam(required = false) String text,
             HttpSession session) {
         UserAccount user = (UserAccount) session.getAttribute("currentUser");
-        if (user == null)
-            return "redirect:/";
+        if (user == null) return "redirect:/";
         draftRepository.save(new com.example.demo.entity.DraftEmail(user.getEmail(), to, subject, text));
         return "redirect:/drafts";
     }
@@ -297,9 +268,7 @@ public class HelloController {
     @GetMapping("/drafts")
     public ModelAndView draftBox(HttpSession session) {
         UserAccount user = (UserAccount) session.getAttribute("currentUser");
-        if (user == null)
-            return new ModelAndView("redirect:/");
-
+        if (user == null) return new ModelAndView("redirect:/");
         ModelAndView mav = new ModelAndView("drafts");
         List<com.example.demo.entity.DraftEmail> drafts = draftRepository.findBySender(user.getEmail());
         mav.addObject("drafts", drafts);
@@ -313,34 +282,23 @@ public class HelloController {
         return "redirect:/drafts";
     }
 
-    // --- 邮件删除操作 (IMAP 同步) ---
-
-    // 从已发送移入“已删除”
     @GetMapping("/deleteFromSent")
     public String deleteFromSent(HttpSession session, @RequestParam Long id) {
         UserAccount user = (UserAccount) session.getAttribute("currentUser");
-        if (user != null) {
-            mailService.moveToTrash(user, "已发送", id);
-        }
+        if (user != null) mailService.moveToTrash(user, "已发送", id);
         return "redirect:/sent";
     }
 
-    // 彻底删除
     @GetMapping("/deleteForever")
     public String deleteForever(HttpSession session, @RequestParam Long id) {
         UserAccount user = (UserAccount) session.getAttribute("currentUser");
-        if (user != null) {
-            mailService.deleteMessage(user, "已删除", id);
-        }
+        if (user != null) mailService.deleteMessage(user, "已删除", id);
         return "redirect:/trash";
     }
 
-    // --- 其他 ---
-
     @GetMapping("/settings")
     public String settingsPage(HttpSession session, Model model) {
-        if (session.getAttribute("currentUser") == null)
-            return "redirect:/";
+        if (session.getAttribute("currentUser") == null) return "redirect:/";
         model.addAttribute("currentFolder", "设置");
         return "settings";
     }
