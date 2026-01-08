@@ -24,7 +24,8 @@ public class UserAccount {
     }
 
     public int getSmtpPort() {
-        return "qq".equals(type) ? 465 : 25;
+        //return "qq".equals(type) ? 465 : 25;
+        return 465;
     }
     //
 
