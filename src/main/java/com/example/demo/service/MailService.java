@@ -21,6 +21,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
 
+//牢祝牛逼
 @Service
 public class MailService {
 
@@ -51,12 +52,13 @@ public class MailService {
     /**
      * 发送邮件
      */
-    public void sendMailWithAttachment(UserAccount user, String to, String subject, String content, org.springframework.web.multipart.MultipartFile file) {
+    public void sendMailWithAttachment(UserAccount user, String to, String subject, String content,
+            org.springframework.web.multipart.MultipartFile file) {
         try {
             JavaMailSenderImpl sender = createSender(user);
             jakarta.mail.internet.MimeMessage message = sender.createMimeMessage();
-            org.springframework.mail.javamail.MimeMessageHelper helper =
-                    new org.springframework.mail.javamail.MimeMessageHelper(message, true, "UTF-8");
+            org.springframework.mail.javamail.MimeMessageHelper helper = new org.springframework.mail.javamail.MimeMessageHelper(
+                    message, true, "UTF-8");
 
             helper.setFrom(user.getEmail());
             helper.setTo(to);
@@ -82,34 +84,35 @@ public class MailService {
      */
     private void parseMessage(Part part, StringBuilder bodyText, List<String> attachments) throws Exception {
         // 1. 如果是附件
-        if (Part.ATTACHMENT.equalsIgnoreCase(part.getDisposition()) || 
-           (part.getFileName() != null && !part.getFileName().isEmpty())) {
-            
+        if (Part.ATTACHMENT.equalsIgnoreCase(part.getDisposition()) ||
+                (part.getFileName() != null && !part.getFileName().isEmpty())) {
+
             String fileName = MimeUtility.decodeText(part.getFileName());
-            
+
             // 自动创建目录
             File saveDir = new File(SAVE_PATH);
-            if (!saveDir.exists()) saveDir.mkdirs();
-            
+            if (!saveDir.exists())
+                saveDir.mkdirs();
+
             // 【修复点】：使用输入流读取附件，并复制到硬盘
             try (InputStream is = part.getInputStream()) {
                 File targetFile = new File(SAVE_PATH + fileName);
                 Files.copy(is, targetFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
             }
-            
+
             // 记录文件名
             attachments.add(fileName);
-            return; 
+            return;
         }
 
         // 2. 如果是纯文本
         if (part.isMimeType("text/plain")) {
             bodyText.append(part.getContent().toString());
-        } 
+        }
         // 3. 如果是 HTML
         else if (part.isMimeType("text/html")) {
             bodyText.append(part.getContent().toString());
-        } 
+        }
         // 4. 如果是 Multipart 容器，递归处理
         else if (part.isMimeType("multipart/*")) {
             Multipart multipart = (Multipart) part.getContent();
@@ -150,13 +153,14 @@ public class MailService {
             for (int i = end - 1; i >= start; i--) {
                 Message msg = messages[i];
                 String subject = (msg.getSubject() != null) ? MimeUtility.decodeText(msg.getSubject()) : "无标题";
-                
+
                 String from = "未知";
                 if (msg.getFrom() != null && msg.getFrom().length > 0) {
                     from = MimeUtility.decodeText(msg.getFrom()[0].toString());
-                    if(from.contains("<")) from = from.substring(0, from.indexOf("<")).trim();
+                    if (from.contains("<"))
+                        from = from.substring(0, from.indexOf("<")).trim();
                 }
-                
+
                 String sentDate = (msg.getSentDate() != null) ? fmt.format(msg.getSentDate()) : "未知时间";
 
                 // 解析内容和附件
