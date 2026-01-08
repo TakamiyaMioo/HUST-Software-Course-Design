@@ -41,6 +41,8 @@ public class HelloController {
     private SentLogRepository sentLogRepository;
     @Autowired
     private TrashEmailRepository trashRepository;
+    @Autowired
+    private com.example.demo.repository.DraftRepository draftRepository; // 【新增】
 
     @GetMapping("/")
     public String root() { return "login"; }
@@ -161,21 +163,28 @@ public class HelloController {
 //    }
 
     // 修改 1：跳转写信页接口，支持接收预填参数（用于回复和转发）
+    // 【修改】写信页面（支持从草稿箱带入数据）
     @GetMapping("/sendPage")
-    public ModelAndView sendPage(@RequestParam(required = false) String to,
-                                 @RequestParam(required = false) String subject,
-                                 @RequestParam(required = false) String content,
-                                 HttpSession session) {
-        if (session.getAttribute("currentUser") == null) return new ModelAndView("redirect:/");
+    public ModelAndView sendPage(HttpSession session,
+                                 @RequestParam(required = false) Long draftId) {
+        UserAccount user = (UserAccount) session.getAttribute("currentUser");
+        if (user == null) return new ModelAndView("redirect:/");
 
         ModelAndView mav = new ModelAndView("send");
         mav.addObject("contacts", contactRepository.findAll());
+        mav.addObject("currentFolder", "写信"); // 侧边栏高亮
 
-        // 把传进来的参数放进页面模型里，让 Thymeleaf 渲染
-        mav.addObject("preTo", to != null ? to : "");
-        mav.addObject("preSubject", subject != null ? subject : "");
-        mav.addObject("preContent", content != null ? content : "");
-
+        // 如果有 draftId，说明是“编辑草稿”，需要把数据查出来回填
+        if (draftId != null) {
+            draftRepository.findById(draftId).ifPresent(draft -> {
+                mav.addObject("draftReceiver", draft.getReceiver());
+                mav.addObject("draftTitle", draft.getTitle());
+                mav.addObject("draftContent", draft.getContent());
+                // 这里可以选择在发送后删除草稿，或者保留。
+                // 简单的逻辑是：再次编辑时，我们作为新邮件发送，用户手动去删旧草稿，或者我们在发送成功后根据逻辑删除。
+                // 为了简单起见，这里只负责回填数据。
+            });
+        }
         return mav;
     }
 
@@ -209,6 +218,49 @@ public ModelAndView sendMail(@RequestParam String to,
 
     return new ModelAndView("redirect:/inbox");
 }
+
+// ============ 草稿箱功能 ============
+
+    // 1. 保存草稿
+    @PostMapping("/saveDraft")
+    public String saveDraft(@RequestParam(required = false) String to,
+                            @RequestParam(required = false) String subject, // 注意前端name属性要对应
+                            @RequestParam(required = false) String text,
+                            HttpSession session) {
+        UserAccount user = (UserAccount) session.getAttribute("currentUser");
+        if (user == null) return "redirect:/";
+
+        // 即使收件人为空也可以存草稿
+        draftRepository.save(new com.example.demo.entity.DraftEmail(
+                user.getEmail(), to, subject, text
+        ));
+
+        return "redirect:/drafts";
+    }
+
+    // 2. 查看草稿箱列表
+    @GetMapping("/drafts")
+    public ModelAndView draftBox(HttpSession session) {
+        UserAccount user = (UserAccount) session.getAttribute("currentUser");
+        if (user == null) return new ModelAndView("redirect:/");
+
+        ModelAndView mav = new ModelAndView("drafts"); // 指定跳转到 drafts.html
+        List<com.example.demo.entity.DraftEmail> drafts = draftRepository.findBySender(user.getEmail());
+        
+        // 转换成 EmailInfo 格式以便复用列表展示逻辑（也可以直接传 drafts，看前端怎么写）
+        // 这里为了方便，我们直接传 drafts 到前端，在 drafts.html 里单独处理
+        mav.addObject("drafts", drafts);
+        mav.addObject("currentFolder", "草稿箱");
+        
+        return mav;
+    }
+
+    // 3. 删除草稿
+    @GetMapping("/deleteDraft")
+    public String deleteDraft(@RequestParam Long id) {
+        draftRepository.deleteById(id);
+        return "redirect:/drafts";
+    }
 
     @GetMapping("/deleteFromSent")
     public String deleteFromSent(@RequestParam Long id) {

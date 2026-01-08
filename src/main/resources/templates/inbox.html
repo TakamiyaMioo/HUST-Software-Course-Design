@@ -126,6 +126,7 @@
         <div class="menu-title">邮箱文件夹</div>
         <a href="/inbox" class="menu-item" th:classappend="${currentFolder == null || currentFolder == '收件箱'} ? 'active'"><i class="fas fa-inbox"></i> 收件箱</a>
         <a href="/sent" class="menu-item" th:classappend="${currentFolder == '已发送'} ? 'active'"><i class="fas fa-paper-plane"></i> 已发送</a>
+        <a href="/drafts" class="menu-item"><i class="fas fa-file-alt"></i> 草稿箱</a>
         <a href="/trash" class="menu-item" th:classappend="${currentFolder == '垃圾箱'} ? 'active'"><i class="fas fa-trash-alt"></i> 垃圾箱</a>
 
         <div class="menu-title">管理</div>
