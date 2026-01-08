@@ -122,6 +122,47 @@
         .theme-switch:hover { background: rgba(0,0,0,0.1); transform: translateX(2px); }
         /* 隐藏的文件上传输入框 */
         #bgUploadInput { display: none; }
+
+        /* 分页工具栏样式 */
+        .pagination-bar {
+            background: #eef3f8; /* 浅蓝背景 */
+            padding: 10px 20px;
+            display: flex;
+            justify-content: flex-end; /* 居右显示 */
+            align-items: center;
+            font-size: 13px;
+            color: #333;
+            border-top: 1px solid #dce4ec;
+        }
+
+        .pagination-bar a {
+            text-decoration: none;
+            color: #0078d4;
+            margin: 0 5px;
+            cursor: pointer;
+        }
+        .pagination-bar a:hover { text-decoration: underline; }
+        .pagination-bar a.disabled { color: #999; cursor: default; text-decoration: none; }
+
+        .page-input {
+            width: 30px;
+            height: 22px;
+            margin: 0 5px;
+            border: 1px solid #ccc;
+            text-align: center;
+            font-size: 12px;
+        }
+
+        .btn-go {
+            background: #fff;
+            border: 1px solid #ccc;
+            border-radius: 3px;
+            padding: 2px 8px;
+            font-size: 12px;
+            cursor: pointer;
+            color: #333;
+        }
+        .btn-go:hover { background: #f0f0f0; }
     </style>
 </head>
 <body>
@@ -225,6 +266,24 @@
                 </tr>
                 </tbody>
             </table>
+            <div class="pagination-bar" th:if="${totalPages > 0}">
+                <span style="margin-right: 15px;">
+                    <span th:text="${currentPage}">1</span>/<span th:text="${totalPages}">1</span> 页
+                </span>
+
+                <a th:if="${currentPage > 1}" th:href="@{/inbox(page=${currentPage - 1})}">上一页</a>
+                <span th:if="${currentPage <= 1}" class="disabled">上一页</span>
+
+                <a th:if="${currentPage < totalPages}" th:href="@{/inbox(page=${currentPage + 1})}">下一页</a>
+                <span th:if="${currentPage >= totalPages}" class="disabled">下一页</span>
+
+                <span style="margin-left: 15px;">
+                    跳转到第 <input type="text" id="jumpInput" class="page-input" th:value="${currentPage}"> 页
+                    <button type="button" class="btn-go" onclick="jumpToPage()">确定</button>
+                </span>
+                
+                <input type="hidden" id="maxPage" th:value="${totalPages}">
+            </div>
         </div>
     </div>
 </div>
@@ -410,6 +469,26 @@
     
     document.getElementById('emailModal').onclick = function(event) {
         if (event.target == this) closeModal();
+    }
+
+        // 分页跳转逻辑
+    function jumpToPage() {
+        var input = document.getElementById("jumpInput");
+        var maxPage = document.getElementById("maxPage").value;
+        var page = parseInt(input.value);
+
+        // 简单的校验
+        if (isNaN(page) || page < 1) {
+            alert("请输入有效的页码！");
+            return;
+        }
+        if (page > parseInt(maxPage)) {
+            alert("超过最大页数了！");
+            return;
+        }
+
+        // 跳转
+        window.location.href = "/inbox?page=" + page;
     }
 </script>
 

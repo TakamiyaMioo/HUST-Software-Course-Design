@@ -57,16 +57,36 @@ public class HelloController {
         return "redirect:/";
     }
 
+    //
+
     @GetMapping("/inbox")
-    public ModelAndView inbox(HttpSession session) {
+    public ModelAndView inbox(HttpSession session,
+            @RequestParam(defaultValue = "1") int page) { // 1. 接收 page 参数，默认第1页
         UserAccount user = (UserAccount) session.getAttribute("currentUser");
-        if (user == null) return new ModelAndView("redirect:/");
+        if (user == null)
+            return new ModelAndView("redirect:/");
 
         ModelAndView mav = new ModelAndView("inbox");
-        List<EmailInfo> emails = mailService.receiveEmails(user);
+
+        // 每页显示 10 条
+        int pageSize = 10;
+
+        // 2. 调用 Service 获取数据和总数
+        java.util.Map<String, Object> result = mailService.receiveEmails(user, page, pageSize);
+        List<EmailInfo> emails = (List<EmailInfo>) result.get("list");
+        int totalCount = (int) result.get("totalCount");
+
+        // 3. 计算总页数
+        int totalPages = (int) Math.ceil((double) totalCount / pageSize);
 
         mav.addObject("emails", emails);
         mav.addObject("currentFolder", "收件箱");
+
+        // 4. 传递分页数据给前端
+        mav.addObject("currentPage", page);
+        mav.addObject("totalPages", totalPages);
+        mav.addObject("totalCount", totalCount);
+
         return mav;
     }
 

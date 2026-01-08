@@ -125,8 +125,13 @@ public class MailService {
     /**
      * 接收邮件
      */
-    public List<EmailInfo> receiveEmails(UserAccount user) {
+    //
+
+    // 修改返回类型为 Map<String, Object>，以便同时返回 list 和 totalCount
+    public java.util.Map<String, Object> receiveEmails(UserAccount user, int page, int size) {
+        java.util.Map<String, Object> result = new java.util.HashMap<>();
         List<EmailInfo> emailList = new ArrayList<>();
+
         try {
             Properties props = new Properties();
             props.setProperty("mail.store.protocol", "pop3");
@@ -145,36 +150,52 @@ public class MailService {
             Folder folder = store.getFolder("INBOX");
             folder.open(Folder.READ_ONLY);
 
-            Message[] messages = folder.getMessages();
-            int end = messages.length;
-            int start = Math.max(0, end - 10);
-            SimpleDateFormat fmt = new SimpleDateFormat("yyyy-MM-dd HH:mm");
+            // 1. 获取总邮件数
+            int totalMessages = folder.getMessageCount();
+            result.put("totalCount", totalMessages); // 放入结果集
 
-            for (int i = end - 1; i >= start; i--) {
-                Message msg = messages[i];
-                String subject = (msg.getSubject() != null) ? MimeUtility.decodeText(msg.getSubject()) : "无标题";
+            // 2. 计算当前页需要的邮件索引范围 (POP3 索引从 1 开始，且 1 是最旧的，total 是最新的)
+            // page 1 (size 10): 读取 total ~ total-9
+            // page 2 (size 10): 读取 total-10 ~ total-19
 
-                String from = "未知";
-                if (msg.getFrom() != null && msg.getFrom().length > 0) {
-                    from = MimeUtility.decodeText(msg.getFrom()[0].toString());
-                    if (from.contains("<"))
-                        from = from.substring(0, from.indexOf("<")).trim();
+            int end = totalMessages - (page - 1) * size;
+            int start = end - size + 1;
+
+            // 边界检查
+            if (end > 0) {
+                if (start < 1)
+                    start = 1; // 防止越界
+
+                // getMessages(start, end) 是闭区间，包含 start 和 end
+                Message[] messages = folder.getMessages(start, end);
+                SimpleDateFormat fmt = new SimpleDateFormat("yyyy-MM-dd HH:mm");
+
+                // 3. 倒序遍历（这样最新的邮件会在 List 的最前面）
+                for (int i = messages.length - 1; i >= 0; i--) {
+                    Message msg = messages[i];
+                    // ... (原有的解析逻辑保持不变) ...
+                    String subject = (msg.getSubject() != null) ? MimeUtility.decodeText(msg.getSubject()) : "无标题";
+
+                    String from = "未知";
+                    if (msg.getFrom() != null && msg.getFrom().length > 0) {
+                        from = MimeUtility.decodeText(msg.getFrom()[0].toString());
+                        if (from.contains("<"))
+                            from = from.substring(0, from.indexOf("<")).trim();
+                    }
+
+                    String sentDate = (msg.getSentDate() != null) ? fmt.format(msg.getSentDate()) : "未知时间";
+
+                    StringBuilder contentBuffer = new StringBuilder();
+                    List<String> attachmentList = new ArrayList<>();
+                    try {
+                        // 调用原有的 parseMessage 解析内容
+                        parseMessage(msg, contentBuffer, attachmentList);
+                    } catch (Exception e) {
+                        contentBuffer.append("（内容解析异常）");
+                    }
+
+                    emailList.add(new EmailInfo(subject, from, sentDate, contentBuffer.toString(), attachmentList));
                 }
-
-                String sentDate = (msg.getSentDate() != null) ? fmt.format(msg.getSentDate()) : "未知时间";
-
-                // 解析内容和附件
-                StringBuilder contentBuffer = new StringBuilder();
-                List<String> attachmentList = new ArrayList<>();
-                try {
-                    parseMessage(msg, contentBuffer, attachmentList);
-                } catch (Exception e) {
-                    contentBuffer.append("（内容解析异常）");
-                    // e.printStackTrace(); // 调试时可以打开
-                }
-
-                // 传入 5 个参数：标题, 发件人, 时间, 正文, 附件列表
-                emailList.add(new EmailInfo(subject, from, sentDate, contentBuffer.toString(), attachmentList));
             }
 
             folder.close(false);
@@ -182,6 +203,8 @@ public class MailService {
         } catch (Exception e) {
             e.printStackTrace();
         }
-        return emailList;
+
+        result.put("list", emailList);
+        return result;
     }
 }
