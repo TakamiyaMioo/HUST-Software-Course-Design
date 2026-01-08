@@ -76,22 +76,11 @@
         th { text-align: left; padding: 15px 30px; color: #888; font-size: 13px; font-weight: 500; position: sticky; top: 0; background: var(--table-header-bg); z-index: 10; }
         td { padding: 15px 30px; border-bottom: 1px solid rgba(0,0,0,0.03); font-size: 14px; color: var(--text-main); vertical-align: middle; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
         tr:hover { background: var(--hover-bg); cursor: pointer; }
-        .sender-avatar { width: 35px; height: 35px; background: #e0e0e0; border-radius: 50%; display: inline-flex; justify-content: center; align-items: center; margin-right: 10px; font-size: 12px; color: #666; }
+        .sender-avatar { width: 35px; height: 35px; background: #e0e0e0; border-radius: 50%; display: inline-flex; justify-content: center; align-items: center; margin-right: 10px; font-size: 12px; color: #666; flex-shrink: 0; }
         .date-col { color: #999; font-size: 13px; text-align: right; width: 150px;}
         .sender-col { width: 30%; font-weight: 600; }
 
-        /* === 新增：操作按钮样式 === */
-        .btn-action {
-            text-decoration: none;
-            font-size: 15px;
-            padding: 5px;
-            margin: 0 3px;
-            transition: 0.2s;
-            display: inline-block;
-            background: none;
-            border: none;
-            cursor: pointer;
-        }
+        .btn-action { text-decoration: none; font-size: 15px; padding: 5px; margin: 0 3px; transition: 0.2s; display: inline-block; background: none; border: none; cursor: pointer; }
         .btn-action:hover { transform: scale(1.2); }
         .btn-trash { color: #ccc; }
         .btn-trash:hover { color: #ff4d4f; }
@@ -105,7 +94,7 @@
         .btn-go { background: var(--btn-bg); border: 1px solid var(--btn-border); color: var(--text-main); border-radius: 3px; padding: 2px 8px; font-size: 12px; cursor: pointer; }
         .btn-go:hover { background: var(--btn-hover); }
 
-        /* 邮件详情弹窗 */
+        /* 弹窗 */
         .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; justify-content: center; align-items: center; backdrop-filter: blur(5px); }
         .modal-card { background: var(--modal-bg); border-radius: 12px; display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 20px 50px rgba(0,0,0,0.3); border: 1px solid var(--border-color); color: var(--text-main); width: 60%; max-height: 80vh; }
         .modal-header { padding: 20px; border-bottom: 1px solid rgba(0,0,0,0.05); display: flex; justify-content: space-between; align-items: center; background: rgba(0,0,0,0.02); }
@@ -127,13 +116,12 @@
         <a href="/inbox" class="menu-item" th:classappend="${currentFolder == null || currentFolder == '收件箱'} ? 'active'"><i class="fas fa-inbox"></i> 收件箱</a>
         <a href="/sent" class="menu-item" th:classappend="${currentFolder == '已发送'} ? 'active'"><i class="fas fa-paper-plane"></i> 已发送</a>
         <a href="/drafts" class="menu-item"><i class="fas fa-file-alt"></i> 草稿箱</a>
-        <a href="/trash" class="menu-item" th:classappend="${currentFolder == '垃圾箱'} ? 'active'"><i class="fas fa-trash-alt"></i> 垃圾箱</a>
+        
+        <a href="/trash" class="menu-item" th:classappend="${currentFolder == '已删除'} ? 'active'"><i class="fas fa-trash-alt"></i> 已删除</a>
 
         <div class="menu-title">管理</div>
         <a href="/contacts" class="menu-item"><i class="fas fa-address-book"></i> 通讯录</a>
-
         <a href="/settings" class="menu-item"><i class="fas fa-cog"></i> 设置</a>
-
         <a href="/logout" class="menu-item" style="margin-top: auto; color: #ff4d4f;"><i class="fas fa-sign-out-alt"></i> 退出登录</a>
     </div>
 
@@ -157,54 +145,55 @@
             <table>
                 <thead>
                 <tr>
-                    <th class="sender-col">发件人/收件人</th>
+                    <th class="sender-col" th:text="${currentFolder == '已发送'} ? '收件人' : '发件人'">发件人/收件人</th>
                     <th width="45%">主题</th>
                     <th width="15%" style="text-align: right;">时间</th>
-                    <!-- 增加宽度以容纳3个图标 -->
                     <th width="12%"></th>
                 </tr>
                 </thead>
                 <tbody id="emailTableBody">
-                <tr th:each="email : ${emails}"
+                <tr th:each="email : ${emails}" 
+                    th:data-uid="${email.id}"
+                    th:data-folder="${currentFolder}"
                     th:data-title="${email.title}"
                     th:data-sender="${email.sender}"
-                    th:data-content="${email.content}"
-                    th:data-files="${email.filenames}"
                     onclick="showEmailDetail(this)">
+                    
                     <td class="sender-col">
-                        <span class="sender-avatar" th:text="${#strings.substring(email.sender, 0, 1)}">A</span>
-                        <span th:text="${email.sender}">张三</span>
+                        <div style="display: flex; align-items: center;">
+                            <span class="sender-avatar" th:text="${#strings.substring(email.sender, 0, 1)}">A</span>
+                            <div style="display: flex; flex-direction: column; justify-content: center;">
+                                <span th:text="${email.sender}" style="line-height: 1.2;">张三</span>
+                                <span th:text="${email.address}" style="font-size: 12px; color: #999; font-weight: normal; line-height: 1.2;">zhangsan@qq.com</span>
+                            </div>
+                        </div>
                     </td>
+                    
                     <td th:text="${email.title}" style="font-weight: 500;">主题</td>
                     <td class="date-col" th:text="${email.sendDate}">时间</td>
 
-                    <!-- === 操作列修改 === -->
                     <td style="text-align: center; white-space: nowrap;" onclick="event.stopPropagation()">
-
-                        <!-- 1. 回复按钮 (仅在收件箱显示) -->
-                        <a th:if="${currentFolder == null || currentFolder == '收件箱'}"
-                           th:href="@{/sendPage(to=${email.sender}, subject='Re: ' + ${email.title})}"
-                           class="btn-action" title="回复" style="color: #0078d4;">
-                            <i class="fas fa-reply"></i>
+                        <a th:if="${currentFolder == null || currentFolder == '收件箱' || currentFolder == '已发送' || currentFolder == '已删除'}"
+                        href="javascript:void(0)"
+                        th:onclick="|openForwardModal(${email.id})|"
+                        class="btn-action" title="转发" style="color: #28a745;">
+                            <i class="fas fa-share"></i>
                         </a>
-
-                        <!-- 2. 转发按钮 (收件箱和已发送都显示) -->
-                        <a th:if="${currentFolder == null || currentFolder == '收件箱' || currentFolder == '已发送'}"
-                           th:href="@{/sendPage(subject='Fwd: ' + ${email.title})}"
+                        
+                        <a th:if="${currentFolder == null || currentFolder == '收件箱' || currentFolder == '已发送' || currentFolder == '已删除'}"
+                           th:href="@{/sendPage(forwardUid=${email.id}, folder=${currentFolder})}"
                            class="btn-action" title="转发" style="color: #28a745;">
                             <i class="fas fa-share"></i>
                         </a>
 
-                        <!-- 3. 删除/垃圾箱按钮 -->
                         <a th:if="${currentFolder == '已发送'}"
-                           th:href="@{/deleteFromSent(id=${email.id})}"
-                           class="btn-action btn-trash" title="移入垃圾箱" onclick="return confirm('确定要移入垃圾箱吗？')">
+                            th:href="@{/deleteFromSent(id=${email.id})}"
+                            class="btn-action btn-trash" title="移入已删除" onclick="return confirm('确定要删除吗？')">
                             <i class="fas fa-trash"></i>
                         </a>
-
-                        <a th:if="${currentFolder == '垃圾箱'}"
-                           th:href="@{/deleteForever(id=${email.id})}"
-                           class="btn-action btn-trash" title="彻底删除" style="color: #ff4d4f;" onclick="return confirm('确定彻底删除吗？')">
+                        <a th:if="${currentFolder == '已删除'}"
+                            th:href="@{/deleteForever(id=${email.id})}"
+                            class="btn-action btn-trash" title="彻底删除" style="color: #ff4d4f;" onclick="return confirm('确定彻底删除吗？')">
                             <i class="fas fa-times-circle"></i>
                         </a>
                     </td>
@@ -216,14 +205,25 @@
                 </tr>
                 </tbody>
             </table>
+            
             <div class="pagination-bar" th:if="${totalPages > 0}">
-                <span style="margin-right: 15px;"><span th:text="${currentPage}">1</span>/<span th:text="${totalPages}">1</span> 页</span>
-                <a th:if="${currentPage > 1}" th:href="@{/inbox(page=${currentPage - 1})}">上一页</a>
+                <span style="margin-right: 15px;">
+                    <span th:text="${currentPage}">1</span>/<span th:text="${totalPages}">1</span> 页
+                </span>
+
+                <a th:if="${currentPage > 1}" th:href="@{${baseUrl}(page=${currentPage - 1})}">上一页</a>
                 <span th:if="${currentPage <= 1}" class="disabled">上一页</span>
-                <a th:if="${currentPage < totalPages}" th:href="@{/inbox(page=${currentPage + 1})}">下一页</a>
+
+                <a th:if="${currentPage < totalPages}" th:href="@{${baseUrl}(page=${currentPage + 1})}">下一页</a>
                 <span th:if="${currentPage >= totalPages}" class="disabled">下一页</span>
-                <span style="margin-left: 15px;">跳转到第 <input type="text" id="jumpInput" class="page-input" th:value="${currentPage}"> 页 <button type="button" class="btn-go" onclick="jumpToPage()">确定</button></span>
+
+                <span style="margin-left: 15px;">
+                    跳转到第 <input type="text" id="jumpInput" class="page-input" th:value="${currentPage}"> 页
+                    <button type="button" class="btn-go" onclick="jumpToPage()">确定</button>
+                </span>
+
                 <input type="hidden" id="maxPage" th:value="${totalPages}">
+                <input type="hidden" id="currentBaseUrl" th:value="${baseUrl}">
             </div>
         </div>
     </div>
@@ -242,7 +242,40 @@
     </div>
 </div>
 
+<div id="forwardModal" class="modal-overlay">
+    <div class="modal-card" style="width: 400px; height: auto;">
+        <div class="modal-header">
+            <h3><i class="fas fa-share" style="color: #28a745;"></i> 转发邮件</h3>
+            <button class="modal-close" onclick="closeForwardModal()">&times;</button>
+        </div>
+        <div style="padding: 20px;">
+            <div style="margin-bottom: 15px;">
+                <label style="display:block; margin-bottom:5px; font-weight:bold; color:#666;">收件人</label>
+                <input type="text" id="forwardTo" list="contactsList" placeholder="输入邮箱或选择联系人" 
+                       style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 5px; box-sizing: border-box;">
+                <datalist id="contactsList">
+                    <option th:each="c : ${contacts}" th:value="${c.email}" th:label="${c.name}"></option>
+                </datalist>
+            </div>
+            
+            <div style="margin-bottom: 15px;">
+                <label style="display:block; margin-bottom:5px; font-weight:bold; color:#666;">附加留言 (可选)</label>
+                <textarea id="forwardComment" rows="3" placeholder="例如：这封邮件很有意思，你看一下..." 
+                          style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 5px; box-sizing: border-box; font-family: inherit; resize: vertical;"></textarea>
+            </div>
+
+            <div style="text-align: right;">
+                <button onclick="closeForwardModal()" style="padding: 8px 15px; background: #eee; border: none; border-radius: 5px; cursor: pointer; margin-right: 10px;">取消</button>
+                <button onclick="submitForward()" id="btnSubmitForward" style="padding: 8px 20px; background: #28a745; color: white; border: none; border-radius: 5px; cursor: pointer;">
+                    <i class="fas fa-paper-plane"></i> 立即转发
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <script>
+    // 1. 页面加载：恢复主题和背景
     window.onload = function() {
         const savedTheme = localStorage.getItem('theme');
         if (savedTheme === 'dark') document.body.classList.add('dark-mode');
@@ -250,331 +283,180 @@
         if (savedBg) document.body.style.setProperty('--bg-image', `url(${savedBg})`);
     }
 
+    // 2. 搜索邮件
     function searchEmails() {
         var input = document.getElementById("searchInput");
         var filter = input.value.toLowerCase();
         var tr = document.getElementById("emailTableBody").getElementsByTagName("tr");
         for (var i = 0; i < tr.length; i++) {
             var text = tr[i].textContent || tr[i].innerText;
+            // 如果是暂无数据的行，不隐藏
+            if (tr[i].innerText.indexOf("暂无邮件") > -1) continue;
             tr[i].style.display = text.toLowerCase().indexOf(filter) > -1 ? "" : "none";
         }
     }
 
+    // 3. 显示邮件详情 (AJAX 异步加载版)
     function showEmailDetail(element) {
+        // 先显示基础信息
         document.getElementById('modalTitle').innerText = element.getAttribute("data-title");
         document.getElementById('modalSender').innerText = element.getAttribute("data-sender");
-        var content = element.getAttribute("data-content");
-        document.getElementById('modalContent').innerHTML = content ? content : "<span style='color:#999'>（无正文内容）</span>";
+        
+        // 显示“加载中...”动画
+        var contentDiv = document.getElementById('modalContent');
+        contentDiv.innerHTML = "<div style='text-align:center; padding:30px; color:#666;'><i class='fas fa-spinner fa-spin'></i> 正在从服务器下载邮件内容，请稍候...</div>";
+        
+        // 重置附件区域
+        document.getElementById('attachmentArea').style.display = 'none';
+        document.getElementById('imagePreviewArea').style.display = 'none';
+        document.getElementById('attachmentList').innerHTML = "";
+        
+        // 显示弹窗
+        document.getElementById('emailModal').style.display = 'flex';
 
-        var filesStr = element.getAttribute("data-files");
+        // 获取参数并请求后端
+        var uid = element.getAttribute("data-uid");
+        var folder = element.getAttribute("data-folder");
+        if(!folder) folder = "收件箱"; 
+
+        fetch(`/email/detail?folder=${encodeURIComponent(folder)}&uid=${uid}`)
+            .then(response => response.json())
+            .then(data => {
+                if(data.success) {
+                    // 填充正文
+                    contentDiv.innerHTML = data.content ? data.content : "<span style='color:#999'>（无正文内容）</span>";
+                    // 渲染附件
+                    if (data.files && data.files.length > 0) {
+                        renderAttachments(data.files);
+                    }
+                } else {
+                    contentDiv.innerHTML = "<span style='color:red'>加载失败：" + (data.error || "未知错误") + "</span>";
+                }
+            })
+            .catch(err => {
+                contentDiv.innerHTML = "<span style='color:red'>网络错误，无法加载内容</span>";
+                console.error(err);
+            });
+    }
+
+    // 4. 渲染附件的辅助函数
+    function renderAttachments(fileArray) {
         var attachArea = document.getElementById('attachmentArea');
         var attachDiv = document.getElementById('attachmentList');
         var imgArea = document.getElementById('imagePreviewArea');
+        
+        attachDiv.innerHTML = ""; 
+        imgArea.innerHTML = "";
+        attachArea.style.display = 'block';
 
-        attachDiv.innerHTML = ""; imgArea.innerHTML = "";
-        imgArea.style.display = 'none'; attachArea.style.display = 'none';
+        for(var i=0; i<fileArray.length; i++) {
+            var fName = fileArray[i];
+            var downloadUrl = "/download?filename=" + encodeURIComponent(fName);
 
-        if (filesStr && filesStr.length > 2) {
-            var cleanStr = filesStr.replace('[', '').replace(']', '');
-            if(cleanStr.trim() !== "") {
-                var fileArray = cleanStr.split(',');
-                attachArea.style.display = 'block';
-                for(var i=0; i<fileArray.length; i++) {
-                    var fName = fileArray[i].trim();
-                    if(fName === "") continue;
-                    var dl = "/download?filename=" + encodeURIComponent(fName);
-                    attachDiv.innerHTML += `<a href="${dl}" target="_blank" style="font-size:12px; padding:6px 12px; background:#f0f0f0; border-radius:4px; text-decoration:none; color:#333; border:1px solid #ddd; display:flex; align-items:center; gap:5px;"><i class="fas fa-file-download" style="color:#0078d4;"></i> ${fName}</a>`;
-                    var lower = fName.toLowerCase();
-                    if(lower.endsWith('.jpg')||lower.endsWith('.png')||lower.endsWith('.jpeg')) {
-                        imgArea.style.display = 'block';
-                        imgArea.innerHTML += `<div style="margin-top:15px; border:1px solid #eee; padding:5px; border-radius:5px; display:inline-block;"><img src="${dl}" style="max-width:100%; max-height:400px; display:block;"></div><br>`;
-                    }
-                }
+            // 下载按钮
+            var btn = `<a href="${downloadUrl}" target="_blank" 
+                        style="font-size:12px; padding:6px 12px; background:#f0f0f0; border-radius:4px; text-decoration:none; color:#333; border:1px solid #ddd; display:flex; align-items:center; gap:5px;">
+                        <i class="fas fa-file-download" style="color:#0078d4;"></i> ${fName}
+                       </a>`;
+            attachDiv.innerHTML += btn;
+
+            // 图片预览
+            var lowerName = fName.toLowerCase();
+            if(lowerName.endsWith('.jpg') || lowerName.endsWith('.jpeg') || lowerName.endsWith('.png')) {
+                imgArea.style.display = 'block';
+                var imgTag = `<div style="margin-top:15px; border:1px solid #eee; padding:5px; border-radius:5px; display:inline-block;">
+                                <p style="margin:0 0 5px 0; font-size:12px; color:#999;">预览: ${fName}</p>
+                                <img src="${downloadUrl}" style="max-width:100%; max-height:400px; display:block;">
+                              </div><br>`;
+                imgArea.innerHTML += imgTag;
             }
         }
-        document.getElementById('emailModal').style.display = 'flex';
     }
 
-    function closeModal() { document.getElementById('emailModal').style.display = 'none'; }
-    window.onclick = function(e) { if (e.target.classList.contains('modal-overlay')) e.target.style.display = 'none'; }
+    // 5. 关闭弹窗功能
+    function closeModal() { 
+        document.getElementById('emailModal').style.display = 'none'; 
+    }
 
+    // 点击弹窗外部空白处也可以关闭
+    window.onclick = function(e) { 
+        if (e.target.classList.contains('modal-overlay')) {
+            e.target.style.display = 'none'; 
+        }
+    }
+
+    // 6. 翻页跳转功能
     function jumpToPage() {
         var p = parseInt(document.getElementById("jumpInput").value);
         var max = parseInt(document.getElementById("maxPage").value);
+        var baseUrl = document.getElementById("currentBaseUrl").value;
+
         if (isNaN(p) || p < 1) { alert("无效页码"); return; }
         if (p > max) { alert("超过最大页数"); return; }
-        window.location.href = "/inbox?page=" + p;
+        
+        window.location.href = baseUrl + "?page=" + p;
     }
+
+    let currentForwardUid = null;
+
+    function openForwardModal(uid) {
+        currentForwardUid = uid;
+        document.getElementById('forwardTo').value = '';
+        document.getElementById('forwardComment').value = '';
+        document.getElementById('forwardModal').style.display = 'flex';
+    }
+
+    function closeForwardModal() {
+        document.getElementById('forwardModal').style.display = 'none';
+        currentForwardUid = null;
+    }
+
+    function submitForward() {
+        var to = document.getElementById('forwardTo').value;
+        var comment = document.getElementById('forwardComment').value;
+        var folder = "[[${currentFolder}]]" || "收件箱"; // 获取当前文件夹名
+
+        if(!to) {
+            alert("请填写收件人邮箱！");
+            return;
+        }
+
+        var btn = document.getElementById('btnSubmitForward');
+        var originalText = btn.innerHTML;
+        btn.innerHTML = "<i class='fas fa-spinner fa-spin'></i> 发送中...";
+        btn.disabled = true;
+
+        // 发送 AJAX 请求
+        var formData = new FormData();
+        formData.append('folder', folder);
+        formData.append('uid', currentForwardUid);
+        formData.append('to', to);
+        formData.append('comment', comment);
+
+        fetch('/mail/forward', {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            if(data.success) {
+                alert("✅ 转发成功！");
+                closeForwardModal();
+            } else {
+                alert("❌ 转发失败：" + (data.error || "未知错误"));
+            }
+        })
+        .catch(err => {
+            alert("网络错误，请重试");
+            console.error(err);
+        })
+        .finally(() => {
+            btn.innerHTML = originalText;
+            btn.disabled = false;
+        });
+    }
+    
 </script>
 
 </body>
 </html>
-
-<!--<!DOCTYPE html>-->
-<!--<html xmlns:th="http://www.thymeleaf.org">-->
-<!--<head>-->
-<!--    <meta charset="UTF-8">-->
-<!--    <title>我的邮箱</title>-->
-<!--    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" rel="stylesheet">-->
-<!--    <style>-->
-<!--        /* CSS 变量 (必须与 settings.html 保持一致，保证切换时无缝体验) */-->
-<!--        :root {-->
-<!--            &#45;&#45;bg-image: url('/images/bg.jpg');-->
-<!--            &#45;&#45;glass-bg: rgba(255, 255, 255, 0.85);-->
-<!--            &#45;&#45;sidebar-bg: rgba(255, 255, 255, 0.5);-->
-<!--            &#45;&#45;main-bg: rgba(255, 255, 255, 0.3);-->
-<!--            &#45;&#45;toolbar-bg: rgba(255, 255, 255, 0.4);-->
-<!--            &#45;&#45;text-main: #333;-->
-<!--            &#45;&#45;text-sub: #666;-->
-<!--            &#45;&#45;border-color: rgba(255, 255, 255, 0.6);-->
-<!--            &#45;&#45;hover-bg: rgba(255, 255, 255, 0.8);-->
-<!--            &#45;&#45;table-header-bg: rgba(255, 255, 255, 0.9);-->
-<!--            &#45;&#45;input-bg: white;-->
-<!--            &#45;&#45;shadow-color: rgba(0, 0, 0, 0.1);-->
-<!--            &#45;&#45;modal-bg: white;-->
-<!--            /* 翻页栏变量 */-->
-<!--            &#45;&#45;pag-bg: #eef3f8; &#45;&#45;pag-border: #dce4ec; &#45;&#45;pag-text: #333; &#45;&#45;btn-bg: #fff; &#45;&#45;btn-border: #ccc; &#45;&#45;btn-hover: #f0f0f0;-->
-<!--        }-->
-
-<!--        body.dark-mode {-->
-<!--            &#45;&#45;glass-bg: rgba(30, 30, 30, 0.85);-->
-<!--            &#45;&#45;sidebar-bg: rgba(0, 0, 0, 0.3);-->
-<!--            &#45;&#45;main-bg: rgba(0, 0, 0, 0.2);-->
-<!--            &#45;&#45;toolbar-bg: rgba(0, 0, 0, 0.3);-->
-<!--            &#45;&#45;text-main: #e0e0e0;-->
-<!--            &#45;&#45;text-sub: #aaaaaa;-->
-<!--            &#45;&#45;border-color: rgba(255, 255, 255, 0.1);-->
-<!--            &#45;&#45;hover-bg: rgba(255, 255, 255, 0.1);-->
-<!--            &#45;&#45;table-header-bg: rgba(40, 40, 40, 0.9);-->
-<!--            &#45;&#45;input-bg: #444;-->
-<!--            &#45;&#45;shadow-color: rgba(0, 0, 0, 0.5);-->
-<!--            &#45;&#45;modal-bg: #2d2d2d;-->
-<!--            /* 翻页栏变量 */-->
-<!--            &#45;&#45;pag-bg: rgba(0, 0, 0, 0.2); &#45;&#45;pag-border: rgba(255, 255, 255, 0.1); &#45;&#45;pag-text: #aaa; &#45;&#45;btn-bg: #444; &#45;&#45;btn-border: #555; &#45;&#45;btn-hover: #555;-->
-<!--        }-->
-
-<!--        body {-->
-<!--            font-family: 'Segoe UI', sans-serif; margin: 0; padding: 0;-->
-<!--            background-image: var(&#45;&#45;bg-image); background-size: cover; background-position: center; background-attachment: fixed;-->
-<!--            height: 100vh; display: flex; justify-content: center; align-items: center; transition: background-image 0.5s;-->
-<!--        }-->
-
-<!--        .glass-container {-->
-<!--            width: 90%; height: 90vh; background: var(&#45;&#45;glass-bg); backdrop-filter: blur(12px);-->
-<!--            border: 1px solid var(&#45;&#45;border-color); border-radius: 20px; box-shadow: 0 15px 40px var(&#45;&#45;shadow-color);-->
-<!--            display: flex; overflow: hidden;-->
-<!--        }-->
-
-<!--        .sidebar { width: 260px; background: var(&#45;&#45;sidebar-bg); border-right: 1px solid rgba(0,0,0,0.05); display: flex; flex-direction: column; padding: 20px; }-->
-<!--        .user-card { text-align: center; margin-bottom: 30px; padding-bottom: 20px; border-bottom: 1px dashed #ccc; }-->
-<!--        .avatar { width: 80px; height: 80px; background: linear-gradient(135deg, #a18cd1 0%, #fbc2eb 100%); border-radius: 50%; margin: 0 auto 10px; display: flex; align-items: center; justify-content: center; font-size: 30px; color: white; }-->
-<!--        .username { font-weight: bold; color: var(&#45;&#45;text-main); font-size: 16px; margin-bottom: 5px;}-->
-<!--        .user-email { font-size: 12px; color: var(&#45;&#45;text-sub); word-break: break-all;}-->
-
-<!--        .menu-item { display: flex; align-items: center; padding: 12px 15px; color: var(&#45;&#45;text-sub); text-decoration: none; border-radius: 10px; margin-bottom: 5px; transition: 0.3s; }-->
-<!--        .menu-item i { width: 25px; font-size: 18px; }-->
-<!--        .menu-item:hover { background: var(&#45;&#45;hover-bg); color: #0078d4; transform: translateX(5px); }-->
-<!--        .menu-item.active { background: #0078d4; color: white; box-shadow: 0 4px 10px rgba(0, 120, 212, 0.3); }-->
-<!--        .menu-title { font-size: 12px; color: #999; margin-top: 20px; margin-bottom: 10px; padding-left: 10px; }-->
-
-<!--        .main-content { flex: 1; display: flex; flex-direction: column; background: var(&#45;&#45;main-bg); }-->
-<!--        .toolbar { padding: 15px 30px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(0,0,0,0.05); background: var(&#45;&#45;toolbar-bg); }-->
-<!--        .page-title { font-size: 20px; font-weight: bold; color: var(&#45;&#45;text-main); display: flex; align-items: center; gap: 10px; }-->
-<!--        .search-box { background: var(&#45;&#45;input-bg); border-radius: 20px; padding: 5px 15px; display: flex; align-items: center; width: 300px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }-->
-<!--        .search-box input { border: none; outline: none; margin-left: 10px; width: 100%; color: #666; background: transparent; }-->
-
-<!--        .email-list-wrapper { flex: 1; overflow-y: auto; padding: 0; }-->
-<!--        table { width: 100%; border-collapse: collapse; table-layout: fixed; }-->
-<!--        th { text-align: left; padding: 15px 30px; color: #888; font-size: 13px; font-weight: 500; position: sticky; top: 0; background: var(&#45;&#45;table-header-bg); z-index: 10; }-->
-<!--        td { padding: 15px 30px; border-bottom: 1px solid rgba(0,0,0,0.03); font-size: 14px; color: var(&#45;&#45;text-main); vertical-align: middle; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }-->
-<!--        tr:hover { background: var(&#45;&#45;hover-bg); cursor: pointer; }-->
-<!--        .sender-avatar { width: 35px; height: 35px; background: #e0e0e0; border-radius: 50%; display: inline-flex; justify-content: center; align-items: center; margin-right: 10px; font-size: 12px; color: #666; }-->
-<!--        .date-col { color: #999; font-size: 13px; text-align: right; width: 150px;}-->
-<!--        .sender-col { width: 30%; font-weight: 600; }-->
-<!--        .btn-trash { color: #ccc; transition: 0.2s; border: none; background: none; cursor: pointer; font-size: 16px; }-->
-<!--        .btn-trash:hover { color: #ff4d4f; transform: scale(1.1); }-->
-
-<!--        /* 分页栏 */-->
-<!--        .pagination-bar { background: var(&#45;&#45;pag-bg); border-top: 1px solid var(&#45;&#45;pag-border); color: var(&#45;&#45;pag-text); padding: 10px 20px; display: flex; justify-content: flex-end; align-items: center; font-size: 13px; }-->
-<!--        .pagination-bar a { text-decoration: none; color: #0078d4; margin: 0 5px; cursor: pointer; }-->
-<!--        .pagination-bar a:hover { text-decoration: underline; }-->
-<!--        .pagination-bar a.disabled { color: var(&#45;&#45;text-sub); cursor: default; text-decoration: none; }-->
-<!--        .page-input { width: 30px; height: 22px; margin: 0 5px; background: var(&#45;&#45;input-bg); border: 1px solid var(&#45;&#45;btn-border); color: var(&#45;&#45;text-main); text-align: center; font-size: 12px; }-->
-<!--        .btn-go { background: var(&#45;&#45;btn-bg); border: 1px solid var(&#45;&#45;btn-border); color: var(&#45;&#45;text-main); border-radius: 3px; padding: 2px 8px; font-size: 12px; cursor: pointer; }-->
-<!--        .btn-go:hover { background: var(&#45;&#45;btn-hover); }-->
-
-<!--        /* 邮件详情弹窗 (Inbox 唯一保留的弹窗) */-->
-<!--        .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; justify-content: center; align-items: center; backdrop-filter: blur(5px); }-->
-<!--        .modal-card { background: var(&#45;&#45;modal-bg); border-radius: 12px; display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 20px 50px rgba(0,0,0,0.3); border: 1px solid var(&#45;&#45;border-color); color: var(&#45;&#45;text-main); width: 60%; max-height: 80vh; }-->
-<!--        .modal-header { padding: 20px; border-bottom: 1px solid rgba(0,0,0,0.05); display: flex; justify-content: space-between; align-items: center; background: rgba(0,0,0,0.02); }-->
-<!--        .modal-close { border: none; background: none; font-size: 24px; cursor: pointer; color: #999; transition: 0.2s; }-->
-<!--        .modal-close:hover { color: #ff4d4f; transform: rotate(90deg); }-->
-<!--    </style>-->
-<!--</head>-->
-<!--<body>-->
-
-<!--<div class="glass-container">-->
-<!--    <div class="sidebar">-->
-<!--        <div class="user-card">-->
-<!--            <div class="avatar"><i class="fas fa-user-astronaut"></i></div>-->
-<!--            <div class="username">我的账号</div>-->
-<!--            <div class="user-email" th:text="${session.currentUser != null ? session.currentUser.email : '未登录'}"></div>-->
-<!--        </div>-->
-
-<!--        <div class="menu-title">邮箱文件夹</div>-->
-<!--        <a href="/inbox" class="menu-item" th:classappend="${currentFolder == null || currentFolder == '收件箱'} ? 'active'"><i class="fas fa-inbox"></i> 收件箱</a>-->
-<!--        <a href="/sent" class="menu-item" th:classappend="${currentFolder == '已发送'} ? 'active'"><i class="fas fa-paper-plane"></i> 已发送</a>-->
-<!--        <a href="/trash" class="menu-item" th:classappend="${currentFolder == '垃圾箱'} ? 'active'"><i class="fas fa-trash-alt"></i> 垃圾箱</a>-->
-
-<!--        <div class="menu-title">管理</div>-->
-<!--        <a href="/contacts" class="menu-item"><i class="fas fa-address-book"></i> 通讯录</a>-->
-<!--        -->
-<!--        <a href="/settings" class="menu-item"><i class="fas fa-cog"></i> 设置</a>-->
-<!--        -->
-<!--        <a href="/logout" class="menu-item" style="margin-top: auto; color: #ff4d4f;"><i class="fas fa-sign-out-alt"></i> 退出登录</a>-->
-<!--    </div>-->
-
-<!--    <div class="main-content">-->
-<!--        <div class="toolbar">-->
-<!--            <div class="page-title">-->
-<!--                <i class="fas fa-envelope-open-text" style="color: #0078d4;"></i>-->
-<!--                <span th:text="${currentFolder != null ? currentFolder : '收件箱'}">收件箱</span>-->
-<!--            </div>-->
-<!--            <div class="search-box">-->
-<!--                <i class="fas fa-search" style="color: #ccc;"></i>-->
-<!--                <input type="text" id="searchInput" placeholder="搜索邮件..." onkeyup="searchEmails()">-->
-<!--            </div>-->
-<!--            <div style="display: flex; gap: 10px;">-->
-<!--                <a href="/inbox" class="menu-item" style="background: white; border:1px solid #eee;"><i class="fas fa-sync-alt"></i></a>-->
-<!--                <a href="/sendPage" class="menu-item active" style="background: #0078d4;"><i class="fas fa-pen"></i> 写信</a>-->
-<!--            </div>-->
-<!--        </div>-->
-
-<!--        <div class="email-list-wrapper">-->
-<!--            <table>-->
-<!--                <thead>-->
-<!--                <tr>-->
-<!--                    <th class="sender-col">发件人/收件人</th>-->
-<!--                    <th width="45%">主题</th>-->
-<!--                    <th width="20%" style="text-align: right;">时间</th>-->
-<!--                    <th width="5%"></th>-->
-<!--                </tr>-->
-<!--                </thead>-->
-<!--                <tbody id="emailTableBody">-->
-<!--                <tr th:each="email : ${emails}" -->
-<!--                    th:data-title="${email.title}"-->
-<!--                    th:data-sender="${email.sender}"-->
-<!--                    th:data-content="${email.content}"-->
-<!--                    th:data-files="${email.filenames}"-->
-<!--                    onclick="showEmailDetail(this)">-->
-<!--                    <td class="sender-col">-->
-<!--                        <span class="sender-avatar" th:text="${#strings.substring(email.sender, 0, 1)}">A</span>-->
-<!--                        <span th:text="${email.sender}">张三</span>-->
-<!--                    </td>-->
-<!--                    <td th:text="${email.title}" style="font-weight: 500;">主题</td>-->
-<!--                    <td class="date-col" th:text="${email.sendDate}">时间</td>-->
-<!--                    <td style="text-align: center;" onclick="event.stopPropagation()">-->
-<!--                        <a th:if="${currentFolder == '已发送'}" th:href="@{/deleteFromSent(id=${email.id})}" class="btn-trash" title="移入垃圾箱" onclick="return confirm('确定要移入垃圾箱吗？')"><i class="fas fa-trash"></i></a>-->
-<!--                        <a th:if="${currentFolder == '垃圾箱'}" th:href="@{/deleteForever(id=${email.id})}" class="btn-trash" title="彻底删除" style="color: #ff4d4f;" onclick="return confirm('确定彻底删除吗？')"><i class="fas fa-times-circle"></i></a>-->
-<!--                    </td>-->
-<!--                </tr>-->
-<!--                <tr th:if="${emails.size() == 0}">-->
-<!--                    <td colspan="4" style="text-align: center; padding: 50px; color: #999;">-->
-<!--                        <i class="fas fa-coffee" style="font-size: 30px; margin-bottom: 10px;"></i><br>暂无邮件-->
-<!--                    </td>-->
-<!--                </tr>-->
-<!--                </tbody>-->
-<!--            </table>-->
-<!--            <div class="pagination-bar" th:if="${totalPages > 0}">-->
-<!--                <span style="margin-right: 15px;"><span th:text="${currentPage}">1</span>/<span th:text="${totalPages}">1</span> 页</span>-->
-<!--                <a th:if="${currentPage > 1}" th:href="@{/inbox(page=${currentPage - 1})}">上一页</a>-->
-<!--                <span th:if="${currentPage <= 1}" class="disabled">上一页</span>-->
-<!--                <a th:if="${currentPage < totalPages}" th:href="@{/inbox(page=${currentPage + 1})}">下一页</a>-->
-<!--                <span th:if="${currentPage >= totalPages}" class="disabled">下一页</span>-->
-<!--                <span style="margin-left: 15px;">跳转到第 <input type="text" id="jumpInput" class="page-input" th:value="${currentPage}"> 页 <button type="button" class="btn-go" onclick="jumpToPage()">确定</button></span>-->
-<!--                <input type="hidden" id="maxPage" th:value="${totalPages}">-->
-<!--            </div>-->
-<!--        </div>-->
-<!--    </div>-->
-<!--</div>-->
-
-<!--<div id="emailModal" class="modal-overlay">-->
-<!--    <div class="modal-card">-->
-<!--        <div class="modal-header">-->
-<!--            <div><h3 id="modalTitle" style="margin: 0; font-size: 18px;">邮件标题</h3><span id="modalSender" style="font-size: 13px; color: #666;">发件人</span></div>-->
-<!--            <button class="modal-close" onclick="closeModal()">&times;</button>-->
-<!--        </div>-->
-<!--        <div id="modalContent" style="padding: 30px; overflow-y: auto; line-height: 1.6; flex: 1; word-wrap: break-word;">邮件内容...</div>-->
-<!--        <div id="imagePreviewArea" style="padding: 0 30px; display:none;"></div>-->
-<!--        <div id="attachmentArea" style="padding: 0 30px 20px; border-top: 1px dashed #eee; margin-top: 10px; display:none;"><p style="font-size: 12px; color: #999; margin-bottom: 5px;"><i class="fas fa-paperclip"></i> 附件列表：</p><div id="attachmentList" style="display: flex; flex-wrap: wrap; gap: 10px;"></div></div>-->
-<!--        <div style="padding: 15px; text-align: right; border-top: 1px solid rgba(0,0,0,0.05);"><button onclick="closeModal()" style="padding: 8px 20px; background: #0078d4; color: white; border: none; border-radius: 5px; cursor: pointer;">关闭</button></div>-->
-<!--    </div>-->
-<!--</div>-->
-
-<!--<script>-->
-<!--    window.onload = function() {-->
-<!--        const savedTheme = localStorage.getItem('theme');-->
-<!--        if (savedTheme === 'dark') document.body.classList.add('dark-mode');-->
-<!--        const savedBg = localStorage.getItem('customBg');-->
-<!--        if (savedBg) document.body.style.setProperty('&#45;&#45;bg-image', `url(${savedBg})`);-->
-<!--    }-->
-
-<!--    function searchEmails() {-->
-<!--        var input = document.getElementById("searchInput");-->
-<!--        var filter = input.value.toLowerCase();-->
-<!--        var tr = document.getElementById("emailTableBody").getElementsByTagName("tr");-->
-<!--        for (var i = 0; i < tr.length; i++) {-->
-<!--            var text = tr[i].textContent || tr[i].innerText;-->
-<!--            tr[i].style.display = text.toLowerCase().indexOf(filter) > -1 ? "" : "none";-->
-<!--        }-->
-<!--    }-->
-
-<!--    function showEmailDetail(element) {-->
-<!--        document.getElementById('modalTitle').innerText = element.getAttribute("data-title");-->
-<!--        document.getElementById('modalSender').innerText = element.getAttribute("data-sender");-->
-<!--        var content = element.getAttribute("data-content");-->
-<!--        document.getElementById('modalContent').innerHTML = content ? content : "<span style='color:#999'>（无正文内容）</span>";-->
-<!--        -->
-<!--        var filesStr = element.getAttribute("data-files");-->
-<!--        var attachArea = document.getElementById('attachmentArea');-->
-<!--        var attachDiv = document.getElementById('attachmentList');-->
-<!--        var imgArea = document.getElementById('imagePreviewArea');-->
-<!--        -->
-<!--        attachDiv.innerHTML = ""; imgArea.innerHTML = "";-->
-<!--        imgArea.style.display = 'none'; attachArea.style.display = 'none';-->
-
-<!--        if (filesStr && filesStr.length > 2) {-->
-<!--            var cleanStr = filesStr.replace('[', '').replace(']', '');-->
-<!--            if(cleanStr.trim() !== "") {-->
-<!--                var fileArray = cleanStr.split(',');-->
-<!--                attachArea.style.display = 'block';-->
-<!--                for(var i=0; i<fileArray.length; i++) {-->
-<!--                    var fName = fileArray[i].trim();-->
-<!--                    if(fName === "") continue;-->
-<!--                    var dl = "/download?filename=" + encodeURIComponent(fName);-->
-<!--                    attachDiv.innerHTML += `<a href="${dl}" target="_blank" style="font-size:12px; padding:6px 12px; background:#f0f0f0; border-radius:4px; text-decoration:none; color:#333; border:1px solid #ddd; display:flex; align-items:center; gap:5px;"><i class="fas fa-file-download" style="color:#0078d4;"></i> ${fName}</a>`;-->
-<!--                    var lower = fName.toLowerCase();-->
-<!--                    if(lower.endsWith('.jpg')||lower.endsWith('.png')||lower.endsWith('.jpeg')) {-->
-<!--                        imgArea.style.display = 'block';-->
-<!--                        imgArea.innerHTML += `<div style="margin-top:15px; border:1px solid #eee; padding:5px; border-radius:5px; display:inline-block;"><img src="${dl}" style="max-width:100%; max-height:400px; display:block;"></div><br>`;-->
-<!--                    }-->
-<!--                }-->
-<!--            }-->
-<!--        }-->
-<!--        document.getElementById('emailModal').style.display = 'flex';-->
-<!--    }-->
-
-<!--    function closeModal() { document.getElementById('emailModal').style.display = 'none'; }-->
-<!--    window.onclick = function(e) { if (e.target.classList.contains('modal-overlay')) e.target.style.display = 'none'; }-->
-<!--    -->
-<!--    function jumpToPage() {-->
-<!--        var p = parseInt(document.getElementById("jumpInput").value);-->
-<!--        var max = parseInt(document.getElementById("maxPage").value);-->
-<!--        if (isNaN(p) || p < 1) { alert("无效页码"); return; }-->
-<!--        if (p > max) { alert("超过最大页数"); return; }-->
-<!--        window.location.href = "/inbox?page=" + p;-->
-<!--    }-->
-<!--</script>-->
-
-<!--</body>-->
-<!--</html>-->

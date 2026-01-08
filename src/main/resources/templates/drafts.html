@@ -133,12 +133,16 @@
                     th:onclick="|window.location.href='/sendPage?draftId=${draft.id}'|">
                     
                     <td class="sender-col">
-                        <span th:text="${#strings.isEmpty(draft.receiver) ? '(未填收件人)' : draft.receiver}" 
-                              style="color: #0078d4;"></span>
+                        <div style="display: flex; align-items: center;">
+                            <div style="display: flex; flex-direction: column; justify-content: center;">
+                                <span th:text="${#strings.isEmpty(draft.receiver) ? '(未填收件人)' : draft.receiver}" 
+                                      style="color: #0078d4; font-weight: 600;"></span>
+                                <span style="font-size: 12px; color: #999; font-weight: normal;">草稿收件人</span>
+                            </div>
+                        </div>
                     </td>
                     
                     <td th:text="${#strings.isEmpty(draft.title) ? '(无主题)' : draft.title}" style="font-weight: 500;"></td>
-                    
                     <td class="date-col" th:text="${#dates.format(draft.saveTime, 'yyyy-MM-dd HH:mm')}"></td>
 
                     <td style="text-align: center;" onclick="event.stopPropagation()">
