@@ -13,17 +13,18 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.UrlResource;
 import org.springframework.http.HttpHeaders;
-import org.springframework.http.MediaType; // 引入 MediaType
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model; // 【新增】引入 Model
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.ModelAndView;
 
-import java.net.URLEncoder; // 引入编码工具
-import java.nio.charset.StandardCharsets; // 引入字符集
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
@@ -57,32 +58,23 @@ public class HelloController {
         return "redirect:/";
     }
 
-    //
-
     @GetMapping("/inbox")
     public ModelAndView inbox(HttpSession session,
-            @RequestParam(defaultValue = "1") int page) { // 1. 接收 page 参数，默认第1页
+            @RequestParam(defaultValue = "1") int page) {
         UserAccount user = (UserAccount) session.getAttribute("currentUser");
         if (user == null)
             return new ModelAndView("redirect:/");
 
         ModelAndView mav = new ModelAndView("inbox");
 
-        // 每页显示 10 条
         int pageSize = 10;
-
-        // 2. 调用 Service 获取数据和总数
         java.util.Map<String, Object> result = mailService.receiveEmails(user, page, pageSize);
         List<EmailInfo> emails = (List<EmailInfo>) result.get("list");
         int totalCount = (int) result.get("totalCount");
-
-        // 3. 计算总页数
         int totalPages = (int) Math.ceil((double) totalCount / pageSize);
 
         mav.addObject("emails", emails);
         mav.addObject("currentFolder", "收件箱");
-
-        // 4. 传递分页数据给前端
         mav.addObject("currentPage", page);
         mav.addObject("totalPages", totalPages);
         mav.addObject("totalCount", totalCount);
@@ -90,27 +82,18 @@ public class HelloController {
         return mav;
     }
 
-    /**
-     * 【修改】文件下载接口 - 修复中文乱码问题
-     */
     @GetMapping("/download")
     public ResponseEntity<Resource> downloadFile(@RequestParam String filename) {
         try {
-            // 获取文件路径
             Path path = Paths.get(MailService.SAVE_PATH + filename);
             Resource resource = new UrlResource(path.toUri());
 
             if (resource.exists() || resource.isReadable()) {
-                // 1. 对文件名进行 URL 编码，防止中文在 HTTP Header 中乱码
                 String encodedFileName = URLEncoder.encode(resource.getFilename(), StandardCharsets.UTF_8.toString());
-                
-                // 2. 将编码后的加号（+）替换为空格（%20），因为某些浏览器对加号处理不同
                 encodedFileName = encodedFileName.replaceAll("\\+", "%20");
 
                 return ResponseEntity.ok()
-                        // 3. 设置 Header，filename 用双引号包围
                         .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + encodedFileName + "\"")
-                        // 4. 强制设置为二进制流，让浏览器必须下载而不是预览
                         .contentType(MediaType.APPLICATION_OCTET_STREAM)
                         .body(resource);
             } else {
@@ -130,7 +113,6 @@ public class HelloController {
         List<EmailInfo> emails = new ArrayList<>();
 
         for (SentLog log : sentLogs) {
-            // 【适配】传入空附件列表 new ArrayList<>()
             emails.add(new EmailInfo(
                     log.getId(),
                     log.getTitle(),
@@ -155,7 +137,6 @@ public class HelloController {
         List<EmailInfo> emails = new ArrayList<>();
 
         for (TrashEmail t : trashList) {
-            // 【适配】传入空附件列表
             emails.add(new EmailInfo(
                     t.getId(),
                     t.getTitle(),
@@ -210,5 +191,20 @@ public class HelloController {
     public String deleteForever(@RequestParam Long id) {
         trashRepository.deleteById(id);
         return "redirect:/trash";
+    }
+
+    // ============ 新增：设置页面的路由 ============
+    @GetMapping("/settings")
+    public String settingsPage(HttpSession session, Model model) {
+        // 1. 检查是否登录
+        if (session.getAttribute("currentUser") == null) {
+            return "redirect:/";
+        }
+        
+        // 2. 告诉前端当前选中的是“设置” (用于侧边栏高亮)
+        model.addAttribute("currentFolder", "设置");
+        
+        // 3. 跳转到 settings.html
+        return "settings"; 
     }
 }
