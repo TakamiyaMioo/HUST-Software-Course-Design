@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>登录 - 桌面邮件系统</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: 'Segoe UI', 'Microsoft YaHei', sans-serif;
+            background-image: url('/images/bglogin.jpg');
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            background-attachment: fixed;
+
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .login-card {
+            background: rgba(255, 255, 255, 0.75);
+            backdrop-filter: blur(15px);
+            border: 1px solid rgba(255, 255, 255, 0.6);
+
+            width: 90%;
+            max-width: 400px;
+            padding: 40px;
+            border-radius: 20px;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.2);
+            text-align: center;
+            transition: transform 0.3s;
+        }
+
+        .login-card:hover {
+            transform: translateY(-5px);
+        }
+
+        h2 {
+            color: #333;
+            margin-bottom: 30px;
+            font-weight: 600;
+            letter-spacing: 1px;
+        }
+
+        .icon-title {
+            font-size: 40px;
+            margin-bottom: 10px;
+            display: block;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+            text-align: left;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #444;
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        input, select {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid transparent;
+            border-radius: 10px;
+            background: rgba(255, 255, 255, 0.9);
+            font-size: 15px;
+            outline: none;
+            transition: 0.3s;
+            color: #333;
+        }
+
+        input:focus, select:focus {
+            border-color: #667eea;
+            background: #fff;
+            box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.1);
+        }
+
+        select {
+            cursor: pointer;
+            appearance: none;
+            background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+            background-repeat: no-repeat;
+            background-position: right 10px center;
+            background-size: 16px;
+        }
+
+        .btn {
+            width: 100%;
+            padding: 14px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            margin-top: 10px;
+            transition: 0.3s;
+            box-shadow: 0 5px 15px rgba(118, 75, 162, 0.3);
+        }
+
+        .btn:hover {
+            transform: scale(1.02);
+            box-shadow: 0 8px 20px rgba(118, 75, 162, 0.4);
+        }
+
+        .btn:active {
+            transform: scale(0.98);
+        }
+
+        /* 底部提示文字 */
+        .tips {
+            font-size: 12px;
+            color: #666;
+            margin-top: 25px;
+            line-height: 1.6;
+            background: rgba(255,255,255,0.5);
+            padding: 10px;
+            border-radius: 8px;
+        }
+
+        .tips a {
+            color: #667eea;
+            text-decoration: none;
+        }
+    </style>
+</head>
+<body>
+<div class="login-card">
+    <span class="icon-title"></span>
+    <h2>桌面邮件系统</h2>
+
+    <form action="/login" method="post">
+        <div class="form-group">
+            <label>选择邮箱服务商</label>
+            <select name="type">
+                <option value="qq">腾讯 QQ 邮箱</option>
+                <option value="163">网易 163 邮箱</option>
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label>邮箱账号</label>
+            <input type="text" name="email" placeholder="例如：123456@qq.com" required>
+        </div>
+
+        <div class="form-group">
+            <label>授权码 (Authorization Code)</label>
+            <input type="password" name="password" placeholder="请输入 POP3/SMTP 授权码" required>
+        </div>
+
+        <button type="submit" class="btn">✨ 立即登录</button>
+    </form>
+
+    <div class="tips">
+        ⚠️ 注意：密码请填 <b>授权码</b>，不是登录密码。<br>
+        <span style="opacity: 0.7">支持电脑、手机端访问</span>
+    </div>
+</div>
+</body>
+</html>
+
+<!--<!DOCTYPE html>-->
+<!--<html xmlns:th="http://www.thymeleaf.org">-->
+<!--<head>-->
+<!--    <meta charset="UTF-8">-->
+<!--    <title>邮箱登录</title>-->
+<!--    <style>-->
+<!--        body {-->
+<!--            font-family: 'Microsoft YaHei', sans-serif;-->
+<!--            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);-->
+<!--            height: 100vh;-->
+<!--            display: flex;-->
+<!--            justify-content: center;-->
+<!--            align-items: center;-->
+<!--            margin: 0;-->
+<!--        }-->
+<!--        .login-card {-->
+<!--            background: white;-->
+<!--            padding: 40px;-->
+<!--            border-radius: 10px;-->
+<!--            box-shadow: 0 10px 25px rgba(0,0,0,0.2);-->
+<!--            width: 350px;-->
+<!--            text-align: center;-->
+<!--        }-->
+<!--        h2 { color: #333; margin-bottom: 30px; }-->
+<!--        .form-group { margin-bottom: 20px; text-align: left; }-->
+<!--        label { display: block; margin-bottom: 8px; color: #666; font-size: 14px; }-->
+<!--        input, select {-->
+<!--            width: 100%;-->
+<!--            padding: 12px;-->
+<!--            border: 1px solid #ddd;-->
+<!--            border-radius: 6px;-->
+<!--            box-sizing: border-box; /* 关键：防止padding撑大盒子 */-->
+<!--            outline: none;-->
+<!--            transition: 0.3s;-->
+<!--        }-->
+<!--        input:focus, select:focus { border-color: #764ba2; }-->
+<!--        .btn {-->
+<!--            width: 100%;-->
+<!--            padding: 12px;-->
+<!--            background: #764ba2;-->
+<!--            color: white;-->
+<!--            border: none;-->
+<!--            border-radius: 6px;-->
+<!--            font-size: 16px;-->
+<!--            cursor: pointer;-->
+<!--            margin-top: 10px;-->
+<!--        }-->
+<!--        .btn:hover { background: #5a367f; }-->
+<!--        .tips { font-size: 12px; color: #999; margin-top: 20px; }-->
+<!--    </style>-->
+<!--</head>-->
+<!--<body>-->
+<!--<div class="login-card">-->
+<!--    <h2>💌 邮箱登录</h2>-->
+<!--    <form action="/login" method="post">-->
+<!--        <div class="form-group">-->
+<!--            <label>邮箱类型</label>-->
+<!--            <select name="type">-->
+<!--                <option value="163">网易 163 邮箱</option>-->
+<!--                <option value="qq">腾讯 QQ 邮箱</option>-->
+<!--            </select>-->
+<!--        </div>-->
+<!--        <div class="form-group">-->
+<!--            <label>邮箱账号</label>-->
+<!--            <input type="text" name="email" placeholder="例如：zhangsan@163.com" required>-->
+<!--        </div>-->
+<!--        <div class="form-group">-->
+<!--            <label>授权码 (不是密码!)</label>-->
+<!--            <input type="password" name="password" placeholder="请输入POP3/SMTP授权码" required>-->
+<!--        </div>-->
+<!--        <button type="submit" class="btn">立即登录</button>-->
+<!--    </form>-->
+<!--    <div class="tips">请确保已在网页版邮箱开启 POP3/SMTP 服务</div>-->
+<!--</div>-->
+<!--</body>-->
+<!--</html>-->

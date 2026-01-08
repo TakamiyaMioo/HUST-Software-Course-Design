@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>我的邮箱 - 桌面版</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" rel="stylesheet">
+
+    <style>
+        body { font-family: 'Segoe UI', 'Microsoft YaHei', sans-serif; margin: 0; padding: 0; background-image: url('/images/bg.jpg'); background-size: cover; background-position: center; background-attachment: fixed; height: 100vh; display: flex; justify-content: center; align-items: center; }
+        .glass-container { width: 90%; height: 90vh; background: rgba(255, 255, 255, 0.85); backdrop-filter: blur(12px); border: 1px solid rgba(255,255,255,0.6); border-radius: 20px; box-shadow: 0 15px 40px rgba(0,0,0,0.2); display: flex; overflow: hidden; }
+        .sidebar { width: 260px; background: rgba(255, 255, 255, 0.5); border-right: 1px solid rgba(0,0,0,0.05); display: flex; flex-direction: column; padding: 20px; }
+        .user-card { text-align: center; margin-bottom: 30px; padding-bottom: 20px; border-bottom: 1px dashed #ccc; }
+        .avatar { width: 80px; height: 80px; background: linear-gradient(135deg, #a18cd1 0%, #fbc2eb 100%); border-radius: 50%; margin: 0 auto 10px; display: flex; align-items: center; justify-content: center; font-size: 30px; color: white; box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
+        .username { font-weight: bold; color: #333; font-size: 16px; margin-bottom: 5px;}
+        .user-email { font-size: 12px; color: #666; word-break: break-all;}
+        .menu-item { display: flex; align-items: center; padding: 12px 15px; color: #555; text-decoration: none; border-radius: 10px; margin-bottom: 5px; transition: 0.3s; }
+        .menu-item i { width: 25px; font-size: 18px; }
+        .menu-item:hover { background: white; color: #0078d4; transform: translateX(5px); }
+        .menu-item.active { background: #0078d4; color: white; box-shadow: 0 4px 10px rgba(0, 120, 212, 0.3); }
+        .menu-title { font-size: 12px; color: #999; margin-top: 20px; margin-bottom: 10px; padding-left: 10px; }
+        .main-content { flex: 1; display: flex; flex-direction: column; background: rgba(255,255,255,0.3); }
+        .toolbar { padding: 15px 30px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(0,0,0,0.05); background: rgba(255,255,255,0.4); }
+        .page-title { font-size: 20px; font-weight: bold; color: #333; display: flex; align-items: center; gap: 10px; }
+        .search-box { background: white; border-radius: 20px; padding: 5px 15px; display: flex; align-items: center; width: 300px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+        .search-box input { border: none; outline: none; margin-left: 10px; width: 100%; color: #666; }
+        .email-list-wrapper { flex: 1; overflow-y: auto; padding: 0; }
+        table { width: 100%; border-collapse: collapse; table-layout: fixed; }
+        th { text-align: left; padding: 15px 30px; color: #888; font-size: 13px; font-weight: 500; position: sticky; top: 0; background: rgba(255,255,255,0.9); z-index: 10; }
+        td { padding: 15px 30px; border-bottom: 1px solid rgba(0,0,0,0.03); font-size: 14px; color: #444; vertical-align: middle; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        tr:hover { background: rgba(255,255,255,0.6); cursor: pointer; }
+        .sender-avatar { width: 35px; height: 35px; background: #e0e0e0; border-radius: 50%; display: inline-flex; justify-content: center; align-items: center; margin-right: 10px; font-size: 12px; color: #666; }
+        .date-col { color: #999; font-size: 13px; text-align: right; width: 150px;}
+        .sender-col { width: 30%; font-weight: 600; }
+
+        .btn-trash { color: #ccc; transition: 0.2s; border: none; background: none; cursor: pointer; font-size: 16px; }
+        .btn-trash:hover { color: #ff4d4f; transform: scale(1.1); }
+    </style>
+</head>
+<body>
+
+<div class="glass-container">
+    <div class="sidebar">
+        <div class="user-card">
+            <div class="avatar"><i class="fas fa-user-astronaut"></i></div>
+            <div class="username">我的账号</div>
+            <div class="user-email" th:text="${session.currentUser != null ? session.currentUser.email : '未登录'}"></div>
+        </div>
+
+        <div class="menu-title">邮箱文件夹</div>
+        <a href="/inbox" class="menu-item" th:classappend="${currentFolder == null || currentFolder == '收件箱'} ? 'active'"><i class="fas fa-inbox"></i> 收件箱</a>
+        <a href="/sent" class="menu-item" th:classappend="${currentFolder == '已发送'} ? 'active'"><i class="fas fa-paper-plane"></i> 已发送</a>
+        <a href="/trash" class="menu-item" th:classappend="${currentFolder == '垃圾箱'} ? 'active'"><i class="fas fa-trash-alt"></i> 垃圾箱</a>
+
+        <div class="menu-title">管理</div>
+        <a href="/contacts" class="menu-item"><i class="fas fa-address-book"></i> 通讯录</a>
+        <a href="/logout" class="menu-item" style="margin-top: auto; color: #ff4d4f;"><i class="fas fa-sign-out-alt"></i> 退出登录</a>
+    </div>
+
+    <div class="main-content">
+        <div class="toolbar">
+            <div class="page-title">
+                <i class="fas fa-envelope-open-text" style="color: #0078d4;"></i>
+                <span th:text="${currentFolder != null ? currentFolder : '收件箱'}">收件箱</span>
+            </div>
+            <div class="search-box">
+                <i class="fas fa-search" style="color: #ccc;"></i>
+                <input type="text" id="searchInput" placeholder="搜索邮件..." onkeyup="searchEmails()">
+            </div>
+            <div style="display: flex; gap: 10px;">
+                <a href="/inbox" class="menu-item" style="background: white; border:1px solid #eee;"><i class="fas fa-sync-alt"></i></a>
+                <a href="/sendPage" class="menu-item active" style="background: #0078d4;"><i class="fas fa-pen"></i> 写信</a>
+            </div>
+        </div>
+
+        <div class="email-list-wrapper">
+            <table>
+                <thead>
+                <tr>
+                    <th class="sender-col">发件人/收件人</th>
+                    <th width="45%">主题</th>
+                    <th width="20%" style="text-align: right;">时间</th>
+                    <th width="5%"></th>
+                </tr>
+                </thead>
+                <tbody id="emailTableBody">
+                
+                <tr th:each="email : ${emails}" 
+                    th:data-title="${email.title}"
+                    th:data-sender="${email.sender}"
+                    th:data-content="${email.content}"
+                    th:data-files="${email.filenames}"
+                    onclick="showEmailDetail(this)">
+                    
+                    <td class="sender-col">
+                        <span class="sender-avatar" th:text="${#strings.substring(email.sender, 0, 1)}">A</span>
+                        <span th:text="${email.sender}">张三</span>
+                    </td>
+                    <td th:text="${email.title}" style="font-weight: 500;">主题</td>
+                    <td class="date-col" th:text="${email.sendDate}">时间</td>
+
+                    <td style="text-align: center;" onclick="event.stopPropagation()">
+                        <a th:if="${currentFolder == '已发送'}"
+                           th:href="@{/deleteFromSent(id=${email.id})}"
+                           class="btn-trash" title="移入垃圾箱"
+                           onclick="return confirm('确定要移入垃圾箱吗？')">
+                            <i class="fas fa-trash"></i>
+                        </a>
+
+                        <a th:if="${currentFolder == '垃圾箱'}"
+                           th:href="@{/deleteForever(id=${email.id})}"
+                           class="btn-trash" title="彻底删除" style="color: #ff4d4f;"
+                           onclick="return confirm('确定彻底删除吗？无法恢复！')">
+                            <i class="fas fa-times-circle"></i>
+                        </a>
+                    </td>
+                </tr>
+
+                <tr th:if="${emails.size() == 0}">
+                    <td colspan="4" style="text-align: center; padding: 50px; color: #999;">
+                        <i class="fas fa-coffee" style="font-size: 30px; margin-bottom: 10px;"></i><br>暂无邮件
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<div id="emailModal" style="display:none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; justify-content: center; align-items: center;">
+    <div style="background: white; width: 60%; max-height: 80vh; border-radius: 10px; display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 10px 25px rgba(0,0,0,0.2);">
+        
+        <div style="padding: 20px; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; align-items: center; background: #f8f9fa;">
+            <div>
+                <h3 id="modalTitle" style="margin: 0; color: #333; font-size: 18px;">邮件标题</h3>
+                <span id="modalSender" style="font-size: 13px; color: #666;">发件人</span>
+            </div>
+            <button onclick="closeModal()" style="border: none; background: none; font-size: 24px; cursor: pointer; color: #999;">&times;</button>
+        </div>
+
+        <div id="modalContent" style="padding: 30px; overflow-y: auto; line-height: 1.6; color: #444; flex: 1; word-wrap: break-word;">
+            邮件内容...
+        </div>
+
+        <div id="imagePreviewArea" style="padding: 0 30px; display:none;"></div>
+
+        <div id="attachmentArea" style="padding: 0 30px 20px; border-top: 1px dashed #eee; margin-top: 10px; display:none;">
+            <p style="font-size: 12px; color: #999; margin-bottom: 5px;"><i class="fas fa-paperclip"></i> 附件列表 (点击下载)：</p>
+            <div id="attachmentList" style="display: flex; flex-wrap: wrap; gap: 10px;"></div>
+        </div>
+
+        <div style="padding: 15px; text-align: right; background: #fff; border-top: 1px solid #eee;">
+            <button onclick="closeModal()" style="padding: 8px 20px; background: #0078d4; color: white; border: none; border-radius: 5px; cursor: pointer;">关闭</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    function searchEmails() {
+        var input = document.getElementById("searchInput");
+        var filter = input.value.toLowerCase();
+        var tbody = document.getElementById("emailTableBody");
+        var tr = tbody.getElementsByTagName("tr");
+        for (var i = 0; i < tr.length; i++) {
+            var textContent = tr[i].textContent || tr[i].innerText;
+            if (textContent.toLowerCase().indexOf(filter) > -1) tr[i].style.display = "";
+            else tr[i].style.display = "none";
+        }
+    }
+
+    // 【核心修改】通过 element 获取 data 属性，解决乱码导致的 JS 错误
+    function showEmailDetail(element) {
+        // 从 data- 属性中读取数据
+        var title = element.getAttribute("data-title");
+        var sender = element.getAttribute("data-sender");
+        var content = element.getAttribute("data-content");
+        var filesStr = element.getAttribute("data-files");
+
+        document.getElementById('modalTitle').innerText = title;
+        document.getElementById('modalSender').innerText = sender;
+        
+        // 1. 显示正文
+        if (!content) {
+            document.getElementById('modalContent').innerHTML = "<span style='color:#999'>（无正文内容）</span>";
+        } else {
+            document.getElementById('modalContent').innerHTML = content;
+        }
+
+        // 2. 准备附件区
+        var attachArea = document.getElementById('attachmentArea');
+        var attachDiv = document.getElementById('attachmentList');
+        var imgArea = document.getElementById('imagePreviewArea');
+        
+        attachDiv.innerHTML = ""; 
+        imgArea.innerHTML = "";
+        imgArea.style.display = 'none';
+        attachArea.style.display = 'none';
+
+        // 3. 解析附件列表 "[a.jpg, b.png]"
+        if (filesStr && filesStr.length > 2) { 
+            var cleanStr = filesStr.replace('[', '').replace(']', '');
+            
+            if(cleanStr.trim() !== "") {
+                var fileArray = cleanStr.split(',');
+                attachArea.style.display = 'block';
+                
+                for(var i=0; i<fileArray.length; i++) {
+                    var fName = fileArray[i].trim();
+                    if(fName === "") continue;
+                    
+                    // URL 编码，防止中文文件名出错
+                    var downloadUrl = "/download?filename=" + encodeURIComponent(fName);
+
+                    // A. 生成下载按钮
+                    var btn = `<a href="${downloadUrl}" target="_blank" 
+                                style="font-size:12px; padding:6px 12px; background:#f0f0f0; border-radius:4px; text-decoration:none; color:#333; border:1px solid #ddd; display:flex; align-items:center; gap:5px;">
+                                <i class="fas fa-file-download" style="color:#0078d4;"></i> ${fName}
+                               </a>`;
+                    attachDiv.innerHTML += btn;
+
+                    // B. 图片预览
+                    var lowerName = fName.toLowerCase();
+                    if(lowerName.endsWith('.jpg') || lowerName.endsWith('.jpeg') || lowerName.endsWith('.png') || lowerName.endsWith('.gif') || lowerName.endsWith('.bmp')) {
+                        imgArea.style.display = 'block';
+                        var imgTag = `<div style="margin-top:15px; border:1px solid #eee; padding:5px; border-radius:5px; display:inline-block;">
+                                        <p style="margin:0 0 5px 0; font-size:12px; color:#999;">预览: ${fName}</p>
+                                        <img src="${downloadUrl}" style="max-width:100%; max-height:400px; display:block;">
+                                      </div><br>`;
+                        imgArea.innerHTML += imgTag;
+                    }
+                }
+            }
+        }
+
+        document.getElementById('emailModal').style.display = 'flex';
+    }
+
+    function closeModal() {
+        document.getElementById('emailModal').style.display = 'none';
+    }
+    
+    document.getElementById('emailModal').onclick = function(event) {
+        if (event.target == this) closeModal();
+    }
+</script>
+
+</body>
+</html>
