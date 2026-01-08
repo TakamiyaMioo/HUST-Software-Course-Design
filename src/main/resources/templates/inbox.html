@@ -8,7 +8,7 @@
     <style>
         /* ================== 1. CSS 变量定义 ================== */
         :root {
-            /* 默认背景图 (这里定义一个变量，方便后面用 JS 修改) */
+            /* 默认背景图 */
             --bg-image: url('/images/bg.jpg');
 
             /* 日间模式变量 */
@@ -23,7 +23,15 @@
             --table-header-bg: rgba(255, 255, 255, 0.9);
             --input-bg: white;
             --shadow-color: rgba(0, 0, 0, 0.1);
-            --modal-bg: white;
+            --modal-bg: white; /* 弹窗背景 */
+
+            /* 翻页栏变量 (浅色) */
+            --pag-bg: #eef3f8;
+            --pag-border: #dce4ec;
+            --pag-text: #333;
+            --btn-bg: #fff;
+            --btn-border: #ccc;
+            --btn-hover: #f0f0f0;
         }
 
         /* 黑夜模式变量 */
@@ -40,13 +48,20 @@
             --input-bg: #444;
             --shadow-color: rgba(0, 0, 0, 0.5);
             --modal-bg: #2d2d2d;
+
+            /* 翻页栏变量 (深色) */
+            --pag-bg: rgba(0, 0, 0, 0.2);
+            --pag-border: rgba(255, 255, 255, 0.1);
+            --pag-text: #aaa;
+            --btn-bg: #444;
+            --btn-border: #555;
+            --btn-hover: #555;
         }
 
         /* ================== 2. 通用样式 ================== */
         body {
             font-family: 'Segoe UI', 'Microsoft YaHei', sans-serif;
             margin: 0; padding: 0;
-            /* 【核心修改】这里改为使用变量，不再写死 url */
             background-image: var(--bg-image); 
             background-size: cover;
             background-position: center;
@@ -82,7 +97,7 @@
         .username { font-weight: bold; color: var(--text-main); font-size: 16px; margin-bottom: 5px;}
         .user-email { font-size: 12px; color: var(--text-sub); word-break: break-all;}
 
-        .menu-item { display: flex; align-items: center; padding: 12px 15px; color: var(--text-sub); text-decoration: none; border-radius: 10px; margin-bottom: 5px; transition: 0.3s; }
+        .menu-item { display: flex; align-items: center; padding: 12px 15px; color: var(--text-sub); text-decoration: none; border-radius: 10px; margin-bottom: 5px; transition: 0.3s; cursor: pointer; }
         .menu-item i { width: 25px; font-size: 18px; }
         .menu-item:hover { background: var(--hover-bg); color: #0078d4; transform: translateX(5px); }
         .menu-item.active { background: #0078d4; color: white; box-shadow: 0 4px 10px rgba(0, 120, 212, 0.3); }
@@ -107,62 +122,98 @@
         .btn-trash { color: #ccc; transition: 0.2s; border: none; background: none; cursor: pointer; font-size: 16px; }
         .btn-trash:hover { color: #ff4d4f; transform: scale(1.1); }
 
-        /* 个性化按钮样式 */
-        .theme-switch {
-            cursor: pointer;
-            padding: 8px 15px;
-            border-radius: 10px;
-            background: rgba(0,0,0,0.05);
-            color: var(--text-main);
-            font-size: 14px;
-            display: flex; align-items: center; gap: 8px;
-            margin-top: 5px;
-            transition: 0.3s;
-        }
-        .theme-switch:hover { background: rgba(0,0,0,0.1); transform: translateX(2px); }
-        /* 隐藏的文件上传输入框 */
-        #bgUploadInput { display: none; }
-
         /* 分页工具栏样式 */
         .pagination-bar {
-            background: #eef3f8; /* 浅蓝背景 */
+            background: var(--pag-bg);
+            border-top: 1px solid var(--pag-border);
+            color: var(--pag-text);
             padding: 10px 20px;
-            display: flex;
-            justify-content: flex-end; /* 居右显示 */
-            align-items: center;
+            display: flex; justify-content: flex-end; align-items: center;
             font-size: 13px;
-            color: #333;
-            border-top: 1px solid #dce4ec;
         }
-
-        .pagination-bar a {
-            text-decoration: none;
-            color: #0078d4;
-            margin: 0 5px;
-            cursor: pointer;
-        }
+        .pagination-bar a { text-decoration: none; color: #0078d4; margin: 0 5px; cursor: pointer; }
         .pagination-bar a:hover { text-decoration: underline; }
-        .pagination-bar a.disabled { color: #999; cursor: default; text-decoration: none; }
-
+        .pagination-bar a.disabled { color: var(--text-sub); cursor: default; text-decoration: none; }
         .page-input {
-            width: 30px;
-            height: 22px;
-            margin: 0 5px;
-            border: 1px solid #ccc;
-            text-align: center;
-            font-size: 12px;
+            width: 30px; height: 22px; margin: 0 5px;
+            background: var(--input-bg); border: 1px solid var(--btn-border);
+            color: var(--text-main); text-align: center; font-size: 12px;
         }
-
         .btn-go {
-            background: #fff;
-            border: 1px solid #ccc;
-            border-radius: 3px;
-            padding: 2px 8px;
-            font-size: 12px;
-            cursor: pointer;
-            color: #333;
+            background: var(--btn-bg); border: 1px solid var(--btn-border);
+            color: var(--text-main); border-radius: 3px; padding: 2px 8px;
+            font-size: 12px; cursor: pointer;
         }
-        .btn-go:hover { background: #f0f0f0; }
+        .btn-go:hover { background: var(--btn-hover); }
+
+        /* ================== 3. 弹窗与设置菜单样式 ================== */
+        
+        /* 通用模态框遮罩 */
+        .modal-overlay {
+            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.5); z-index: 1000;
+            justify-content: center; align-items: center;
+            backdrop-filter: blur(5px);
+        }
+        
+        /* 通用卡片样式 */
+        .modal-card {
+            background: var(--modal-bg);
+            border-radius: 12px;
+            display: flex; flex-direction: column; overflow: hidden;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.3);
+            border: 1px solid var(--border-color);
+            color: var(--text-main);
+        }
+        
+        /* 弹窗专用尺寸 */
+        .email-detail-card { width: 60%; max-height: 80vh; }
+        .settings-card { width: 500px; max-height: 600px; }
+
+        .modal-header {
+            padding: 20px; border-bottom: 1px solid rgba(0,0,0,0.05);
+            display: flex; justify-content: space-between; align-items: center;
+            background: rgba(0,0,0,0.02);
+        }
+        .modal-close { border: none; background: none; font-size: 24px; cursor: pointer; color: #999; transition: 0.2s; }
+        .modal-close:hover { color: #ff4d4f; transform: rotate(90deg); }
+
+        /* 设置中心 - 布局 */
+        .settings-body { position: relative; padding: 0; height: 100%; }
+        .settings-view { padding: 30px; animation: fadeIn 0.3s ease; }
+        .settings-section-title { font-size: 14px; color: #999; margin-bottom: 15px; font-weight: bold; letter-spacing: 1px; }
+
+        /* 设置中心 - 列表项 */
+        .setting-item {
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 15px; background: rgba(0,0,0,0.03);
+            border-radius: 10px; margin-bottom: 10px;
+            cursor: pointer; transition: 0.2s; border: 1px solid transparent;
+        }
+        .setting-item:hover {
+            background: var(--hover-bg); border-color: #0078d4;
+            transform: translateY(-2px); box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+        }
+        .setting-icon { 
+            width: 40px; height: 40px; border-radius: 8px; 
+            display: flex; align-items: center; justify-content: center; 
+            margin-right: 15px; font-size: 18px; color: white;
+        }
+        .setting-text h4 { margin: 0; font-size: 15px; color: var(--text-main); }
+        .setting-text p { margin: 3px 0 0 0; font-size: 12px; color: var(--text-sub); }
+
+        /* 返回按钮 */
+        .back-btn {
+            display: flex; align-items: center; gap: 8px;
+            color: #666; font-size: 14px; margin-bottom: 20px;
+            cursor: pointer; font-weight: bold; transition: 0.2s;
+        }
+        .back-btn:hover { color: #0078d4; transform: translateX(-3px); }
+
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+        .flex-row { display: flex; align-items: center; }
+        
+        #bgUploadInput { display: none; }
     </style>
 </head>
 <body>
@@ -180,23 +231,13 @@
         <a href="/sent" class="menu-item" th:classappend="${currentFolder == '已发送'} ? 'active'"><i class="fas fa-paper-plane"></i> 已发送</a>
         <a href="/trash" class="menu-item" th:classappend="${currentFolder == '垃圾箱'} ? 'active'"><i class="fas fa-trash-alt"></i> 垃圾箱</a>
 
-        <div class="menu-title">个性化</div>
-        
-        <div class="theme-switch" onclick="toggleTheme()">
-            <i class="fas fa-moon" id="themeIcon"></i> <span id="themeText">切换黑夜模式</span>
-        </div>
-
-        <div class="theme-switch" onclick="triggerBgUpload()">
-            <i class="fas fa-image" style="color: #ff9f43;"></i> <span>自定义背景</span>
-        </div>
-        <input type="file" id="bgUploadInput" accept="image/*" onchange="handleBgChange(this)">
-
-        <div class="theme-switch" onclick="resetBg()">
-            <i class="fas fa-undo" style="color: #ff6b6b;"></i> <span>恢复默认背景</span>
-        </div>
-
         <div class="menu-title">管理</div>
         <a href="/contacts" class="menu-item"><i class="fas fa-address-book"></i> 通讯录</a>
+        
+        <div class="menu-item" onclick="openSettings()">
+            <i class="fas fa-cog"></i> 设置
+        </div>
+        
         <a href="/logout" class="menu-item" style="margin-top: auto; color: #ff4d4f;"><i class="fas fa-sign-out-alt"></i> 退出登录</a>
     </div>
 
@@ -227,38 +268,23 @@
                 </tr>
                 </thead>
                 <tbody id="emailTableBody">
-                
                 <tr th:each="email : ${emails}" 
                     th:data-title="${email.title}"
                     th:data-sender="${email.sender}"
                     th:data-content="${email.content}"
                     th:data-files="${email.filenames}"
                     onclick="showEmailDetail(this)">
-                    
                     <td class="sender-col">
                         <span class="sender-avatar" th:text="${#strings.substring(email.sender, 0, 1)}">A</span>
                         <span th:text="${email.sender}">张三</span>
                     </td>
                     <td th:text="${email.title}" style="font-weight: 500;">主题</td>
                     <td class="date-col" th:text="${email.sendDate}">时间</td>
-
                     <td style="text-align: center;" onclick="event.stopPropagation()">
-                        <a th:if="${currentFolder == '已发送'}"
-                           th:href="@{/deleteFromSent(id=${email.id})}"
-                           class="btn-trash" title="移入垃圾箱"
-                           onclick="return confirm('确定要移入垃圾箱吗？')">
-                            <i class="fas fa-trash"></i>
-                        </a>
-
-                        <a th:if="${currentFolder == '垃圾箱'}"
-                           th:href="@{/deleteForever(id=${email.id})}"
-                           class="btn-trash" title="彻底删除" style="color: #ff4d4f;"
-                           onclick="return confirm('确定彻底删除吗？无法恢复！')">
-                            <i class="fas fa-times-circle"></i>
-                        </a>
+                        <a th:if="${currentFolder == '已发送'}" th:href="@{/deleteFromSent(id=${email.id})}" class="btn-trash" title="移入垃圾箱" onclick="return confirm('确定要移入垃圾箱吗？')"><i class="fas fa-trash"></i></a>
+                        <a th:if="${currentFolder == '垃圾箱'}" th:href="@{/deleteForever(id=${email.id})}" class="btn-trash" title="彻底删除" style="color: #ff4d4f;" onclick="return confirm('确定彻底删除吗？')"><i class="fas fa-times-circle"></i></a>
                     </td>
                 </tr>
-
                 <tr th:if="${emails.size() == 0}">
                     <td colspan="4" style="text-align: center; padding: 50px; color: #999;">
                         <i class="fas fa-coffee" style="font-size: 30px; margin-bottom: 10px;"></i><br>暂无邮件
@@ -270,36 +296,89 @@
                 <span style="margin-right: 15px;">
                     <span th:text="${currentPage}">1</span>/<span th:text="${totalPages}">1</span> 页
                 </span>
-
                 <a th:if="${currentPage > 1}" th:href="@{/inbox(page=${currentPage - 1})}">上一页</a>
                 <span th:if="${currentPage <= 1}" class="disabled">上一页</span>
-
                 <a th:if="${currentPage < totalPages}" th:href="@{/inbox(page=${currentPage + 1})}">下一页</a>
                 <span th:if="${currentPage >= totalPages}" class="disabled">下一页</span>
-
                 <span style="margin-left: 15px;">
                     跳转到第 <input type="text" id="jumpInput" class="page-input" th:value="${currentPage}"> 页
                     <button type="button" class="btn-go" onclick="jumpToPage()">确定</button>
                 </span>
-                
                 <input type="hidden" id="maxPage" th:value="${totalPages}">
             </div>
         </div>
     </div>
 </div>
 
-<div id="emailModal" style="display:none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; justify-content: center; align-items: center;">
-    <div style="background: white; width: 60%; max-height: 80vh; border-radius: 10px; display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 10px 25px rgba(0,0,0,0.2);">
-        
-        <div style="padding: 20px; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; align-items: center; background: #f8f9fa;">
-            <div>
-                <h3 id="modalTitle" style="margin: 0; color: #333; font-size: 18px;">邮件标题</h3>
-                <span id="modalSender" style="font-size: 13px; color: #666;">发件人</span>
-            </div>
-            <button onclick="closeModal()" style="border: none; background: none; font-size: 24px; cursor: pointer; color: #999;">&times;</button>
+<div id="settingsModal" class="modal-overlay">
+    <div class="modal-card settings-card">
+        <div class="modal-header">
+            <h3 id="settingsTitle" style="margin:0; display:flex; align-items:center; gap:10px;">
+                <i class="fas fa-cog" style="color: #0078d4;"></i> 设置
+            </h3>
+            <button class="modal-close" onclick="closeSettings()">&times;</button>
         </div>
 
-        <div id="modalContent" style="padding: 30px; overflow-y: auto; line-height: 1.6; color: #444; flex: 1; word-wrap: break-word;">
+        <div class="settings-body">
+            <div id="settingsMain" class="settings-view">
+                <div class="settings-section-title">通用设置</div>
+                <div class="setting-item" onclick="goToSubMenu('personalization')">
+                    <div class="flex-row">
+                        <div class="setting-icon" style="background: #a29bfe;"><i class="fas fa-palette"></i></div>
+                        <div class="setting-text"><h4>个性化外观</h4><p>主题颜色、背景壁纸</p></div>
+                    </div>
+                    <i class="fas fa-chevron-right" style="color:#ccc;"></i>
+                </div>
+                <div class="setting-item" style="opacity: 0.6; cursor: not-allowed;">
+                    <div class="flex-row">
+                        <div class="setting-icon" style="background: #dfe6e9; color:#636e72;"><i class="fas fa-shield-alt"></i></div>
+                        <div class="setting-text"><h4>账号安全</h4><p>修改密码 (开发中)</p></div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="settingsPersonalization" class="settings-view" style="display:none;">
+                <div class="back-btn" onclick="goBackToMain()"><i class="fas fa-arrow-left"></i> 返回上一级</div>
+                
+                <div class="setting-item" onclick="toggleTheme()">
+                    <div class="flex-row">
+                        <div class="setting-icon" style="background: #2f3542;"><i class="fas fa-moon"></i></div>
+                        <div class="setting-text"><h4>黑夜模式</h4><p id="themeStatusText">点击切换主题</p></div>
+                    </div>
+                    <i class="fas fa-toggle-on" id="themeToggleIcon" style="color:#ccc; font-size: 20px;"></i>
+                </div>
+
+                <div class="setting-item" onclick="triggerBgUpload()">
+                    <div class="flex-row">
+                        <div class="setting-icon" style="background: #ff9f43;"><i class="fas fa-image"></i></div>
+                        <div class="setting-text"><h4>自定义背景</h4><p>上传图片作为壁纸</p></div>
+                    </div>
+                    <i class="fas fa-upload" style="color:#ccc;"></i>
+                </div>
+                <input type="file" id="bgUploadInput" accept="image/*" onchange="handleBgChange(this)" style="display:none;">
+
+                <div class="setting-item" onclick="resetBg()">
+                    <div class="flex-row">
+                        <div class="setting-icon" style="background: #ff6b6b;"><i class="fas fa-undo"></i></div>
+                        <div class="setting-text"><h4>恢复默认外观</h4><p>清除所有自定义设置</p></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="emailModal" class="modal-overlay">
+    <div class="modal-card email-detail-card">
+        <div class="modal-header">
+            <div>
+                <h3 id="modalTitle" style="margin: 0; font-size: 18px;">邮件标题</h3>
+                <span id="modalSender" style="font-size: 13px; color: #666;">发件人</span>
+            </div>
+            <button class="modal-close" onclick="closeModal()">&times;</button>
+        </div>
+
+        <div id="modalContent" style="padding: 30px; overflow-y: auto; line-height: 1.6; flex: 1; word-wrap: break-word;">
             邮件内容...
         </div>
 
@@ -310,89 +389,90 @@
             <div id="attachmentList" style="display: flex; flex-wrap: wrap; gap: 10px;"></div>
         </div>
 
-        <div style="padding: 15px; text-align: right; background: #fff; border-top: 1px solid #eee;">
+        <div style="padding: 15px; text-align: right; border-top: 1px solid rgba(0,0,0,0.05);">
             <button onclick="closeModal()" style="padding: 8px 20px; background: #0078d4; color: white; border: none; border-radius: 5px; cursor: pointer;">关闭</button>
         </div>
     </div>
 </div>
 
 <script>
-    // 页面加载时：恢复主题 + 恢复自定义背景
+    // 页面加载时：恢复状态
     window.onload = function() {
-        // 1. 恢复主题
         const savedTheme = localStorage.getItem('theme');
         if (savedTheme === 'dark') {
             document.body.classList.add('dark-mode');
-            updateThemeIcon(true);
+        }
+        
+        // 初始化文字状态
+        const statusText = document.getElementById('themeStatusText');
+        const toggleIcon = document.getElementById('themeToggleIcon');
+        if(statusText) {
+            statusText.innerText = (savedTheme === 'dark') ? "当前模式：黑夜 🌑" : "当前模式：日间 ☀️";
+            toggleIcon.style.color = (savedTheme === 'dark') ? "#0078d4" : "#ccc";
         }
 
-        // 2. 【核心】恢复自定义背景
         const savedBg = localStorage.getItem('customBg');
         if (savedBg) {
             document.body.style.setProperty('--bg-image', `url(${savedBg})`);
         }
     }
 
-    // ============ 个性化功能 ============
+    // ============ 设置中心逻辑 ============
+    function openSettings() {
+        document.getElementById('settingsModal').style.display = 'flex';
+        goBackToMain(); // 每次打开都回到主菜单
+    }
+    function closeSettings() {
+        document.getElementById('settingsModal').style.display = 'none';
+    }
 
-    // 切换黑夜模式
+    // 菜单切换 logic
+    function goToSubMenu(menuName) {
+        if (menuName === 'personalization') {
+            document.getElementById('settingsMain').style.display = 'none';
+            document.getElementById('settingsPersonalization').style.display = 'block';
+            document.getElementById('settingsTitle').innerHTML = '<i class="fas fa-palette" style="color:#a29bfe;"></i> 个性化';
+        }
+    }
+    function goBackToMain() {
+        document.getElementById('settingsMain').style.display = 'block';
+        document.getElementById('settingsPersonalization').style.display = 'none';
+        document.getElementById('settingsTitle').innerHTML = '<i class="fas fa-cog" style="color: #0078d4;"></i> 设置';
+    }
+
+    // ============ 个性化功能 ============
     function toggleTheme() {
         document.body.classList.toggle('dark-mode');
         const isDark = document.body.classList.contains('dark-mode');
         localStorage.setItem('theme', isDark ? 'dark' : 'light');
-        updateThemeIcon(isDark);
+        
+        // 更新文字和图标
+        const statusText = document.getElementById('themeStatusText');
+        if(statusText) statusText.innerText = isDark ? "当前模式：黑夜 🌑" : "当前模式：日间 ☀️";
+        
+        const toggleIcon = document.getElementById('themeToggleIcon');
+        if(toggleIcon) toggleIcon.style.color = isDark ? "#0078d4" : "#ccc";
     }
 
-    function updateThemeIcon(isDark) {
-        const icon = document.getElementById('themeIcon');
-        const text = document.getElementById('themeText');
-        if (isDark) {
-            icon.className = 'fas fa-sun';
-            text.innerText = '切换日间模式';
-        } else {
-            icon.className = 'fas fa-moon';
-            text.innerText = '切换黑夜模式';
-        }
-    }
-
-    // 触发背景上传
-    function triggerBgUpload() {
-        document.getElementById('bgUploadInput').click();
-    }
-
-    // 处理背景图片选择
+    function triggerBgUpload() { document.getElementById('bgUploadInput').click(); }
     function handleBgChange(input) {
         if (input.files && input.files[0]) {
             var reader = new FileReader();
-            
             reader.onload = function (e) {
-                // e.target.result 就是图片的 Base64 数据
                 var bgUrl = e.target.result;
-                
-                // 1. 设置当前页面的 CSS 变量
                 document.body.style.setProperty('--bg-image', `url(${bgUrl})`);
-                
-                // 2. 保存到浏览器缓存 (LocalStorage)
-                try {
-                    localStorage.setItem('customBg', bgUrl);
-                } catch (e) {
-                    alert("图片太大了，无法保存！建议选择小于 2MB 的图片。");
-                }
+                try { localStorage.setItem('customBg', bgUrl); } catch (e) { alert("图片太大，建议使用小图"); }
             };
-            
             reader.readAsDataURL(input.files[0]);
         }
     }
-
-    // 重置背景
     function resetBg() {
         localStorage.removeItem('customBg');
-        // 移除行内样式，恢复到 CSS 文件里定义的默认值
         document.body.style.removeProperty('--bg-image');
+        alert("已恢复默认背景");
     }
 
-    // ============ 搜索 & 详情弹窗逻辑 (保持不变) ============
-
+    // ============ 邮件功能逻辑 ============
     function searchEmails() {
         var input = document.getElementById("searchInput");
         var filter = input.value.toLowerCase();
@@ -424,70 +504,47 @@
         var attachDiv = document.getElementById('attachmentList');
         var imgArea = document.getElementById('imagePreviewArea');
         
-        attachDiv.innerHTML = ""; 
-        imgArea.innerHTML = "";
-        imgArea.style.display = 'none';
-        attachArea.style.display = 'none';
+        attachDiv.innerHTML = ""; imgArea.innerHTML = "";
+        imgArea.style.display = 'none'; attachArea.style.display = 'none';
 
         if (filesStr && filesStr.length > 2) { 
             var cleanStr = filesStr.replace('[', '').replace(']', '');
             if(cleanStr.trim() !== "") {
                 var fileArray = cleanStr.split(',');
                 attachArea.style.display = 'block';
-                
                 for(var i=0; i<fileArray.length; i++) {
                     var fName = fileArray[i].trim();
                     if(fName === "") continue;
-                    
                     var downloadUrl = "/download?filename=" + encodeURIComponent(fName);
-
-                    var btn = `<a href="${downloadUrl}" target="_blank" 
-                                style="font-size:12px; padding:6px 12px; background:#f0f0f0; border-radius:4px; text-decoration:none; color:#333; border:1px solid #ddd; display:flex; align-items:center; gap:5px;">
-                                <i class="fas fa-file-download" style="color:#0078d4;"></i> ${fName}
-                               </a>`;
+                    var btn = `<a href="${downloadUrl}" target="_blank" style="font-size:12px; padding:6px 12px; background:#f0f0f0; border-radius:4px; text-decoration:none; color:#333; border:1px solid #ddd; display:flex; align-items:center; gap:5px;"><i class="fas fa-file-download" style="color:#0078d4;"></i> ${fName}</a>`;
                     attachDiv.innerHTML += btn;
-
                     var lowerName = fName.toLowerCase();
                     if(lowerName.endsWith('.jpg') || lowerName.endsWith('.jpeg') || lowerName.endsWith('.png') || lowerName.endsWith('.gif') || lowerName.endsWith('.bmp')) {
                         imgArea.style.display = 'block';
-                        var imgTag = `<div style="margin-top:15px; border:1px solid #eee; padding:5px; border-radius:5px; display:inline-block;">
-                                        <p style="margin:0 0 5px 0; font-size:12px; color:#999;">预览: ${fName}</p>
-                                        <img src="${downloadUrl}" style="max-width:100%; max-height:400px; display:block;">
-                                      </div><br>`;
-                        imgArea.innerHTML += imgTag;
+                        imgArea.innerHTML += `<div style="margin-top:15px; border:1px solid #eee; padding:5px; border-radius:5px; display:inline-block;"><p style="margin:0 0 5px 0; font-size:12px; color:#999;">预览: ${fName}</p><img src="${downloadUrl}" style="max-width:100%; max-height:400px; display:block;"></div><br>`;
                     }
                 }
             }
         }
-
         document.getElementById('emailModal').style.display = 'flex';
     }
 
-    function closeModal() {
-        document.getElementById('emailModal').style.display = 'none';
-    }
+    function closeModal() { document.getElementById('emailModal').style.display = 'none'; }
     
-    document.getElementById('emailModal').onclick = function(event) {
-        if (event.target == this) closeModal();
+    // 通用关闭逻辑：点击背景关闭任意弹窗
+    window.onclick = function(event) {
+        if (event.target.classList.contains('modal-overlay')) {
+            event.target.style.display = 'none';
+        }
     }
 
-        // 分页跳转逻辑
+    // 分页跳转
     function jumpToPage() {
         var input = document.getElementById("jumpInput");
         var maxPage = document.getElementById("maxPage").value;
         var page = parseInt(input.value);
-
-        // 简单的校验
-        if (isNaN(page) || page < 1) {
-            alert("请输入有效的页码！");
-            return;
-        }
-        if (page > parseInt(maxPage)) {
-            alert("超过最大页数了！");
-            return;
-        }
-
-        // 跳转
+        if (isNaN(page) || page < 1) { alert("请输入有效的页码！"); return; }
+        if (page > parseInt(maxPage)) { alert("超过最大页数了！"); return; }
         window.location.href = "/inbox?page=" + page;
     }
 </script>
