@@ -31,3 +31,14 @@ build/
 
 ### VS Code ###
 .vscode/
+
+# ===== Java / Maven / Spring Boot =====
+target/
+*.class
+*.log
+*.iml
+.idea/
+.vscode/
+.mvn/
+!mvnw
+!mvnw.cmd
