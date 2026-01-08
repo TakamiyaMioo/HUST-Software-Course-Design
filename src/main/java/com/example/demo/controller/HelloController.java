@@ -152,26 +152,63 @@ public class HelloController {
         return mav;
     }
 
+//    @GetMapping("/sendPage")
+//    public ModelAndView sendPage(HttpSession session) {
+//        if (session.getAttribute("currentUser") == null) return new ModelAndView("redirect:/");
+//        ModelAndView mav = new ModelAndView("send");
+//        mav.addObject("contacts", contactRepository.findAll());
+//        return mav;
+//    }
+
+    // 修改 1：跳转写信页接口，支持接收预填参数（用于回复和转发）
     @GetMapping("/sendPage")
-    public ModelAndView sendPage(HttpSession session) {
+    public ModelAndView sendPage(@RequestParam(required = false) String to,
+                                 @RequestParam(required = false) String subject,
+                                 @RequestParam(required = false) String content,
+                                 HttpSession session) {
         if (session.getAttribute("currentUser") == null) return new ModelAndView("redirect:/");
+
         ModelAndView mav = new ModelAndView("send");
         mav.addObject("contacts", contactRepository.findAll());
+
+        // 把传进来的参数放进页面模型里，让 Thymeleaf 渲染
+        mav.addObject("preTo", to != null ? to : "");
+        mav.addObject("preSubject", subject != null ? subject : "");
+        mav.addObject("preContent", content != null ? content : "");
+
         return mav;
     }
 
-    @PostMapping("/sendMail")
-    public ModelAndView sendMail(@RequestParam String to, @RequestParam String text,
-                                 @RequestParam(value = "file", required = false) MultipartFile file,
-                                 HttpSession session) {
-        UserAccount user = (UserAccount) session.getAttribute("currentUser");
-        if (user == null) return new ModelAndView("redirect:/");
+//    @PostMapping("/sendMail")
+//    public ModelAndView sendMail(@RequestParam String to, @RequestParam String text,
+//                                 @RequestParam(value = "file", required = false) MultipartFile file,
+//                                 HttpSession session) {
+//        UserAccount user = (UserAccount) session.getAttribute("currentUser");
+//        if (user == null) return new ModelAndView("redirect:/");
+//
+//        String subject = "桌面软件邮件";
+//        mailService.sendMailWithAttachment(user, to, subject, text, file);
+//        sentLogRepository.save(new SentLog(to, subject, text));
+//        return new ModelAndView("redirect:/inbox");
+//    }
+// 修改 2：发送接口，支持自定义主题
+@PostMapping("/sendMail")
+public ModelAndView sendMail(@RequestParam String to,
+                             @RequestParam String subject, // 【新增】接收主题参数
+                             @RequestParam String text,
+                             @RequestParam(value = "file", required = false) MultipartFile file,
+                             HttpSession session) {
+    UserAccount user = (UserAccount) session.getAttribute("currentUser");
+    if (user == null) return new ModelAndView("redirect:/");
 
-        String subject = "桌面软件邮件";
-        mailService.sendMailWithAttachment(user, to, subject, text, file);
-        sentLogRepository.save(new SentLog(to, subject, text));
-        return new ModelAndView("redirect:/inbox");
-    }
+    // 发送邮件 (现在使用用户输入的主题 subject)
+    mailService.sendMailWithAttachment(user, to, subject, text, file);
+
+    // 存入已发送 (同时记录真实主题)
+    sentLogRepository.save(new SentLog(to, subject, text));
+
+    return new ModelAndView("redirect:/inbox");
+}
 
     @GetMapping("/deleteFromSent")
     public String deleteFromSent(@RequestParam Long id) {
