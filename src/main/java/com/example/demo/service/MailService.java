@@ -21,7 +21,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
 
-//牢祝牛逼
+
 @Service
 public class MailService {
 
