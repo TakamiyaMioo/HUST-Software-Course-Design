@@ -6,9 +6,9 @@
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" rel="stylesheet">
 
     <style>
-        /* ================== 1. 全局变量与布局 (与Inbox一致) ================== */
+        /* ================== 1. 全局变量与布局 ================== */
         :root {
-            --bg-image: url('/images/bgcontacts.jpg'); /* 默认背景，同时也支持被JS覆盖 */
+            --bg-image: url('/images/bgcontacts.jpg');
             --glass-bg: rgba(255, 255, 255, 0.85);
             --sidebar-bg: rgba(255, 255, 255, 0.5);
             --main-bg: rgba(255, 255, 255, 0.3);
@@ -93,6 +93,14 @@
         .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 1px solid rgba(0,0,0,0.1); padding-bottom: 15px; }
         h2 { margin: 0; font-size: 24px; color: #2d6a4f; display: flex; align-items: center; gap: 10px; }
 
+        /* 【新增】返回按钮样式 */
+        .btn-back {
+            text-decoration: none; color: var(--text-sub); font-size: 14px;
+            padding: 8px 15px; background: rgba(0,0,0,0.05); border-radius: 20px;
+            transition: 0.2s; display: flex; align-items: center; gap: 5px;
+        }
+        .btn-back:hover { background: #0078d4; color: white; }
+
         .table-wrapper { flex: 1; overflow-y: auto; border-radius: 8px; margin-bottom: 20px; border: 1px solid rgba(0,0,0,0.05); }
         table { width: 100%; border-collapse: collapse; }
 
@@ -172,6 +180,7 @@
         <div class="contacts-container fade-in">
             <div class="header">
                 <h2><i class="fas fa-address-book"></i> 我的通讯录</h2>
+                <a href="/inbox" class="btn-back"><i class="fas fa-arrow-left"></i> 返回收件箱</a>
             </div>
 
             <div class="table-wrapper">
@@ -242,67 +251,238 @@
 <!--<html xmlns:th="http://www.thymeleaf.org">-->
 <!--<head>-->
 <!--    <meta charset="UTF-8">-->
-<!--    <title>通讯录</title>-->
+<!--    <title>我的通讯录</title>-->
+<!--    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" rel="stylesheet">-->
+
 <!--    <style>-->
-<!--        body { font-family: 'Microsoft YaHei', sans-serif; background-color: #f0fdf4; margin: 0; padding: 20px; display: flex; justify-content: center; }-->
-<!--        .container { width: 800px; background: white; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); padding: 20px; }-->
+<!--        /* ================== 1. 全局变量与布局 (与Inbox一致) ================== */-->
+<!--        :root {-->
+<!--            &#45;&#45;bg-image: url('/images/bgcontacts.jpg'); /* 默认背景，同时也支持被JS覆盖 */-->
+<!--            &#45;&#45;glass-bg: rgba(255, 255, 255, 0.85);-->
+<!--            &#45;&#45;sidebar-bg: rgba(255, 255, 255, 0.5);-->
+<!--            &#45;&#45;main-bg: rgba(255, 255, 255, 0.3);-->
+<!--            &#45;&#45;text-main: #333;-->
+<!--            &#45;&#45;text-sub: #666;-->
+<!--            &#45;&#45;border-color: rgba(255, 255, 255, 0.6);-->
+<!--            &#45;&#45;hover-bg: rgba(255, 255, 255, 0.8);-->
+<!--            &#45;&#45;card-bg: rgba(255, 255, 255, 0.6);-->
+<!--            &#45;&#45;table-header-bg: rgba(255, 255, 255, 0.9);-->
+<!--            &#45;&#45;input-bg: white;-->
+<!--            &#45;&#45;shadow-color: rgba(0, 0, 0, 0.1);-->
+<!--        }-->
 
-<!--        .header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #bbf7d0; padding-bottom: 15px; margin-bottom: 20px; }-->
-<!--        h2 { margin: 0; color: #166534; }-->
-<!--        .back-btn { text-decoration: none; color: #666; font-size: 14px; }-->
-<!--        .back-btn:hover { color: #000; }-->
+<!--        body.dark-mode {-->
+<!--            &#45;&#45;glass-bg: rgba(30, 30, 30, 0.85);-->
+<!--            &#45;&#45;sidebar-bg: rgba(0, 0, 0, 0.3);-->
+<!--            &#45;&#45;main-bg: rgba(0, 0, 0, 0.2);-->
+<!--            &#45;&#45;text-main: #e0e0e0;-->
+<!--            &#45;&#45;text-sub: #aaaaaa;-->
+<!--            &#45;&#45;border-color: rgba(255, 255, 255, 0.1);-->
+<!--            &#45;&#45;hover-bg: rgba(255, 255, 255, 0.1);-->
+<!--            &#45;&#45;card-bg: rgba(40, 40, 40, 0.6);-->
+<!--            &#45;&#45;table-header-bg: rgba(40, 40, 40, 0.9);-->
+<!--            &#45;&#45;input-bg: #444;-->
+<!--            &#45;&#45;shadow-color: rgba(0, 0, 0, 0.5);-->
+<!--        }-->
 
-<!--        /* 表格样式 */-->
-<!--        table { width: 100%; border-collapse: collapse; margin-bottom: 30px; }-->
-<!--        th { text-align: left; background: #dcfce7; padding: 10px; color: #14532d; }-->
-<!--        td { padding: 10px; border-bottom: 1px solid #eee; color: #333; }-->
+<!--        body {-->
+<!--            font-family: 'Segoe UI', 'Microsoft YaHei', sans-serif;-->
+<!--            margin: 0; padding: 0;-->
+<!--            background-image: var(&#45;&#45;bg-image);-->
+<!--            background-size: cover; background-position: center; background-attachment: fixed;-->
+<!--            height: 100vh; display: flex; justify-content: center; align-items: center;-->
+<!--            transition: background-image 0.5s;-->
+<!--        }-->
 
-<!--        .btn-del { color: #ef4444; text-decoration: none; font-size: 12px; border: 1px solid #ef4444; padding: 2px 8px; border-radius: 4px; }-->
-<!--        .btn-del:hover { background: #ef4444; color: white; }-->
+<!--        .glass-container {-->
+<!--            width: 90%; height: 90vh; background: var(&#45;&#45;glass-bg); backdrop-filter: blur(12px);-->
+<!--            border: 1px solid var(&#45;&#45;border-color); border-radius: 20px; box-shadow: 0 15px 40px var(&#45;&#45;shadow-color);-->
+<!--            display: flex; overflow: hidden;-->
+<!--        }-->
 
-<!--        /* 添加表单样式 */-->
-<!--        .add-box { background: #f8fafc; padding: 15px; border-radius: 6px; display: flex; gap: 10px; align-items: center; }-->
-<!--        input { padding: 8px; border: 1px solid #ddd; border-radius: 4px; flex: 1; }-->
-<!--        .btn-add { background: #22c55e; color: white; border: none; padding: 8px 20px; border-radius: 4px; cursor: pointer; }-->
-<!--        .btn-add:hover { background: #16a34a; }-->
+<!--        /* ================== 2. 侧边栏样式 ================== */-->
+<!--        .sidebar { width: 260px; background: var(&#45;&#45;sidebar-bg); border-right: 1px solid rgba(0,0,0,0.05); display: flex; flex-direction: column; padding: 20px; overflow-y: auto; }-->
+<!--        .user-profile-area { margin-bottom: 20px; border-bottom: 1px dashed #ccc; padding-bottom: 15px; }-->
+<!--        .app-user-name { font-weight: bold; font-size: 16px; color: var(&#45;&#45;text-main); margin-bottom: 10px; display: flex; align-items: center; gap: 8px; }-->
+<!--        .account-list-title { font-size: 12px; color: #999; margin-bottom: 8px; font-weight: bold; }-->
+
+<!--        .account-switcher-item {-->
+<!--            display: flex; align-items: center; padding: 8px 12px;-->
+<!--            border-radius: 8px; cursor: pointer; transition: 0.2s;-->
+<!--            margin-bottom: 5px; text-decoration: none; color: var(&#45;&#45;text-sub);-->
+<!--            border: 1px solid transparent;-->
+<!--        }-->
+<!--        .account-switcher-item:hover { background: var(&#45;&#45;hover-bg); }-->
+<!--        .account-switcher-item.active {-->
+<!--            background: rgba(0, 120, 212, 0.1);-->
+<!--            border-color: rgba(0, 120, 212, 0.3);-->
+<!--            color: #0078d4; font-weight: bold;-->
+<!--        }-->
+
+<!--        .acc-icon { width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; border-radius: 50%; background: #eee; margin-right: 10px; font-size: 12px; }-->
+<!--        .active .acc-icon { background: #0078d4; color: white; }-->
+<!--        .add-acc-btn { font-size: 12px; color: #0078d4; text-decoration: none; padding-left: 10px; display: inline-block; margin-top: 5px;}-->
+<!--        .add-acc-btn:hover { text-decoration: underline; }-->
+
+<!--        .menu-item { display: flex; align-items: center; padding: 12px 15px; color: var(&#45;&#45;text-sub); text-decoration: none; border-radius: 10px; margin-bottom: 5px; transition: 0.3s; cursor: pointer; }-->
+<!--        .menu-item:hover { background: var(&#45;&#45;hover-bg); color: #0078d4; transform: translateX(5px); }-->
+<!--        .menu-item.active { background: #0078d4; color: white; box-shadow: 0 4px 10px rgba(0, 120, 212, 0.3); }-->
+<!--        .menu-item i { width: 25px; font-size: 18px; }-->
+<!--        .menu-title { font-size: 12px; color: #999; margin-top: 20px; margin-bottom: 10px; padding-left: 10px; }-->
+
+<!--        /* ================== 3. 通讯录主内容区域 ================== */-->
+<!--        .main-content { flex: 1; padding: 40px; overflow-y: auto; color: var(&#45;&#45;text-main); display: flex; flex-direction: column; }-->
+
+<!--        .contacts-container {-->
+<!--            max-width: 900px; margin: 0 auto; width: 100%;-->
+<!--            background: var(&#45;&#45;card-bg); border-radius: 15px; padding: 30px;-->
+<!--            box-shadow: 0 10px 30px rgba(0,0,0,0.05); display: flex; flex-direction: column; height: 100%;-->
+<!--        }-->
+
+<!--        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 1px solid rgba(0,0,0,0.1); padding-bottom: 15px; }-->
+<!--        h2 { margin: 0; font-size: 24px; color: #2d6a4f; display: flex; align-items: center; gap: 10px; }-->
+
+<!--        .table-wrapper { flex: 1; overflow-y: auto; border-radius: 8px; margin-bottom: 20px; border: 1px solid rgba(0,0,0,0.05); }-->
+<!--        table { width: 100%; border-collapse: collapse; }-->
+
+<!--        th { text-align: left; background: rgba(45, 106, 79, 0.1); color: #2d6a4f; padding: 15px 20px; font-weight: 600; position: sticky; top: 0; }-->
+<!--        td { padding: 15px 20px; border-bottom: 1px solid rgba(0,0,0,0.05); color: var(&#45;&#45;text-main); }-->
+<!--        tr:hover { background-color: var(&#45;&#45;hover-bg); }-->
+
+<!--        .btn-del { color: #e63946; text-decoration: none; font-size: 13px; border: 1px solid #e63946; padding: 4px 10px; border-radius: 6px; transition: 0.2s; background: transparent; }-->
+<!--        .btn-del:hover { background: #e63946; color: white; }-->
+
+<!--        .add-section { background: rgba(0,0,0,0.02); padding: 20px; border-radius: 12px; border: 1px dashed #ced4da; margin-top: auto; }-->
+<!--        .form-title { font-size: 14px; color: #2d6a4f; margin-bottom: 15px; font-weight: bold; display: flex; align-items: center; gap: 8px; }-->
+<!--        .input-group { display: flex; gap: 15px; }-->
+
+<!--        input { flex: 1; padding: 12px 15px; border: 1px solid var(&#45;&#45;border-color); border-radius: 8px; background: var(&#45;&#45;input-bg); color: var(&#45;&#45;text-main); outline: none; transition: 0.3s; }-->
+<!--        input:focus { border-color: #40916c; box-shadow: 0 0 0 3px rgba(64, 145, 108, 0.1); }-->
+
+<!--        .btn-save { background: linear-gradient(135deg, #40916c 0%, #2d6a4f 100%); color: white; border: none; padding: 0 30px; border-radius: 8px; cursor: pointer; font-weight: bold; transition: 0.3s; display: flex; align-items: center; gap: 5px; }-->
+<!--        .btn-save:hover { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(45, 106, 79, 0.3); }-->
+
+<!--        .empty-state { text-align: center; padding: 50px; color: #adb5bd; }-->
+
+<!--        .fade-in { animation: fadeIn 0.3s ease; }-->
+<!--        @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }-->
 <!--    </style>-->
 <!--</head>-->
 <!--<body>-->
 
-<!--<div class="container">-->
-<!--    <div class="header">-->
-<!--        <h2>📗 我的通讯录</h2>-->
-<!--        <a href="/inbox" class="back-btn">← 返回收件箱</a>-->
+<!--<div class="glass-container">-->
+
+<!--    <div class="sidebar">-->
+<!--        <div class="user-profile-area">-->
+<!--            <div class="app-user-name">-->
+<!--                <i class="fas fa-user-astronaut" style="color: #6c5ce7;"></i>-->
+<!--                <span th:text="${session.appUser.nickname}">主账号昵称</span>-->
+<!--            </div>-->
+<!--            <div style="font-size: 12px; color: #999;">-->
+<!--                <span th:text="${session.appUser.username}">admin</span>-->
+<!--                <a href="/logout" style="color: #ff4d4f; margin-left: 10px; text-decoration: none;">[退出]</a>-->
+<!--            </div>-->
+<!--        </div>-->
+
+<!--        <div class="account-list-title">切换邮箱账号</div>-->
+
+<!--        <a th:each="acc : ${myAccounts}"-->
+<!--           th:href="@{/account/switch(id=${acc.id})}"-->
+<!--           class="account-switcher-item"-->
+<!--           th:classappend="${acc.id == currentEmailId} ? 'active'">-->
+<!--            <div class="acc-icon">-->
+<!--                <i th:if="${acc.type == 'qq'}" class="fab fa-qq"></i>-->
+<!--                <i th:if="${acc.type == '163'}" class="fas fa-envelope"></i>-->
+<!--            </div>-->
+<!--            <div style="display: flex; flex-direction: column; overflow: hidden;">-->
+<!--                <span th:text="${acc.email}" style="font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">user@qq.com</span>-->
+<!--                <span th:text="${acc.type == 'qq' ? 'QQ邮箱' : '网易邮箱'}" style="font-size: 11px; opacity: 0.7;">Type</span>-->
+<!--            </div>-->
+<!--            <i th:if="${acc.id == currentEmailId}" class="fas fa-check" style="margin-left: auto; font-size: 12px;"></i>-->
+<!--        </a>-->
+<!--        <a href="/settings" class="add-acc-btn"><i class="fas fa-plus-circle"></i> 绑定新邮箱</a>-->
+
+<!--        <hr style="border: 0; border-bottom: 1px dashed #ddd; margin: 15px 0; width: 100%;">-->
+
+<!--        <div class="menu-title" th:if="${currentEmailId != null}">当前邮箱文件夹</div>-->
+<!--        <div th:if="${currentEmailId == null}" style="color:orange; font-size:12px; padding:10px;">请先选择或绑定一个邮箱</div>-->
+
+<!--        <a href="/inbox" class="menu-item" th:if="${currentEmailId != null}"><i class="fas fa-inbox"></i> 收件箱</a>-->
+<!--        <a href="/sent" class="menu-item" th:if="${currentEmailId != null}"><i class="fas fa-paper-plane"></i> 已发送</a>-->
+<!--        <a href="/drafts" class="menu-item" th:if="${currentEmailId != null}"><i class="fas fa-file-alt"></i> 草稿箱</a>-->
+<!--        <a href="/trash" class="menu-item" th:if="${currentEmailId != null}"><i class="fas fa-trash-alt"></i> 垃圾箱</a>-->
+
+<!--        <div class="menu-title">管理</div>-->
+<!--        <a href="/contacts" class="menu-item active" style="background: #2d6a4f; color: white;"><i class="fas fa-address-book"></i> 通讯录</a>-->
+<!--        <a href="/settings" class="menu-item"><i class="fas fa-cog"></i> 设置</a>-->
 <!--    </div>-->
 
-<!--    &lt;!&ndash; 联系人列表 &ndash;&gt;-->
-<!--    <table>-->
-<!--        <thead>-->
-<!--        <tr>-->
-<!--            <th>姓名</th>-->
-<!--            <th>邮箱地址</th>-->
-<!--            <th>操作</th>-->
-<!--        </tr>-->
-<!--        </thead>-->
-<!--        <tbody>-->
-<!--        <tr th:each="c : ${contacts}">-->
-<!--            <td th:text="${c.name}">张三</td>-->
-<!--            <td th:text="${c.email}">zhangsan@qq.com</td>-->
-<!--            <td>-->
-<!--                <a th:href="@{/contact/delete(id=${c.id})}" class="btn-del" onclick="return confirm('确定删除吗？')">删除</a>-->
-<!--            </td>-->
-<!--        </tr>-->
-<!--        </tbody>-->
-<!--    </table>-->
+<!--    <div class="main-content">-->
+<!--        <div class="contacts-container fade-in">-->
+<!--            <div class="header">-->
+<!--                <h2><i class="fas fa-address-book"></i> 我的通讯录</h2>-->
+<!--            </div>-->
 
-<!--    &lt;!&ndash; 添加新联系人 &ndash;&gt;-->
-<!--    <form action="/contact/add" method="post" class="add-box">-->
-<!--        <b>➕ 新增：</b>-->
-<!--        <input type="text" name="name" placeholder="朋友名字" required>-->
-<!--        <input type="text" name="email" placeholder="邮箱地址" required>-->
-<!--        <button type="submit" class="btn-add">保存</button>-->
-<!--    </form>-->
+<!--            <div class="table-wrapper">-->
+<!--                <table>-->
+<!--                    <thead>-->
+<!--                    <tr>-->
+<!--                        <th width="30%">姓名</th>-->
+<!--                        <th width="50%">邮箱地址</th>-->
+<!--                        <th width="20%" style="text-align: center;">操作</th>-->
+<!--                    </tr>-->
+<!--                    </thead>-->
+<!--                    <tbody>-->
+<!--                    <tr th:each="c : ${contacts}">-->
+<!--                        <td>-->
+<!--                            <i class="fas fa-user-circle" style="color: #ccc; margin-right: 5px;"></i>-->
+<!--                            <span th:text="${c.name}" style="font-weight: 500;"></span>-->
+<!--                        </td>-->
+<!--                        <td th:text="${c.email}" style="font-family: monospace; color: var(&#45;&#45;text-sub);"></td>-->
+<!--                        <td style="text-align: center;">-->
+<!--                            <a th:href="@{/contact/delete(id=${c.id})}" class="btn-del" onclick="return confirm('确定要移除这位好友吗？')">-->
+<!--                                <i class="fas fa-trash-alt"></i> 删除-->
+<!--                            </a>-->
+<!--                        </td>-->
+<!--                    </tr>-->
+
+<!--                    <tr th:if="${contacts.size() == 0}">-->
+<!--                        <td colspan="3" class="empty-state">-->
+<!--                            <i class="fas fa-users-slash" style="font-size: 30px; margin-bottom: 10px;"></i><br>-->
+<!--                            通讯录还是空的，快去添加朋友吧！-->
+<!--                        </td>-->
+<!--                    </tr>-->
+<!--                    </tbody>-->
+<!--                </table>-->
+<!--            </div>-->
+
+<!--            <div class="add-section">-->
+<!--                <div class="form-title"><i class="fas fa-user-plus"></i> 添加新联系人</div>-->
+<!--                <form action="/contact/add" method="post" class="input-group">-->
+<!--                    <input type="text" name="name" placeholder="请输入姓名 (如: 张三)" required>-->
+<!--                    <input type="text" name="email" placeholder="请输入邮箱 (如: zhangsan@qq.com)" required>-->
+<!--                    <button type="submit" class="btn-save">-->
+<!--                        <i class="fas fa-check"></i> 保存-->
+<!--                    </button>-->
+<!--                </form>-->
+<!--            </div>-->
+<!--        </div>-->
+<!--    </div>-->
 <!--</div>-->
+
+<!--<script>-->
+<!--    // 页面加载时：自动恢复主题和背景-->
+<!--    window.onload = function() {-->
+<!--        const savedTheme = localStorage.getItem('theme');-->
+<!--        if (savedTheme === 'dark') {-->
+<!--            document.body.classList.add('dark-mode');-->
+<!--        }-->
+<!--        const savedBg = localStorage.getItem('customBg');-->
+<!--        if (savedBg) {-->
+<!--            document.body.style.setProperty('&#45;&#45;bg-image', `url(${savedBg})`);-->
+<!--        }-->
+<!--    }-->
+<!--</script>-->
 
 <!--</body>-->
 <!--</html>-->

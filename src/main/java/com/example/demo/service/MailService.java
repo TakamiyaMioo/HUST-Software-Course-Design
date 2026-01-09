@@ -21,15 +21,18 @@ public class MailService {
 
     public static final String SAVE_PATH = "D:/email_data/";
 
+
     /**
-     * 核心接收方法 (支持：分页 + 排序 + 定向搜索)
-     *
-     * @param keyword    搜索关键字
-     * @param searchType 搜索类型: "all"(默认), "sender", "title", "date"
+     * 核心接收方法 (修复版：增加了异常保护和 163 兼容配置)
      */
     public Map<String, Object> receiveEmails(UserAccount user, String folderName, int page, int size,
-            String sortField, String sortOrder, String keyword, String searchType) {
+                                             String sortField, String sortOrder, String keyword, String searchType) {
+
+        // 1. 【修复关键点】先初始化默认值，防止发生异常时返回空 Map 导致 Controller 报 500 错误
         Map<String, Object> result = new HashMap<>();
+        result.put("totalCount", 0);
+        result.put("list", new ArrayList<EmailInfo>());
+
         List<EmailInfo> fullList = new ArrayList<>();
         Store store = null;
         Folder folder = null;
@@ -39,27 +42,34 @@ public class MailService {
             props.put("mail.imap.host", user.getImapHost());
             props.put("mail.imap.port", "993");
             props.put("mail.imap.ssl.enable", "true");
-            // 关闭部分抓取，确保获取完整信头用于搜索
+            // 关闭部分抓取，确保获取完整信头
             props.put("mail.imap.partialfetch", "false");
+
+            // 【新增】针对 163 等邮箱的 SSL 证书信任配置，防止握手失败
+            props.put("mail.imap.ssl.trust", "*");
 
             Session session = Session.getInstance(props);
             store = session.getStore("imap");
+
+            // 连接服务器
             store.connect(user.getImapHost(), user.getEmail(), user.getPassword());
 
             String realFolder = getCorrectFolderName(user.getType(), folderName);
             folder = store.getFolder(realFolder);
-            if (!folder.exists())
+
+            // 如果文件夹不存在（比如163没有"Deleted Messages"），回退到 INBOX 防止报错
+            if (!folder.exists()) {
                 folder = store.getFolder("INBOX");
+            }
 
             folder.open(Folder.READ_ONLY);
 
             int totalMessages = folder.getMessageCount();
-            result.put("totalCount", totalMessages); // 初始总数
+            result.put("totalCount", totalMessages); // 更新总数
 
             Message[] messages = null;
 
             // --- 策略判断 ---
-            // 只有当 (无搜索词) 且 (默认排序) 时，才使用极速模式
             boolean hasKeyword = StringUtils.hasText(keyword);
             boolean isDefaultSort = (sortField == null || "date".equals(sortField))
                     && (sortOrder == null || "desc".equals(sortOrder));
@@ -70,8 +80,7 @@ public class MailService {
                 int end = totalMessages - (page - 1) * size;
                 int start = end - size + 1;
                 if (end > 0) {
-                    if (start < 1)
-                        start = 1;
+                    if (start < 1) start = 1;
                     messages = folder.getMessages(start, end);
                 }
             } else {
@@ -89,19 +98,18 @@ public class MailService {
 
                 boolean isSentFolder = realFolder.equalsIgnoreCase("Sent Messages") || realFolder.equals("已发送");
                 fullList = parseMessages((UIDFolder) folder, messages, isSentFolder);
-            } else {
-                if (!useServerSidePaging) {
-                    result.put("totalCount", 0);
-                }
             }
 
         } catch (Exception e) {
+            // 打印错误日志，方便在控制台看到 163 到底报什么错
+            System.err.println("❌ 邮件接收失败: " + e.getMessage());
             e.printStackTrace();
+            // 注意：这里吞掉了异常，但因为我们在最开始初始化了 result，所以 Controller 不会崩，只会显示 "暂无邮件"
         } finally {
             closeQuietly(folder, store);
         }
 
-        // --- 1. 内存搜索过滤 (支持 searchType) ---
+        // --- 1. 内存搜索过滤 ---
         if (StringUtils.hasText(keyword)) {
             String k = keyword.toLowerCase();
             String type = (searchType != null) ? searchType : "all";
@@ -110,16 +118,16 @@ public class MailService {
                     .filter(email -> {
                         boolean match = false;
                         switch (type) {
-                            case "sender": // 仅搜发件人
+                            case "sender":
                                 match = (email.getSender() != null && email.getSender().toLowerCase().contains(k));
                                 break;
-                            case "title": // 仅搜主题
+                            case "title":
                                 match = (email.getTitle() != null && email.getTitle().toLowerCase().contains(k));
                                 break;
-                            case "date": // 仅搜日期
+                            case "date":
                                 match = (email.getSendDate() != null && email.getSendDate().contains(k));
                                 break;
-                            case "all": // 搜全部
+                            case "all":
                             default:
                                 match = (email.getTitle() != null && email.getTitle().toLowerCase().contains(k)) ||
                                         (email.getSender() != null && email.getSender().toLowerCase().contains(k)) ||
@@ -152,8 +160,7 @@ public class MailService {
         }
 
         if ("desc".equals(sortOrder)) {
-            if (comparator != null)
-                comparator = comparator.reversed();
+            if (comparator != null) comparator = comparator.reversed();
         }
 
         if (!fullList.isEmpty() && comparator != null) {
@@ -161,13 +168,13 @@ public class MailService {
         }
 
         // --- 3. 内存分页 ---
-        boolean hasKeyword = StringUtils.hasText(keyword);
-        boolean isDefaultSort = (sortField == null || "date".equals(sortField))
+        boolean hasKeyword2 = StringUtils.hasText(keyword);
+        boolean isDefaultSort2 = (sortField == null || "date".equals(sortField))
                 && (sortOrder == null || "desc".equals(sortOrder));
-        boolean useServerSidePaging = !hasKeyword && isDefaultSort;
+        boolean useServerSidePaging2 = !hasKeyword2 && isDefaultSort2;
 
         List<EmailInfo> pageList;
-        if (useServerSidePaging) {
+        if (useServerSidePaging2) {
             pageList = fullList;
         } else {
             int fromIndex = (page - 1) * size;
@@ -182,6 +189,168 @@ public class MailService {
         result.put("list", pageList);
         return result;
     }
+
+//    /**
+//     * 核心接收方法 (支持：分页 + 排序 + 定向搜索)
+//     *
+//     * @param keyword    搜索关键字
+//     * @param searchType 搜索类型: "all"(默认), "sender", "title", "date"
+//     */
+//    public Map<String, Object> receiveEmails(UserAccount user, String folderName, int page, int size,
+//            String sortField, String sortOrder, String keyword, String searchType) {
+//        Map<String, Object> result = new HashMap<>();
+//        List<EmailInfo> fullList = new ArrayList<>();
+//        Store store = null;
+//        Folder folder = null;
+//        try {
+//            Properties props = new Properties();
+//            props.put("mail.store.protocol", "imap");
+//            props.put("mail.imap.host", user.getImapHost());
+//            props.put("mail.imap.port", "993");
+//            props.put("mail.imap.ssl.enable", "true");
+//            // 关闭部分抓取，确保获取完整信头用于搜索
+//            props.put("mail.imap.partialfetch", "false");
+//
+//            Session session = Session.getInstance(props);
+//            store = session.getStore("imap");
+//            store.connect(user.getImapHost(), user.getEmail(), user.getPassword());
+//
+//            String realFolder = getCorrectFolderName(user.getType(), folderName);
+//            folder = store.getFolder(realFolder);
+//            if (!folder.exists())
+//                folder = store.getFolder("INBOX");
+//
+//            folder.open(Folder.READ_ONLY);
+//
+//            int totalMessages = folder.getMessageCount();
+//            result.put("totalCount", totalMessages); // 初始总数
+//
+//            Message[] messages = null;
+//
+//            // --- 策略判断 ---
+//            // 只有当 (无搜索词) 且 (默认排序) 时，才使用极速模式
+//            boolean hasKeyword = StringUtils.hasText(keyword);
+//            boolean isDefaultSort = (sortField == null || "date".equals(sortField))
+//                    && (sortOrder == null || "desc".equals(sortOrder));
+//            boolean useServerSidePaging = !hasKeyword && isDefaultSort;
+//
+//            if (useServerSidePaging) {
+//                // [极速模式]
+//                int end = totalMessages - (page - 1) * size;
+//                int start = end - size + 1;
+//                if (end > 0) {
+//                    if (start < 1)
+//                        start = 1;
+//                    messages = folder.getMessages(start, end);
+//                }
+//            } else {
+//                // [全量模式]
+//                if (totalMessages > 0) {
+//                    messages = folder.getMessages();
+//                }
+//            }
+//
+//            if (messages != null && messages.length > 0) {
+//                FetchProfile fp = new FetchProfile();
+//                fp.add(FetchProfile.Item.ENVELOPE);
+//                fp.add(UIDFolder.FetchProfileItem.UID);
+//                folder.fetch(messages, fp);
+//
+//                boolean isSentFolder = realFolder.equalsIgnoreCase("Sent Messages") || realFolder.equals("已发送");
+//                fullList = parseMessages((UIDFolder) folder, messages, isSentFolder);
+//            } else {
+//                if (!useServerSidePaging) {
+//                    result.put("totalCount", 0);
+//                }
+//            }
+//
+//        } catch (Exception e) {
+//            e.printStackTrace();
+//        } finally {
+//            closeQuietly(folder, store);
+//        }
+//
+//        // --- 1. 内存搜索过滤 (支持 searchType) ---
+//        if (StringUtils.hasText(keyword)) {
+//            String k = keyword.toLowerCase();
+//            String type = (searchType != null) ? searchType : "all";
+//
+//            fullList = fullList.stream()
+//                    .filter(email -> {
+//                        boolean match = false;
+//                        switch (type) {
+//                            case "sender": // 仅搜发件人
+//                                match = (email.getSender() != null && email.getSender().toLowerCase().contains(k));
+//                                break;
+//                            case "title": // 仅搜主题
+//                                match = (email.getTitle() != null && email.getTitle().toLowerCase().contains(k));
+//                                break;
+//                            case "date": // 仅搜日期
+//                                match = (email.getSendDate() != null && email.getSendDate().contains(k));
+//                                break;
+//                            case "all": // 搜全部
+//                            default:
+//                                match = (email.getTitle() != null && email.getTitle().toLowerCase().contains(k)) ||
+//                                        (email.getSender() != null && email.getSender().toLowerCase().contains(k)) ||
+//                                        (email.getSendDate() != null && email.getSendDate().contains(k));
+//                                break;
+//                        }
+//                        return match;
+//                    })
+//                    .collect(Collectors.toList());
+//
+//            // 更新搜索后的总数
+//            result.put("totalCount", fullList.size());
+//        }
+//
+//        // --- 2. 内存排序 ---
+//        Comparator<EmailInfo> comparator = null;
+//        String field = sortField != null ? sortField : "date";
+//
+//        switch (field) {
+//            case "sender":
+//                comparator = Comparator.comparing(EmailInfo::getSender, String.CASE_INSENSITIVE_ORDER);
+//                break;
+//            case "title":
+//                comparator = Comparator.comparing(EmailInfo::getTitle, String.CASE_INSENSITIVE_ORDER);
+//                break;
+//            case "date":
+//            default:
+//                comparator = Comparator.comparing(EmailInfo::getSendDate);
+//                break;
+//        }
+//
+//        if ("desc".equals(sortOrder)) {
+//            if (comparator != null)
+//                comparator = comparator.reversed();
+//        }
+//
+//        if (!fullList.isEmpty() && comparator != null) {
+//            Collections.sort(fullList, comparator);
+//        }
+//
+//        // --- 3. 内存分页 ---
+//        boolean hasKeyword = StringUtils.hasText(keyword);
+//        boolean isDefaultSort = (sortField == null || "date".equals(sortField))
+//                && (sortOrder == null || "desc".equals(sortOrder));
+//        boolean useServerSidePaging = !hasKeyword && isDefaultSort;
+//
+//        List<EmailInfo> pageList;
+//        if (useServerSidePaging) {
+//            pageList = fullList;
+//        } else {
+//            int fromIndex = (page - 1) * size;
+//            if (fromIndex >= fullList.size()) {
+//                pageList = new ArrayList<>();
+//            } else {
+//                int toIndex = Math.min(fromIndex + size, fullList.size());
+//                pageList = fullList.subList(fromIndex, toIndex);
+//            }
+//        }
+//
+//        result.put("list", pageList);
+//        return result;
+//    }
 
     /**
      * 辅助方法：批量解析 Message 到 EmailInfo
