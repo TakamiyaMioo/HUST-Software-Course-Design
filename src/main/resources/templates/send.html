@@ -158,8 +158,8 @@
             
             <form id="mailForm" method="post" action="/sendMail" enctype="multipart/form-data">
 
-                <input type="hidden" id="replyUid" th:value="${replyUid != null ? #strings.toString(replyUid) : ''}">
-                <input type="hidden" id="replyFolder" th:value="${replyFolder}">
+                <input type="hidden" id="replyUid" name="replyUid" th:value="${replyUid != null ? #strings.toString(replyUid) : ''}">
+                <input type="hidden" id="replyFolder" name="replyFolder" th:value="${replyFolder}">
 
                 <div class="form-group">
                     <label>收件人</label>
@@ -189,6 +189,13 @@
                 <div class="form-group">
                     <label><i class="fas fa-paperclip"></i> 添加附件</label>
                     <input type="file" name="file">
+
+                    <!-- 回复场景：原邮件附件（浏览器出于安全原因无法自动写入 file input，但后端会在发送时自动附带这些附件） -->
+                    <div id="replyAttachmentArea" style="display:none; margin-top:10px; padding:10px; border:1px dashed rgba(0,0,0,0.15); border-radius:8px;">
+                        <div style="font-size:12px; color:#666; margin-bottom:8px;">将自动附带原邮件附件：</div>
+                        <div id="replyAttachmentList" style="display:flex; flex-wrap:wrap; gap:8px;"></div>
+                    </div>
+
                     <p style="font-size:12px; color:#999; margin-top:5px;">(存入草稿时暂不保存附件)</p>
                 </div>
 
@@ -245,7 +252,6 @@
             if (draftData && draftData.trim() !== "") {
                 quill.setContents([]);
                 quill.clipboard.dangerouslyPasteHTML(draftData);
-
                 return; // 如果是草稿，填完就结束
             }
         }
@@ -255,7 +261,7 @@
         var rFolder = document.getElementById('replyFolder').value;
 
 if (rUid && rFolder) {
-            quill.root.innerHTML = "<p style='color:#666;'>正在加载原邮件内容...</p>";
+            quill.setText('正在加载原邮件内容...');
 
             fetch(`/email/detail?folder=${encodeURIComponent(rFolder)}&uid=${rUid}`)
                 .then(response => {
@@ -272,17 +278,35 @@ if (rUid && rFolder) {
                                 <div>------------------ 原始邮件 ------------------</div>
                             </div><br>`;
                         var originalContent = data.content || "(无内容)";
-                        quill.setContents([]);
-                        quill.clipboard.dangerouslyPasteHTML(splitLine + originalContent);
 
+                        // 回复时展示并提示将自动附带原附件
+                        if (data.files && data.files.length > 0) {
+                            var area = document.getElementById('replyAttachmentArea');
+                            var listDiv = document.getElementById('replyAttachmentList');
+                            if (area && listDiv) {
+                                listDiv.innerHTML = "";
+                                data.files.forEach(function(fName) {
+                                    var downloadUrl = "/download?filename=" + encodeURIComponent(fName);
+                                    var btn = `<a href="${downloadUrl}" target="_blank"
+                                                style="font-size:12px; padding:6px 12px; background:#f0f0f0; border-radius:4px; text-decoration:none; color:#333; border:1px solid #ddd; display:flex; align-items:center; gap:5px;">
+                                                <i class="fas fa-file-download" style="color:#0078d4;"></i> ${fName}
+                                               </a>`;
+                                    listDiv.innerHTML += btn;
+                                });
+                                area.style.display = "block";
+                            }
+                        }
+                        quill.setContents([]);
+                        // 使用 Quill 的粘贴接口，避免直接改 innerHTML 导致内容被清空/不显示
+                        quill.clipboard.dangerouslyPasteHTML(splitLine + originalContent);
                     } else {
-                        quill.root.innerHTML = "无法加载原邮件: " + data.error;
+                        quill.setText('无法加载原邮件: ' + (data.error || '未知错误'));
                     }
                 })
                 .catch(err => {
                     console.error(err);
                     // 把错误直接显示在编辑器里，方便你看
-                    quill.root.innerHTML = `<p style='color:red;'>加载失败 (Error: ${err.message})<br>可能是UID包含逗号导致，请检查 hidden input。</p>`;
+                    quill.setText('加载失败: ' + err.message);
                 });
         }
 
@@ -291,6 +315,16 @@ if (rUid && rFolder) {
         form.onsubmit = function() {
             var html = quill.root.innerHTML;
             document.getElementById('hiddenContent').value = html;
+
+            // 如果不是回复场景，避免提交空的 replyUid= 触发 Spring 参数转换错误
+            var replyUidEl = document.getElementById('replyUid');
+            var replyFolderEl = document.getElementById('replyFolder');
+            if (replyUidEl && (!replyUidEl.value || replyUidEl.value.trim() === "")) {
+                replyUidEl.disabled = true;
+            }
+            if (replyFolderEl && (!replyFolderEl.value || replyFolderEl.value.trim() === "")) {
+                replyFolderEl.disabled = true;
+            }
         }
     }
 </script>

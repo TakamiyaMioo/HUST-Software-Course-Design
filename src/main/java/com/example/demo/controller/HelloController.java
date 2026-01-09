@@ -36,7 +36,7 @@ public class HelloController {
     @Autowired
     private ContactRepository contactRepository;
     @Autowired
-    private SentLogRepository sentLogRepository; 
+    private SentLogRepository sentLogRepository;
     @Autowired
     private DraftRepository draftRepository;
 
@@ -63,42 +63,42 @@ public class HelloController {
 
     // 1. 收件箱
     @GetMapping("/inbox")
-    public ModelAndView inbox(HttpSession session, 
-                              @RequestParam(defaultValue = "1") int page,
-                              @RequestParam(defaultValue = "date") String sort,
-                              @RequestParam(defaultValue = "desc") String order,
-                              @RequestParam(required = false) String keyword,
-                              @RequestParam(defaultValue = "all") String searchType) {
+    public ModelAndView inbox(HttpSession session,
+            @RequestParam(defaultValue = "1") int page,
+            @RequestParam(defaultValue = "date") String sort,
+            @RequestParam(defaultValue = "desc") String order,
+            @RequestParam(required = false) String keyword,
+            @RequestParam(defaultValue = "all") String searchType) {
         return getFolderView(session, "收件箱", "/inbox", page, sort, order, keyword, searchType);
     }
 
     // 2. 已发送
     @GetMapping("/sent")
-    public ModelAndView sentBox(HttpSession session, 
-                                @RequestParam(defaultValue = "1") int page,
-                                @RequestParam(defaultValue = "date") String sort,
-                                @RequestParam(defaultValue = "desc") String order,
-                                @RequestParam(required = false) String keyword,
-                                @RequestParam(defaultValue = "all") String searchType) {
+    public ModelAndView sentBox(HttpSession session,
+            @RequestParam(defaultValue = "1") int page,
+            @RequestParam(defaultValue = "date") String sort,
+            @RequestParam(defaultValue = "desc") String order,
+            @RequestParam(required = false) String keyword,
+            @RequestParam(defaultValue = "all") String searchType) {
         return getFolderView(session, "已发送", "/sent", page, sort, order, keyword, searchType);
     }
 
     // 3. 已删除
     @GetMapping("/trash")
-    public ModelAndView trashBox(HttpSession session, 
-                                 @RequestParam(defaultValue = "1") int page,
-                                 @RequestParam(defaultValue = "date") String sort,
-                                 @RequestParam(defaultValue = "desc") String order,
-                                 @RequestParam(required = false) String keyword,
-                                 @RequestParam(defaultValue = "all") String searchType) {
+    public ModelAndView trashBox(HttpSession session,
+            @RequestParam(defaultValue = "1") int page,
+            @RequestParam(defaultValue = "date") String sort,
+            @RequestParam(defaultValue = "desc") String order,
+            @RequestParam(required = false) String keyword,
+            @RequestParam(defaultValue = "all") String searchType) {
         return getFolderView(session, "已删除", "/trash", page, sort, order, keyword, searchType);
     }
 
     /**
      * 公共方法：构建文件夹视图
      */
-    private ModelAndView getFolderView(HttpSession session, String folderName, String baseUrl, 
-                                       int page, String sort, String order, String keyword, String searchType) {
+    private ModelAndView getFolderView(HttpSession session, String folderName, String baseUrl,
+            int page, String sort, String order, String keyword, String searchType) {
         UserAccount user = (UserAccount) session.getAttribute("currentUser");
         if (user == null)
             return new ModelAndView("redirect:/");
@@ -106,7 +106,8 @@ public class HelloController {
         ModelAndView mav = new ModelAndView("inbox");
 
         // 1. 传递 keyword 和 searchType 到 Service
-        Map<String, Object> result = mailService.receiveEmails(user, folderName, page, 10, sort, order, keyword, searchType);
+        Map<String, Object> result = mailService.receiveEmails(user, folderName, page, 10, sort, order, keyword,
+                searchType);
 
         mav.addObject("emails", result.get("list"));
         mav.addObject("currentFolder", folderName);
@@ -119,7 +120,7 @@ public class HelloController {
 
         mav.addObject("sort", sort);
         mav.addObject("order", order);
-        mav.addObject("keyword", keyword); 
+        mav.addObject("keyword", keyword);
         mav.addObject("searchType", searchType); // 回传搜索类型
 
         mav.addObject("contacts", contactRepository.findAll());
@@ -215,10 +216,16 @@ public class HelloController {
             @RequestParam String subject,
             @RequestParam String text,
             @RequestParam(value = "file", required = false) MultipartFile file,
+            @RequestParam(value = "replyUid", required = false) Long replyUid,
+            @RequestParam(value = "replyFolder", required = false) String replyFolder,
             HttpSession session) {
         UserAccount user = (UserAccount) session.getAttribute("currentUser");
-        if (user == null) return new ModelAndView("redirect:/");
-        mailService.sendMailWithAttachment(user, to, subject, text, file);
+        if (user == null)
+            return new ModelAndView("redirect:/");
+
+        // 回复场景：把原邮件的 uid/folder 传给 Service，让后端自动附带原附件（前端无法自动写入 file input）
+        mailService.sendMailWithAttachment(user, to, subject, text, file, replyFolder, replyUid);
+
         sentLogRepository.save(new SentLog(to, subject, text));
         return new ModelAndView("redirect:/inbox");
     }
@@ -255,7 +262,8 @@ public class HelloController {
             @RequestParam(required = false) String text,
             HttpSession session) {
         UserAccount user = (UserAccount) session.getAttribute("currentUser");
-        if (user == null) return "redirect:/";
+        if (user == null)
+            return "redirect:/";
         draftRepository.save(new com.example.demo.entity.DraftEmail(user.getEmail(), to, subject, text));
         return "redirect:/drafts";
     }
@@ -263,7 +271,8 @@ public class HelloController {
     @GetMapping("/drafts")
     public ModelAndView draftBox(HttpSession session) {
         UserAccount user = (UserAccount) session.getAttribute("currentUser");
-        if (user == null) return new ModelAndView("redirect:/");
+        if (user == null)
+            return new ModelAndView("redirect:/");
         ModelAndView mav = new ModelAndView("drafts");
         List<com.example.demo.entity.DraftEmail> drafts = draftRepository.findBySender(user.getEmail());
         mav.addObject("drafts", drafts);
@@ -285,7 +294,7 @@ public class HelloController {
             mailService.moveToTrash(user, "收件箱", id);
         return "redirect:/inbox"; // 操作完成后刷新收件箱
     }
-    
+
     @GetMapping("/deleteFromSent")
     public String deleteFromSent(HttpSession session, @RequestParam Long id) {
         UserAccount user = (UserAccount) session.getAttribute("currentUser");
@@ -297,7 +306,8 @@ public class HelloController {
     @GetMapping("/deleteForever")
     public String deleteForever(HttpSession session, @RequestParam Long id) {
         UserAccount user = (UserAccount) session.getAttribute("currentUser");
-        if (user != null) mailService.deleteMessage(user, "已删除", id);
+        if (user != null)
+            mailService.deleteMessage(user, "已删除", id);
         return "redirect:/trash";
     }
 
@@ -308,5 +318,5 @@ public class HelloController {
         model.addAttribute("currentFolder", "设置");
         return "settings";
     }
-    
+
 }

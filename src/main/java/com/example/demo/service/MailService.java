@@ -28,7 +28,7 @@ public class MailService {
      * @param searchType 搜索类型: "all"(默认), "sender", "title", "date"
      */
     public Map<String, Object> receiveEmails(UserAccount user, String folderName, int page, int size,
-                                             String sortField, String sortOrder, String keyword, String searchType) {
+            String sortField, String sortOrder, String keyword, String searchType) {
         Map<String, Object> result = new HashMap<>();
         List<EmailInfo> fullList = new ArrayList<>();
         Store store = null;
@@ -61,7 +61,8 @@ public class MailService {
             // --- 策略判断 ---
             // 只有当 (无搜索词) 且 (默认排序) 时，才使用极速模式
             boolean hasKeyword = StringUtils.hasText(keyword);
-            boolean isDefaultSort = (sortField == null || "date".equals(sortField)) && (sortOrder == null || "desc".equals(sortOrder));
+            boolean isDefaultSort = (sortField == null || "date".equals(sortField))
+                    && (sortOrder == null || "desc".equals(sortOrder));
             boolean useServerSidePaging = !hasKeyword && isDefaultSort;
 
             if (useServerSidePaging) {
@@ -69,7 +70,8 @@ public class MailService {
                 int end = totalMessages - (page - 1) * size;
                 int start = end - size + 1;
                 if (end > 0) {
-                    if (start < 1) start = 1;
+                    if (start < 1)
+                        start = 1;
                     messages = folder.getMessages(start, end);
                 }
             } else {
@@ -150,7 +152,8 @@ public class MailService {
         }
 
         if ("desc".equals(sortOrder)) {
-            if (comparator != null) comparator = comparator.reversed();
+            if (comparator != null)
+                comparator = comparator.reversed();
         }
 
         if (!fullList.isEmpty() && comparator != null) {
@@ -159,7 +162,8 @@ public class MailService {
 
         // --- 3. 内存分页 ---
         boolean hasKeyword = StringUtils.hasText(keyword);
-        boolean isDefaultSort = (sortField == null || "date".equals(sortField)) && (sortOrder == null || "desc".equals(sortOrder));
+        boolean isDefaultSort = (sortField == null || "date".equals(sortField))
+                && (sortOrder == null || "desc".equals(sortOrder));
         boolean useServerSidePaging = !hasKeyword && isDefaultSort;
 
         List<EmailInfo> pageList;
@@ -182,7 +186,8 @@ public class MailService {
     /**
      * 辅助方法：批量解析 Message 到 EmailInfo
      */
-    private List<EmailInfo> parseMessages(UIDFolder uidFolder, Message[] messages, boolean isSentFolder) throws Exception {
+    private List<EmailInfo> parseMessages(UIDFolder uidFolder, Message[] messages, boolean isSentFolder)
+            throws Exception {
         List<EmailInfo> list = new ArrayList<>();
         SimpleDateFormat fmt = new SimpleDateFormat("yyyy-MM-dd HH:mm");
 
@@ -228,9 +233,10 @@ public class MailService {
         return list;
     }
 
-    // --- 保持其他方法不变 (getEmailDetail, moveToTrash, deleteMessage, sendMail, forwardMail) ---
+    // --- 保持其他方法不变 (getEmailDetail, moveToTrash, deleteMessage, sendMail,
+    // forwardMail) ---
     // 为节省篇幅，这里假设你已经保留了上个版本中的这些方法代码
-    
+
     public EmailInfo getEmailDetail(UserAccount user, String folderName, long uid) {
         Store store = null;
         Folder folder = null;
@@ -248,7 +254,8 @@ public class MailService {
             folder.open(Folder.READ_ONLY);
             UIDFolder uidFolder = (UIDFolder) folder;
             Message msg = uidFolder.getMessageByUID(uid);
-            if (msg == null) return null;
+            if (msg == null)
+                return null;
             String subject = (msg.getSubject() != null) ? MimeUtility.decodeText(msg.getSubject()) : "无标题";
             String fromFull = "未知";
             if (msg.getFrom() != null && msg.getFrom().length > 0) {
@@ -259,7 +266,8 @@ public class MailService {
             if (fromFull.contains("<")) {
                 fromName = fromFull.substring(0, fromFull.indexOf("<")).trim();
                 fromAddress = fromFull.substring(fromFull.indexOf("<") + 1, fromFull.indexOf(">")).trim();
-                if (fromName.isEmpty()) fromName = fromAddress;
+                if (fromName.isEmpty())
+                    fromName = fromAddress;
             } else {
                 fromAddress = fromFull;
             }
@@ -268,17 +276,20 @@ public class MailService {
             if (recipients != null) {
                 for (int i = 0; i < recipients.length; i++) {
                     recipientsBuilder.append(MimeUtility.decodeText(recipients[i].toString()));
-                    if (i < recipients.length - 1) recipientsBuilder.append("; ");
+                    if (i < recipients.length - 1)
+                        recipientsBuilder.append("; ");
                 }
             }
             String recipientsStr = recipientsBuilder.toString();
-            if (recipientsStr.isEmpty()) recipientsStr = "未知";
+            if (recipientsStr.isEmpty())
+                recipientsStr = "未知";
             SimpleDateFormat fmt = new SimpleDateFormat("yyyy-MM-dd HH:mm");
             String sentDate = (msg.getSentDate() != null) ? fmt.format(msg.getSentDate()) : "未知时间";
             StringBuilder contentBuffer = new StringBuilder();
             List<String> attachmentList = new ArrayList<>();
             parseMessage(msg, contentBuffer, attachmentList);
-            return new EmailInfo(uid, subject, fromName, fromAddress, recipientsStr, sentDate, contentBuffer.toString(), attachmentList);
+            return new EmailInfo(uid, subject, fromName, fromAddress, recipientsStr, sentDate, contentBuffer.toString(),
+                    attachmentList);
         } catch (Exception e) {
             e.printStackTrace();
             return null;
@@ -306,8 +317,10 @@ public class MailService {
             String trashRealName = getCorrectFolderName(user.getType(), "已删除");
             trashFolder = store.getFolder(trashRealName);
             if (!trashFolder.exists()) {
-                if ("qq".equals(user.getType())) trashFolder = store.getFolder("Deleted Messages");
-                else trashFolder = store.getFolder("已删除");
+                if ("qq".equals(user.getType()))
+                    trashFolder = store.getFolder("Deleted Messages");
+                else
+                    trashFolder = store.getFolder("已删除");
             }
             if (trashFolder.exists()) {
                 trashFolder.open(Folder.READ_WRITE);
@@ -357,18 +370,53 @@ public class MailService {
         }
     }
 
-    public void sendMailWithAttachment(UserAccount user, String to, String subject, String content, org.springframework.web.multipart.MultipartFile file) {
+    public void sendMailWithAttachment(UserAccount user, String to, String subject, String content,
+            org.springframework.web.multipart.MultipartFile file) {
+        // 兼容旧调用：非回复场景
+        sendMailWithAttachment(user, to, subject, content, file, null, null);
+    }
+
+    /**
+     * 发送邮件（支持：1）用户选择的新附件；2）回复邮件时自动附带原邮件附件）
+     *
+     * 注意：浏览器出于安全原因无法在前端自动把附件“塞进” file input，
+     * 所以回复场景下我们在后端根据 replyFolder + replyUid 重新取原邮件附件并附带发送。
+     */
+    public void sendMailWithAttachment(UserAccount user, String to, String subject, String content,
+            org.springframework.web.multipart.MultipartFile file,
+            String replyFolder, Long replyUid) {
         try {
             JavaMailSenderImpl sender = createSender(user);
             jakarta.mail.internet.MimeMessage message = sender.createMimeMessage();
-            org.springframework.mail.javamail.MimeMessageHelper helper = new org.springframework.mail.javamail.MimeMessageHelper(message, true, "UTF-8");
+            org.springframework.mail.javamail.MimeMessageHelper helper = new org.springframework.mail.javamail.MimeMessageHelper(
+                    message, true, "UTF-8");
+
             helper.setFrom(user.getEmail());
             helper.setTo(to);
             helper.setSubject(subject);
             helper.setText(content, true);
+
+            // 1) 用户手动选择的新附件
             if (file != null && !file.isEmpty()) {
                 helper.addAttachment(file.getOriginalFilename(), file);
             }
+
+            // 2) 回复时自动附带原邮件附件
+            if (replyUid != null && replyFolder != null && !replyFolder.isEmpty()) {
+                EmailInfo original = getEmailDetail(user, replyFolder, replyUid);
+                if (original != null) {
+                    List<String> filenames = original.getFilenames();
+                    if (filenames != null && !filenames.isEmpty()) {
+                        for (String filename : filenames) {
+                            File f = new File(SAVE_PATH + filename);
+                            if (f.exists()) {
+                                helper.addAttachment(filename, f);
+                            }
+                        }
+                    }
+                }
+            }
+
             sender.send(message);
             saveToSentFolder(user, message);
         } catch (Exception e) {
@@ -380,17 +428,22 @@ public class MailService {
     public void forwardMail(UserAccount user, String folder, Long originalUid, String targetEmail, String userComment) {
         try {
             EmailInfo original = getEmailDetail(user, folder, originalUid);
-            if (original == null) throw new RuntimeException("原邮件加载失败");
+            if (original == null)
+                throw new RuntimeException("原邮件加载失败");
             String subject = "Fwd: " + original.getTitle();
             StringBuilder contentBuilder = new StringBuilder();
             if (userComment != null && !userComment.isEmpty()) {
-                contentBuilder.append("<div style='margin-bottom: 20px; font-size: 14px;'>").append(userComment.replace("\n", "<br>")).append("</div>");
+                contentBuilder.append("<div style='margin-bottom: 20px; font-size: 14px;'>")
+                        .append(userComment.replace("\n", "<br>")).append("</div>");
             }
             String senderStr = original.getSender();
-            if (original.getAddress() != null && !original.getAddress().isEmpty()) senderStr += " &lt;" + original.getAddress() + "&gt;";
+            if (original.getAddress() != null && !original.getAddress().isEmpty())
+                senderStr += " &lt;" + original.getAddress() + "&gt;";
             String recipientsStr = original.getRecipients();
-            if (recipientsStr != null) recipientsStr = recipientsStr.replace("<", "&lt;").replace(">", "&gt;");
-            String quoteHeader = "<div style='background:#f2f2f2; padding:10px; font-size:12px; color:#333; line-height:1.6; border-radius:5px;'>" +
+            if (recipientsStr != null)
+                recipientsStr = recipientsStr.replace("<", "&lt;").replace(">", "&gt;");
+            String quoteHeader = "<div style='background:#f2f2f2; padding:10px; font-size:12px; color:#333; line-height:1.6; border-radius:5px;'>"
+                    +
                     "<div>------------------ 原始邮件 ------------------</div>" +
                     "<div><b>发件人:</b> " + senderStr + "</div>" +
                     "<div><b>发送时间:</b> " + original.getSendDate() + "</div>" +
@@ -401,7 +454,8 @@ public class MailService {
             contentBuilder.append(original.getContent());
             JavaMailSenderImpl sender = createSender(user);
             jakarta.mail.internet.MimeMessage message = sender.createMimeMessage();
-            org.springframework.mail.javamail.MimeMessageHelper helper = new org.springframework.mail.javamail.MimeMessageHelper(message, true, "UTF-8");
+            org.springframework.mail.javamail.MimeMessageHelper helper = new org.springframework.mail.javamail.MimeMessageHelper(
+                    message, true, "UTF-8");
             helper.setFrom(user.getEmail());
             helper.setTo(targetEmail);
             helper.setSubject(subject);
@@ -410,7 +464,8 @@ public class MailService {
             if (filenames != null && !filenames.isEmpty()) {
                 for (String filename : filenames) {
                     File file = new File(SAVE_PATH + filename);
-                    if (file.exists()) helper.addAttachment(filename, file);
+                    if (file.exists())
+                        helper.addAttachment(filename, file);
                 }
             }
             sender.send(message);
@@ -435,7 +490,8 @@ public class MailService {
             store.connect(user.getImapHost(), user.getEmail(), user.getPassword());
             String sentName = getCorrectFolderName(user.getType(), "已发送");
             sentFolder = store.getFolder(sentName);
-            if (!sentFolder.exists()) sentFolder = store.getFolder("Sent Messages");
+            if (!sentFolder.exists())
+                sentFolder = store.getFolder("Sent Messages");
             if (sentFolder.exists()) {
                 sentFolder.open(Folder.READ_WRITE);
                 message.setFlag(Flags.Flag.SEEN, true);
@@ -448,14 +504,19 @@ public class MailService {
     }
 
     private String getCorrectFolderName(String mailType, String uiFolderName) {
-        if ("收件箱".equals(uiFolderName)) return "INBOX";
+        if ("收件箱".equals(uiFolderName))
+            return "INBOX";
         if ("qq".equals(mailType)) {
-            if ("已发送".equals(uiFolderName)) return "Sent Messages";
-            if ("已删除".equals(uiFolderName) || "垃圾箱".equals(uiFolderName)) return "Deleted Messages";
+            if ("已发送".equals(uiFolderName))
+                return "Sent Messages";
+            if ("已删除".equals(uiFolderName) || "垃圾箱".equals(uiFolderName))
+                return "Deleted Messages";
         }
         if ("163".equals(mailType)) {
-            if ("已发送".equals(uiFolderName)) return "已发送";
-            if ("已删除".equals(uiFolderName) || "垃圾箱".equals(uiFolderName)) return "已删除";
+            if ("已发送".equals(uiFolderName))
+                return "已发送";
+            if ("已删除".equals(uiFolderName) || "垃圾箱".equals(uiFolderName))
+                return "已删除";
         }
         return uiFolderName;
     }
@@ -554,7 +615,15 @@ public class MailService {
     }
 
     private void closeQuietly(Folder folder, Store store) {
-        try { if (folder != null && folder.isOpen()) folder.close(false); } catch (Exception e) {}
-        try { if (store != null) store.close(); } catch (Exception e) {}
+        try {
+            if (folder != null && folder.isOpen())
+                folder.close(false);
+        } catch (Exception e) {
+        }
+        try {
+            if (store != null)
+                store.close();
+        } catch (Exception e) {
+        }
     }
 }
