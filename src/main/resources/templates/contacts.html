@@ -6,7 +6,7 @@
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" rel="stylesheet">
 
     <style>
-        /* ================== 1. 全局变量与布局 ================== */
+        /* ================== 1. 全局变量 ================== */
         :root {
             --bg-image: url('/images/bgcontacts.jpg');
             --glass-bg: rgba(255, 255, 255, 0.85);
@@ -17,9 +17,7 @@
             --border-color: rgba(255, 255, 255, 0.6);
             --hover-bg: rgba(255, 255, 255, 0.8);
             --card-bg: rgba(255, 255, 255, 0.6);
-            --table-header-bg: rgba(255, 255, 255, 0.9);
             --input-bg: white;
-            --shadow-color: rgba(0, 0, 0, 0.1);
         }
 
         body.dark-mode {
@@ -31,9 +29,7 @@
             --border-color: rgba(255, 255, 255, 0.1);
             --hover-bg: rgba(255, 255, 255, 0.1);
             --card-bg: rgba(40, 40, 40, 0.6);
-            --table-header-bg: rgba(40, 40, 40, 0.9);
             --input-bg: #444;
-            --shadow-color: rgba(0, 0, 0, 0.5);
         }
 
         body {
@@ -47,63 +43,49 @@
 
         .glass-container {
             width: 90%; height: 90vh; background: var(--glass-bg); backdrop-filter: blur(12px);
-            border: 1px solid var(--border-color); border-radius: 20px; box-shadow: 0 15px 40px var(--shadow-color);
+            border: 1px solid var(--border-color); border-radius: 20px; box-shadow: 0 15px 40px rgba(0,0,0,0.1);
             display: flex; overflow: hidden;
         }
 
-        /* ================== 2. 侧边栏样式 ================== */
+        /* 侧边栏 */
         .sidebar { width: 260px; background: var(--sidebar-bg); border-right: 1px solid rgba(0,0,0,0.05); display: flex; flex-direction: column; padding: 20px; overflow-y: auto; }
         .user-profile-area { margin-bottom: 20px; border-bottom: 1px dashed #ccc; padding-bottom: 15px; }
         .app-user-name { font-weight: bold; font-size: 16px; color: var(--text-main); margin-bottom: 10px; display: flex; align-items: center; gap: 8px; }
         .account-list-title { font-size: 12px; color: #999; margin-bottom: 8px; font-weight: bold; }
-
-        .account-switcher-item {
-            display: flex; align-items: center; padding: 8px 12px;
-            border-radius: 8px; cursor: pointer; transition: 0.2s;
-            margin-bottom: 5px; text-decoration: none; color: var(--text-sub);
-            border: 1px solid transparent;
-        }
+        .account-switcher-item { display: flex; align-items: center; padding: 8px 12px; border-radius: 8px; cursor: pointer; transition: 0.2s; margin-bottom: 5px; text-decoration: none; color: var(--text-sub); border: 1px solid transparent; }
         .account-switcher-item:hover { background: var(--hover-bg); }
-        .account-switcher-item.active {
-            background: rgba(0, 120, 212, 0.1);
-            border-color: rgba(0, 120, 212, 0.3);
-            color: #0078d4; font-weight: bold;
-        }
-
+        .account-switcher-item.active { background: rgba(0, 120, 212, 0.1); border-color: rgba(0, 120, 212, 0.3); color: #0078d4; font-weight: bold; }
         .acc-icon { width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; border-radius: 50%; background: #eee; margin-right: 10px; font-size: 12px; }
         .active .acc-icon { background: #0078d4; color: white; }
         .add-acc-btn { font-size: 12px; color: #0078d4; text-decoration: none; padding-left: 10px; display: inline-block; margin-top: 5px;}
-        .add-acc-btn:hover { text-decoration: underline; }
-
         .menu-item { display: flex; align-items: center; padding: 12px 15px; color: var(--text-sub); text-decoration: none; border-radius: 10px; margin-bottom: 5px; transition: 0.3s; cursor: pointer; }
         .menu-item:hover { background: var(--hover-bg); color: #0078d4; transform: translateX(5px); }
         .menu-item.active { background: #0078d4; color: white; box-shadow: 0 4px 10px rgba(0, 120, 212, 0.3); }
         .menu-item i { width: 25px; font-size: 18px; }
         .menu-title { font-size: 12px; color: #999; margin-top: 20px; margin-bottom: 10px; padding-left: 10px; }
 
-        /* ================== 3. 通讯录主内容区域 ================== */
+        /* 主内容区 */
         .main-content { flex: 1; padding: 40px; overflow-y: auto; color: var(--text-main); display: flex; flex-direction: column; }
+        .contacts-container { max-width: 900px; margin: 0 auto; width: 100%; background: var(--card-bg); border-radius: 15px; padding: 30px; box-shadow: 0 10px 30px rgba(0,0,0,0.05); display: flex; flex-direction: column; height: 100%; }
 
-        .contacts-container {
-            max-width: 900px; margin: 0 auto; width: 100%;
-            background: var(--card-bg); border-radius: 15px; padding: 30px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.05); display: flex; flex-direction: column; height: 100%;
-        }
-
+        /* 顶部 Header */
         .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 1px solid rgba(0,0,0,0.1); padding-bottom: 15px; }
         h2 { margin: 0; font-size: 24px; color: #2d6a4f; display: flex; align-items: center; gap: 10px; }
 
-        /* 【新增】返回按钮样式 */
-        .btn-back {
-            text-decoration: none; color: var(--text-sub); font-size: 14px;
-            padding: 8px 15px; background: rgba(0,0,0,0.05); border-radius: 20px;
-            transition: 0.2s; display: flex; align-items: center; gap: 5px;
+        .actions { display: flex; gap: 10px; }
+        .btn-tool {
+            text-decoration: none; font-size: 13px; padding: 8px 15px; border-radius: 6px; cursor: pointer; border: 1px solid transparent;
+            display: flex; align-items: center; gap: 5px; transition: 0.2s;
         }
-        .btn-back:hover { background: #0078d4; color: white; }
+        .btn-export { background: #e8f5e9; color: #2d6a4f; border-color: #c8e6c9; }
+        .btn-export:hover { background: #c8e6c9; }
+        .btn-import { background: #e3f2fd; color: #0078d4; border-color: #bbdefb; }
+        .btn-import:hover { background: #bbdefb; }
+        .btn-back { background: rgba(0,0,0,0.05); color: var(--text-sub); }
+        .btn-back:hover { background: var(--hover-bg); }
 
         .table-wrapper { flex: 1; overflow-y: auto; border-radius: 8px; margin-bottom: 20px; border: 1px solid rgba(0,0,0,0.05); }
         table { width: 100%; border-collapse: collapse; }
-
         th { text-align: left; background: rgba(45, 106, 79, 0.1); color: #2d6a4f; padding: 15px 20px; font-weight: 600; position: sticky; top: 0; }
         td { padding: 15px 20px; border-bottom: 1px solid rgba(0,0,0,0.05); color: var(--text-main); }
         tr:hover { background-color: var(--hover-bg); }
@@ -114,13 +96,10 @@
         .add-section { background: rgba(0,0,0,0.02); padding: 20px; border-radius: 12px; border: 1px dashed #ced4da; margin-top: auto; }
         .form-title { font-size: 14px; color: #2d6a4f; margin-bottom: 15px; font-weight: bold; display: flex; align-items: center; gap: 8px; }
         .input-group { display: flex; gap: 15px; }
-
         input { flex: 1; padding: 12px 15px; border: 1px solid var(--border-color); border-radius: 8px; background: var(--input-bg); color: var(--text-main); outline: none; transition: 0.3s; }
         input:focus { border-color: #40916c; box-shadow: 0 0 0 3px rgba(64, 145, 108, 0.1); }
-
         .btn-save { background: linear-gradient(135deg, #40916c 0%, #2d6a4f 100%); color: white; border: none; padding: 0 30px; border-radius: 8px; cursor: pointer; font-weight: bold; transition: 0.3s; display: flex; align-items: center; gap: 5px; }
         .btn-save:hover { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(45, 106, 79, 0.3); }
-
         .empty-state { text-align: center; padding: 50px; color: #adb5bd; }
 
         .fade-in { animation: fadeIn 0.3s ease; }
@@ -144,7 +123,6 @@
         </div>
 
         <div class="account-list-title">切换邮箱账号</div>
-
         <a th:each="acc : ${myAccounts}"
            th:href="@{/account/switch(id=${acc.id})}"
            class="account-switcher-item"
@@ -180,7 +158,22 @@
         <div class="contacts-container fade-in">
             <div class="header">
                 <h2><i class="fas fa-address-book"></i> 我的通讯录</h2>
-                <a href="/inbox" class="btn-back"><i class="fas fa-arrow-left"></i> 返回收件箱</a>
+
+                <div class="actions">
+                    <a href="/contacts/export" target="_blank" class="btn-tool btn-export">
+                        <i class="fas fa-file-download"></i> 导出 CSV
+                    </a>
+                    <button onclick="document.getElementById('importFile').click()" class="btn-tool btn-import">
+                        <i class="fas fa-file-upload"></i> 导入 CSV
+                    </button>
+                    <a href="/inbox" class="btn-tool btn-back">
+                        <i class="fas fa-arrow-left"></i> 返回
+                    </a>
+                </div>
+
+                <form id="importForm" action="/contacts/import" method="post" enctype="multipart/form-data" style="display:none;">
+                    <input type="file" id="importFile" name="file" accept=".csv" onchange="document.getElementById('importForm').submit()">
+                </form>
             </div>
 
             <div class="table-wrapper">
@@ -209,7 +202,7 @@
                     <tr th:if="${contacts.size() == 0}">
                         <td colspan="3" class="empty-state">
                             <i class="fas fa-users-slash" style="font-size: 30px; margin-bottom: 10px;"></i><br>
-                            通讯录还是空的，快去添加朋友吧！
+                            通讯录还是空的，快去添加或导入吧！
                         </td>
                     </tr>
                     </tbody>
@@ -231,21 +224,17 @@
 </div>
 
 <script>
-    // 页面加载时：自动恢复主题和背景
     window.onload = function() {
         const savedTheme = localStorage.getItem('theme');
-        if (savedTheme === 'dark') {
-            document.body.classList.add('dark-mode');
-        }
+        if (savedTheme === 'dark') document.body.classList.add('dark-mode');
         const savedBg = localStorage.getItem('customBg');
-        if (savedBg) {
-            document.body.style.setProperty('--bg-image', `url(${savedBg})`);
-        }
+        if (savedBg) document.body.style.setProperty('--bg-image', `url(${savedBg})`);
     }
 </script>
 
 </body>
 </html>
+
 
 <!--<!DOCTYPE html>-->
 <!--<html xmlns:th="http://www.thymeleaf.org">-->
@@ -255,9 +244,9 @@
 <!--    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" rel="stylesheet">-->
 
 <!--    <style>-->
-<!--        /* ================== 1. 全局变量与布局 (与Inbox一致) ================== */-->
+<!--        /* ================== 1. 全局变量与布局 ================== */-->
 <!--        :root {-->
-<!--            &#45;&#45;bg-image: url('/images/bgcontacts.jpg'); /* 默认背景，同时也支持被JS覆盖 */-->
+<!--            &#45;&#45;bg-image: url('/images/bgcontacts.jpg');-->
 <!--            &#45;&#45;glass-bg: rgba(255, 255, 255, 0.85);-->
 <!--            &#45;&#45;sidebar-bg: rgba(255, 255, 255, 0.5);-->
 <!--            &#45;&#45;main-bg: rgba(255, 255, 255, 0.3);-->
@@ -342,6 +331,14 @@
 <!--        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 1px solid rgba(0,0,0,0.1); padding-bottom: 15px; }-->
 <!--        h2 { margin: 0; font-size: 24px; color: #2d6a4f; display: flex; align-items: center; gap: 10px; }-->
 
+<!--        /* 【新增】返回按钮样式 */-->
+<!--        .btn-back {-->
+<!--            text-decoration: none; color: var(&#45;&#45;text-sub); font-size: 14px;-->
+<!--            padding: 8px 15px; background: rgba(0,0,0,0.05); border-radius: 20px;-->
+<!--            transition: 0.2s; display: flex; align-items: center; gap: 5px;-->
+<!--        }-->
+<!--        .btn-back:hover { background: #0078d4; color: white; }-->
+
 <!--        .table-wrapper { flex: 1; overflow-y: auto; border-radius: 8px; margin-bottom: 20px; border: 1px solid rgba(0,0,0,0.05); }-->
 <!--        table { width: 100%; border-collapse: collapse; }-->
 
@@ -421,6 +418,7 @@
 <!--        <div class="contacts-container fade-in">-->
 <!--            <div class="header">-->
 <!--                <h2><i class="fas fa-address-book"></i> 我的通讯录</h2>-->
+<!--                <a href="/inbox" class="btn-back"><i class="fas fa-arrow-left"></i> 返回收件箱</a>-->
 <!--            </div>-->
 
 <!--            <div class="table-wrapper">-->
