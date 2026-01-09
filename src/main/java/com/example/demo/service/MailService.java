@@ -476,18 +476,76 @@ public class MailService {
         return sender;
     }
 
+    /**
+     * 递归解析邮件内容（修复版）
+     * 1. 智能处理 multipart/alternative，优先取 HTML，避免重复
+     * 2. 纯文本转 HTML，解决换行丢失问题
+     */
     private void parseMessage(Part part, StringBuilder bodyText, List<String> attachments) throws Exception {
-        if (part.isMimeType("text/plain") || part.isMimeType("text/html")) {
+        // 1. 处理纯文本：将换行符转换为 <br>
+        if (part.isMimeType("text/plain")) {
+            String txt = part.getContent().toString();
+            // 防止 null
+            if (txt == null)
+                txt = "";
+            // 将换行符转为 HTML 换行，并包裹 div 保持样式
+            bodyText.append("<div style='font-family: sans-serif; white-space: pre-wrap;'>")
+                    .append(txt) // pre-wrap 能保留原有的换行和空格，也可以用 .replace("\n", "<br>")
+                    .append("</div>");
+        }
+        // 2. 处理 HTML：直接拼接
+        else if (part.isMimeType("text/html")) {
             bodyText.append(part.getContent().toString());
-        } else if (part.isMimeType("multipart/*")) {
+        }
+        // 3. 处理多部分内容 (Multipart)
+        else if (part.isMimeType("multipart/*")) {
             Multipart multipart = (Multipart) part.getContent();
-            for (int i = 0; i < multipart.getCount(); i++) {
-                parseMessage(multipart.getBodyPart(i), bodyText, attachments);
+
+            // --- 核心修复：针对 multipart/alternative (多重选择) 的特殊处理 ---
+            if (part.isMimeType("multipart/alternative")) {
+                Part bestPart = null;
+                // 策略：优先找 HTML
+                for (int i = 0; i < multipart.getCount(); i++) {
+                    Part p = multipart.getBodyPart(i);
+                    if (p.isMimeType("text/html")) {
+                        bestPart = p;
+                        break;
+                    }
+                }
+                // 如果没找到 HTML，再找纯文本
+                if (bestPart == null) {
+                    for (int i = 0; i < multipart.getCount(); i++) {
+                        Part p = multipart.getBodyPart(i);
+                        if (p.isMimeType("text/plain")) {
+                            bestPart = p;
+                            break;
+                        }
+                    }
+                }
+
+                // 如果找到了最佳部分，只解析这一个！
+                if (bestPart != null) {
+                    parseMessage(bestPart, bodyText, attachments);
+                } else {
+                    // 极端情况：都没有，那就按默认逻辑全部遍历（防止漏掉内容）
+                    for (int i = 0; i < multipart.getCount(); i++) {
+                        parseMessage(multipart.getBodyPart(i), bodyText, attachments);
+                    }
+                }
+            } else {
+                // --- 对于 multipart/mixed 或 related (包含附件或内嵌图)，遍历所有部分 ---
+                for (int i = 0; i < multipart.getCount(); i++) {
+                    parseMessage(multipart.getBodyPart(i), bodyText, attachments);
+                }
             }
-        } else if (Part.ATTACHMENT.equalsIgnoreCase(part.getDisposition()) || (part.getFileName() != null && !part.getFileName().isEmpty())) {
+        }
+        // 4. 处理附件
+        else if (Part.ATTACHMENT.equalsIgnoreCase(part.getDisposition()) ||
+                (part.getFileName() != null && !part.getFileName().isEmpty())) {
             String fileName = MimeUtility.decodeText(part.getFileName());
             File saveDir = new File(SAVE_PATH);
-            if (!saveDir.exists()) saveDir.mkdirs();
+            if (!saveDir.exists())
+                saveDir.mkdirs();
             try (InputStream is = part.getInputStream()) {
                 Files.copy(is, new File(SAVE_PATH + fileName).toPath(), StandardCopyOption.REPLACE_EXISTING);
             }

@@ -203,18 +203,32 @@
                     <td class="date-col" th:text="${email.sendDate}">时间</td>
 
                     <td style="text-align: center; white-space: nowrap;" onclick="event.stopPropagation()">
+                        
+                        <a th:if="${currentFolder == null || currentFolder == '收件箱'}"
+                        th:href="@{/sendPage(replyUid=${email.id}, folder=${(currentFolder == '收件箱' || currentFolder == null) ? 'INBOX' : currentFolder})}"
+                        class="btn-action" title="回复" 
+                        style="color: #0078d4; margin-right: 5px;"> <i class="fas fa-reply"></i>
+                        </a>
+
                         <a th:if="${currentFolder == null || currentFolder == '收件箱' || currentFolder == '已发送' || currentFolder == '已删除'}"
                         href="javascript:void(0)"
                         th:onclick="|openForwardModal(${email.id})|"
                         class="btn-action" title="转发" style="color: #28a745;">
                             <i class="fas fa-share"></i>
                         </a>
-                        
+
+                        <a th:if="${currentFolder == null || currentFolder == '收件箱'}"
+                        th:href="@{/deleteFromInbox(id=${email.id})}"
+                        class="btn-action btn-trash" title="移入已删除" onclick="return confirm('确定要删除收件箱的这封邮件吗？')">
+                        <i class="fas fa-trash"></i>
+                        </a>
+
                         <a th:if="${currentFolder == '已发送'}"
                             th:href="@{/deleteFromSent(id=${email.id})}"
                             class="btn-action btn-trash" title="移入已删除" onclick="return confirm('确定要删除吗？')">
                             <i class="fas fa-trash"></i>
                         </a>
+                        
                         <a th:if="${currentFolder == '已删除'}"
                             th:href="@{/deleteForever(id=${email.id})}"
                             class="btn-action btn-trash" title="彻底删除" style="color: #ff4d4f;" onclick="return confirm('确定彻底删除吗？')">

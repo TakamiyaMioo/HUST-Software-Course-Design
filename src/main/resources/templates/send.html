@@ -157,7 +157,10 @@
             <div class="send-header"><i class="fas fa-pen" style="color: #0078d4;"></i> 写邮件</div>
             
             <form id="mailForm" method="post" action="/sendMail" enctype="multipart/form-data">
-                
+
+                <input type="hidden" id="replyUid" th:value="${replyUid != null ? #strings.toString(replyUid) : ''}">
+                <input type="hidden" id="replyFolder" th:value="${replyFolder}">
+
                 <div class="form-group">
                     <label>收件人</label>
                     <input type="text" name="to" placeholder="user@example.com" 
@@ -178,7 +181,7 @@
                     
                     <input type="hidden" name="text" id="hiddenContent">
                     
-                    <div id="draftContentData" style="display:none;" th:utext="${draftContent}"></div>
+                    <textarea id="draftContentData" style="display:none;" th:utext="${draftContent}"></textarea>
                     
                     <div id="editor-container"></div>
                 </div>
@@ -218,31 +221,74 @@
         initEditor();
     }
 
+// 修改 send.html 底部的 initEditor 函数
+
     function initEditor() {
         var quill = new Quill('#editor-container', {
             theme: 'snow',
             placeholder: '在此输入精彩内容...',
             modules: {
                 toolbar: [
-                    [{ 'header': [1, 2, 3, false] }], // 标题
-                    ['bold', 'italic', 'underline', 'strike'], // 加粗等
-                    [{ 'color': [] }, { 'background': [] }], // 颜色
-                    [{ 'list': 'ordered'}, { 'list': 'bullet' }], // 列表
-                    ['link', 'clean'] // 链接、清除格式
+                    [{ 'header': [1, 2, 3, false] }],
+                    ['bold', 'italic', 'underline', 'strike'],
+                    [{ 'color': [] }, { 'background': [] }],
+                    [{ 'list': 'ordered'}, { 'list': 'bullet' }],
+                    ['link', 'clean']
                 ]
             }
         });
 
-        // 3. 如果是编辑草稿，回填数据
-        var draftData = document.getElementById('draftContentData').innerHTML;
-        if (draftData && draftData.trim() !== "") {
-            quill.root.innerHTML = draftData;
+        // --- 逻辑 A: 处理草稿 (保持不变) ---
+        var dataArea = document.getElementById('draftContentData');
+        if (dataArea) {
+            var draftData = dataArea.value; 
+            if (draftData && draftData.trim() !== "") {
+                quill.setContents([]);
+                quill.clipboard.dangerouslyPasteHTML(draftData);
+
+                return; // 如果是草稿，填完就结束
+            }
         }
 
-        // 4. 监听表单提交，把编辑器内容同步到 hidden input
+        // --- 逻辑 B: 处理回复 (新增逻辑：前端异步加载) ---
+        var rUid = document.getElementById('replyUid').value;
+        var rFolder = document.getElementById('replyFolder').value;
+
+if (rUid && rFolder) {
+            quill.root.innerHTML = "<p style='color:#666;'>正在加载原邮件内容...</p>";
+
+            fetch(`/email/detail?folder=${encodeURIComponent(rFolder)}&uid=${rUid}`)
+                .then(response => {
+                    // 如果后端报错 (比如 400 Bad Request)，这里会捕获到
+                    if (!response.ok) {
+                        throw new Error("HTTP error " + response.status); 
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    if(data.success) {
+                        var splitLine = `<br><br><br>
+                            <div style="background:#f2f2f2; padding:10px; font-size:12px; color:#333; border-radius:5px; margin-top:20px;">
+                                <div>------------------ 原始邮件 ------------------</div>
+                            </div><br>`;
+                        var originalContent = data.content || "(无内容)";
+                        quill.setContents([]);
+                        quill.clipboard.dangerouslyPasteHTML(splitLine + originalContent);
+
+                    } else {
+                        quill.root.innerHTML = "无法加载原邮件: " + data.error;
+                    }
+                })
+                .catch(err => {
+                    console.error(err);
+                    // 把错误直接显示在编辑器里，方便你看
+                    quill.root.innerHTML = `<p style='color:red;'>加载失败 (Error: ${err.message})<br>可能是UID包含逗号导致，请检查 hidden input。</p>`;
+                });
+        }
+
+        // 4. 监听表单提交 (保持不变)
         var form = document.getElementById('mailForm');
         form.onsubmit = function() {
-            // 获取 HTML 内容
             var html = quill.root.innerHTML;
             document.getElementById('hiddenContent').value = html;
         }

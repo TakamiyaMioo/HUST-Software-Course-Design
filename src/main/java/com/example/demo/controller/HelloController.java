@@ -169,17 +169,22 @@ public class HelloController {
         }
     }
 
-    // --- 写信、回复 ---
+    // 修改 HelloController.java 中的 sendPage 方法
     @GetMapping("/sendPage")
     public ModelAndView sendPage(HttpSession session,
             @RequestParam(required = false) Long draftId,
             @RequestParam(required = false) Long replyUid,
             @RequestParam(required = false) String folder) {
+
         UserAccount user = (UserAccount) session.getAttribute("currentUser");
-        if (user == null) return new ModelAndView("redirect:/");
+        if (user == null)
+            return new ModelAndView("redirect:/");
+
         ModelAndView mav = new ModelAndView("send");
         mav.addObject("contacts", contactRepository.findAll());
         mav.addObject("currentFolder", "写信");
+
+        // 1. 如果是草稿，还是照旧（因为草稿是简单的文本，通常没问题，或者你也可以改成前端加载）
         if (draftId != null) {
             draftRepository.findById(draftId).ifPresent(draft -> {
                 mav.addObject("draftReceiver", draft.getReceiver());
@@ -188,28 +193,18 @@ public class HelloController {
             });
             return mav;
         }
+
+        // 2. 【修改重点】如果是回复，我们不再去查邮件内容，只把 ID 和 Folder 传给前端页面
         if (replyUid != null && folder != null) {
+            // 先去查一下简单的头信息填好收件人和标题（这步很快，不容易出错）
             EmailInfo originalEmail = mailService.getEmailDetail(user, folder, replyUid);
             if (originalEmail != null) {
-                String senderStr = originalEmail.getSender();
-                if (originalEmail.getAddress() != null && !originalEmail.getAddress().isEmpty()) {
-                    senderStr += " &lt;" + originalEmail.getAddress() + "&gt;";
-                }
-                String recipientsStr = originalEmail.getRecipients();
-                if (recipientsStr != null) {
-                    recipientsStr = recipientsStr.replace("<", "&lt;").replace(">", "&gt;");
-                }
-                String splitLine = "<br><br><br><div style='background:#f2f2f2; padding:10px; font-size:12px; color:#333; line-height:1.6; border-radius:5px;'>"
-                        + "<div>------------------ 原始邮件 ------------------</div>"
-                        + "<div><b>发件人:</b> " + senderStr + "</div>"
-                        + "<div><b>发送时间:</b> " + originalEmail.getSendDate() + "</div>"
-                        + "<div><b>收件人:</b> " + (recipientsStr != null ? recipientsStr : "未知") + "</div>"
-                        + "<div><b>主题:</b> " + originalEmail.getTitle() + "</div>"
-                        + "</div><br>";
-                String fullContent = splitLine + originalEmail.getContent();
-                mav.addObject("draftContent", fullContent);
                 mav.addObject("draftReceiver", originalEmail.getAddress());
                 mav.addObject("draftTitle", "Re: " + originalEmail.getTitle());
+
+                // 关键：把 ID 和 Folder 传给前端，让前端 JS 去加载正文
+                mav.addObject("replyUid", replyUid);
+                mav.addObject("replyFolder", folder);
             }
         }
         return mav;
@@ -282,10 +277,20 @@ public class HelloController {
         return "redirect:/drafts";
     }
 
+    @GetMapping("/deleteFromInbox")
+    public String deleteFromInbox(HttpSession session, @RequestParam Long id) {
+        UserAccount user = (UserAccount) session.getAttribute("currentUser");
+        // 调用 mailService 的通用删除方法，文件夹传入 "收件箱"
+        if (user != null)
+            mailService.moveToTrash(user, "收件箱", id);
+        return "redirect:/inbox"; // 操作完成后刷新收件箱
+    }
+    
     @GetMapping("/deleteFromSent")
     public String deleteFromSent(HttpSession session, @RequestParam Long id) {
         UserAccount user = (UserAccount) session.getAttribute("currentUser");
-        if (user != null) mailService.moveToTrash(user, "已发送", id);
+        if (user != null)
+            mailService.moveToTrash(user, "已发送", id);
         return "redirect:/sent";
     }
 
@@ -298,8 +303,10 @@ public class HelloController {
 
     @GetMapping("/settings")
     public String settingsPage(HttpSession session, Model model) {
-        if (session.getAttribute("currentUser") == null) return "redirect:/";
+        if (session.getAttribute("currentUser") == null)
+            return "redirect:/";
         model.addAttribute("currentFolder", "设置");
         return "settings";
     }
+    
 }
