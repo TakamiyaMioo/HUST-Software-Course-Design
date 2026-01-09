@@ -15,6 +15,7 @@ import java.nio.file.StandardCopyOption;
 import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.Arrays;
 
 @Service
 public class MailService {
@@ -190,167 +191,64 @@ public class MailService {
         return result;
     }
 
-//    /**
-//     * 核心接收方法 (支持：分页 + 排序 + 定向搜索)
-//     *
-//     * @param keyword    搜索关键字
-//     * @param searchType 搜索类型: "all"(默认), "sender", "title", "date"
-//     */
-//    public Map<String, Object> receiveEmails(UserAccount user, String folderName, int page, int size,
-//            String sortField, String sortOrder, String keyword, String searchType) {
-//        Map<String, Object> result = new HashMap<>();
-//        List<EmailInfo> fullList = new ArrayList<>();
-//        Store store = null;
-//        Folder folder = null;
-//        try {
-//            Properties props = new Properties();
-//            props.put("mail.store.protocol", "imap");
-//            props.put("mail.imap.host", user.getImapHost());
-//            props.put("mail.imap.port", "993");
-//            props.put("mail.imap.ssl.enable", "true");
-//            // 关闭部分抓取，确保获取完整信头用于搜索
-//            props.put("mail.imap.partialfetch", "false");
-//
-//            Session session = Session.getInstance(props);
-//            store = session.getStore("imap");
-//            store.connect(user.getImapHost(), user.getEmail(), user.getPassword());
-//
-//            String realFolder = getCorrectFolderName(user.getType(), folderName);
-//            folder = store.getFolder(realFolder);
-//            if (!folder.exists())
-//                folder = store.getFolder("INBOX");
-//
-//            folder.open(Folder.READ_ONLY);
-//
-//            int totalMessages = folder.getMessageCount();
-//            result.put("totalCount", totalMessages); // 初始总数
-//
-//            Message[] messages = null;
-//
-//            // --- 策略判断 ---
-//            // 只有当 (无搜索词) 且 (默认排序) 时，才使用极速模式
-//            boolean hasKeyword = StringUtils.hasText(keyword);
-//            boolean isDefaultSort = (sortField == null || "date".equals(sortField))
-//                    && (sortOrder == null || "desc".equals(sortOrder));
-//            boolean useServerSidePaging = !hasKeyword && isDefaultSort;
-//
-//            if (useServerSidePaging) {
-//                // [极速模式]
-//                int end = totalMessages - (page - 1) * size;
-//                int start = end - size + 1;
-//                if (end > 0) {
-//                    if (start < 1)
-//                        start = 1;
-//                    messages = folder.getMessages(start, end);
-//                }
-//            } else {
-//                // [全量模式]
-//                if (totalMessages > 0) {
-//                    messages = folder.getMessages();
-//                }
-//            }
-//
-//            if (messages != null && messages.length > 0) {
-//                FetchProfile fp = new FetchProfile();
-//                fp.add(FetchProfile.Item.ENVELOPE);
-//                fp.add(UIDFolder.FetchProfileItem.UID);
-//                folder.fetch(messages, fp);
-//
-//                boolean isSentFolder = realFolder.equalsIgnoreCase("Sent Messages") || realFolder.equals("已发送");
-//                fullList = parseMessages((UIDFolder) folder, messages, isSentFolder);
-//            } else {
-//                if (!useServerSidePaging) {
-//                    result.put("totalCount", 0);
-//                }
-//            }
-//
-//        } catch (Exception e) {
-//            e.printStackTrace();
-//        } finally {
-//            closeQuietly(folder, store);
-//        }
-//
-//        // --- 1. 内存搜索过滤 (支持 searchType) ---
-//        if (StringUtils.hasText(keyword)) {
-//            String k = keyword.toLowerCase();
-//            String type = (searchType != null) ? searchType : "all";
-//
-//            fullList = fullList.stream()
-//                    .filter(email -> {
-//                        boolean match = false;
-//                        switch (type) {
-//                            case "sender": // 仅搜发件人
-//                                match = (email.getSender() != null && email.getSender().toLowerCase().contains(k));
-//                                break;
-//                            case "title": // 仅搜主题
-//                                match = (email.getTitle() != null && email.getTitle().toLowerCase().contains(k));
-//                                break;
-//                            case "date": // 仅搜日期
-//                                match = (email.getSendDate() != null && email.getSendDate().contains(k));
-//                                break;
-//                            case "all": // 搜全部
-//                            default:
-//                                match = (email.getTitle() != null && email.getTitle().toLowerCase().contains(k)) ||
-//                                        (email.getSender() != null && email.getSender().toLowerCase().contains(k)) ||
-//                                        (email.getSendDate() != null && email.getSendDate().contains(k));
-//                                break;
-//                        }
-//                        return match;
-//                    })
-//                    .collect(Collectors.toList());
-//
-//            // 更新搜索后的总数
-//            result.put("totalCount", fullList.size());
-//        }
-//
-//        // --- 2. 内存排序 ---
-//        Comparator<EmailInfo> comparator = null;
-//        String field = sortField != null ? sortField : "date";
-//
-//        switch (field) {
-//            case "sender":
-//                comparator = Comparator.comparing(EmailInfo::getSender, String.CASE_INSENSITIVE_ORDER);
-//                break;
-//            case "title":
-//                comparator = Comparator.comparing(EmailInfo::getTitle, String.CASE_INSENSITIVE_ORDER);
-//                break;
-//            case "date":
-//            default:
-//                comparator = Comparator.comparing(EmailInfo::getSendDate);
-//                break;
-//        }
-//
-//        if ("desc".equals(sortOrder)) {
-//            if (comparator != null)
-//                comparator = comparator.reversed();
-//        }
-//
-//        if (!fullList.isEmpty() && comparator != null) {
-//            Collections.sort(fullList, comparator);
-//        }
-//
-//        // --- 3. 内存分页 ---
-//        boolean hasKeyword = StringUtils.hasText(keyword);
-//        boolean isDefaultSort = (sortField == null || "date".equals(sortField))
-//                && (sortOrder == null || "desc".equals(sortOrder));
-//        boolean useServerSidePaging = !hasKeyword && isDefaultSort;
-//
-//        List<EmailInfo> pageList;
-//        if (useServerSidePaging) {
-//            pageList = fullList;
-//        } else {
-//            int fromIndex = (page - 1) * size;
-//            if (fromIndex >= fullList.size()) {
-//                pageList = new ArrayList<>();
-//            } else {
-//                int toIndex = Math.min(fromIndex + size, fullList.size());
-//                pageList = fullList.subList(fromIndex, toIndex);
-//            }
-//        }
-//
-//        result.put("list", pageList);
-//        return result;
-//    }
+    /**
+     * 获取自定义文件夹列表 (剔除系统默认文件夹)
+     */
+    public List<String> getCustomFolders(UserAccount user) {
+        List<String> customFolders = new ArrayList<>();
+        Store store = null;
+        Folder defaultFolder = null;
+        try {
+            Properties props = new Properties();
+            props.put("mail.store.protocol", "imap");
+            props.put("mail.imap.host", user.getImapHost());
+            props.put("mail.imap.port", "993");
+            props.put("mail.imap.ssl.enable", "true");
+            // 针对 163 等的 SSL 信任配置
+            props.put("mail.imap.ssl.trust", "*");
+
+            Session session = Session.getInstance(props);
+            store = session.getStore("imap");
+            store.connect(user.getImapHost(), user.getEmail(), user.getPassword());
+
+            // 获取根目录下的所有文件夹
+            defaultFolder = store.getDefaultFolder();
+            Folder[] allFolders = defaultFolder.list("*");
+
+            // 定义需要剔除的系统文件夹名称 (包含英文和常见中文)
+            // 注意：不同邮箱服务商的系统文件夹名字可能不一样
+            List<String> systemFolders = Arrays.asList(
+                    "INBOX", "收件箱",
+                    "Sent Messages", "Sent", "已发送",
+                    "Drafts", "Draft", "草稿箱",
+                    "Deleted Messages", "Trash", "已删除", "垃圾箱", "Deleted",
+                    "Junk", "Spam", "垃圾邮件", "广告邮件"
+            );
+
+            for (Folder f : allFolders) {
+                // 获取文件夹名称
+                String name = f.getName();
+
+                // 简单的过滤逻辑：忽略系统文件夹
+                // 注意：这里忽略大小写
+                boolean isSystem = systemFolders.stream()
+                        .anyMatch(sys -> sys.equalsIgnoreCase(name));
+
+                // 还要排除也就是当前的 INBOX (IMAP 协议中 INBOX 是大小写敏感的，通常是大写)
+                if (!isSystem && !"INBOX".equalsIgnoreCase(name)) {
+                    customFolders.add(name);
+                }
+            }
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            try {
+                if (store != null) store.close();
+            } catch (Exception e) {}
+        }
+        return customFolders;
+    }
 
     /**
      * 辅助方法：批量解析 Message 到 EmailInfo
@@ -551,9 +449,12 @@ public class MailService {
      * 注意：浏览器出于安全原因无法在前端自动把附件“塞进” file input，
      * 所以回复场景下我们在后端根据 replyFolder + replyUid 重新取原邮件附件并附带发送。
      */
+    /**
+     * 发送邮件（支持群发，支持：1）用户选择的新附件；2）回复邮件时自动附带原邮件附件）
+     */
     public void sendMailWithAttachment(UserAccount user, String to, String subject, String content,
-            org.springframework.web.multipart.MultipartFile file,
-            String replyFolder, Long replyUid) {
+                                       org.springframework.web.multipart.MultipartFile file,
+                                       String replyFolder, Long replyUid) {
         try {
             JavaMailSenderImpl sender = createSender(user);
             jakarta.mail.internet.MimeMessage message = sender.createMimeMessage();
@@ -561,7 +462,16 @@ public class MailService {
                     message, true, "UTF-8");
 
             helper.setFrom(user.getEmail());
-            helper.setTo(to);
+
+            // ==================== 【核心修改开始】 ====================
+            // 处理多收件人：支持用 分号(;)、逗号(,)、中文逗号(，) 分隔
+            if (to != null && !to.isEmpty()) {
+                // 正则表达式：分割 [分号] [逗号] [中文逗号] 以及 [这些符号周围的空格]
+                String[] recipients = to.split("[,;，\\s]+");
+                helper.setTo(recipients);
+            }
+            // ==================== 【核心修改结束】 ====================
+
             helper.setSubject(subject);
             helper.setText(content, true);
 

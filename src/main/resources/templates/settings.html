@@ -166,6 +166,17 @@
         <a href="/sent" class="menu-item" th:if="${currentEmailId != null}"><i class="fas fa-paper-plane"></i> 已发送</a>
         <a href="/drafts" class="menu-item" th:if="${currentEmailId != null}"><i class="fas fa-file-alt"></i> 草稿箱</a>
         <a href="/trash" class="menu-item" th:if="${currentEmailId != null}"><i class="fas fa-trash-alt"></i> 垃圾箱</a>
+        <div th:if="${customFolders != null && customFolders.size() > 0}">
+            <div class="menu-title" style="margin-top: 10px;">我的文件夹</div>
+
+            <a th:each="folder : ${customFolders}"
+               th:href="@{/inbox(folder=${folder})}"
+               class="menu-item"
+               th:classappend="${currentFolder == folder} ? 'active'">
+                <i class="fas fa-folder" style="color: #ffcc00;"></i>
+                <span th:text="${folder}">FolderName</span>
+            </a>
+        </div>
 
         <div class="menu-title">管理</div>
         <a href="/contacts" class="menu-item"><i class="fas fa-address-book"></i> 通讯录</a>
