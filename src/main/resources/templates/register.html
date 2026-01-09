@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>注册账号</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            background-image: url('/images/bglogin.jpg');
+            background-size: cover; height: 100vh;
+            display: flex; justify-content: center; align-items: center; margin: 0;
+        }
+        .card {
+            background: rgba(255, 255, 255, 0.85); backdrop-filter: blur(10px);
+            padding: 40px; border-radius: 15px; width: 350px; text-align: center;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+        }
+        h2 { color: #333; margin-bottom: 20px; }
+        input {
+            width: 100%; padding: 12px; margin-bottom: 15px;
+            border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box;
+        }
+        .btn {
+            width: 100%; padding: 12px; background: #0078d4; color: white;
+            border: none; border-radius: 8px; font-size: 16px; cursor: pointer;
+        }
+        .btn:hover { background: #005a9e; }
+        .link { margin-top: 15px; display: block; color: #666; font-size: 14px; text-decoration: none;}
+    </style>
+</head>
+<body>
+<div class="card">
+    <h2>📝 注册新账号</h2>
+    <form action="/register" method="post">
+        <input type="text" name="username" placeholder="设置用户名 (如: admin)" required>
+        <input type="text" name="nickname" placeholder="您的昵称 (如: 管理员)" required>
+        <input type="password" name="password" placeholder="设置登录密码" required>
+        <button type="submit" class="btn">立即注册</button>
+    </form>
+    <a href="/" class="link">已有账号？去登录</a>
+</div>
+</body>
+</html>

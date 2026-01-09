@@ -46,24 +46,43 @@
             border: 1px solid var(--border-color); border-radius: 20px; box-shadow: 0 15px 40px var(--shadow-color);
             display: flex; overflow: hidden;
         }
-        .sidebar { width: 260px; background: var(--sidebar-bg); border-right: 1px solid rgba(0,0,0,0.05); display: flex; flex-direction: column; padding: 20px; }
-        .user-card { text-align: center; margin-bottom: 30px; padding-bottom: 20px; border-bottom: 1px dashed #ccc; }
-        .avatar { width: 80px; height: 80px; background: linear-gradient(135deg, #a18cd1 0%, #fbc2eb 100%); border-radius: 50%; margin: 0 auto 10px; display: flex; align-items: center; justify-content: center; font-size: 30px; color: white; }
-        .username { font-weight: bold; color: var(--text-main); font-size: 16px; margin-bottom: 5px;}
-        .user-email { font-size: 12px; color: var(--text-sub); word-break: break-all;}
+
+        /* === 侧边栏样式 (更新) === */
+        .sidebar { width: 260px; background: var(--sidebar-bg); border-right: 1px solid rgba(0,0,0,0.05); display: flex; flex-direction: column; padding: 20px; overflow-y: auto; }
+        .user-profile-area { margin-bottom: 20px; border-bottom: 1px dashed #ccc; padding-bottom: 15px; }
+        .app-user-name { font-weight: bold; font-size: 16px; color: var(--text-main); margin-bottom: 10px; display: flex; align-items: center; gap: 8px; }
+        .account-list-title { font-size: 12px; color: #999; margin-bottom: 8px; font-weight: bold; }
+        .account-switcher-item {
+            display: flex; align-items: center; padding: 8px 12px;
+            border-radius: 8px; cursor: pointer; transition: 0.2s;
+            margin-bottom: 5px; text-decoration: none; color: var(--text-sub);
+            border: 1px solid transparent;
+        }
+        .account-switcher-item:hover { background: var(--hover-bg); }
+        .account-switcher-item.active {
+            background: rgba(0, 120, 212, 0.1); border-color: rgba(0, 120, 212, 0.3);
+            color: #0078d4; font-weight: bold;
+        }
+        .acc-icon { width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; border-radius: 50%; background: #eee; margin-right: 10px; font-size: 12px; }
+        .active .acc-icon { background: #0078d4; color: white; }
+        .add-acc-btn { font-size: 12px; color: #0078d4; text-decoration: none; padding-left: 10px; display: inline-block; margin-top: 5px;}
+        .add-acc-btn:hover { text-decoration: underline; }
+
         .menu-item { display: flex; align-items: center; padding: 12px 15px; color: var(--text-sub); text-decoration: none; border-radius: 10px; margin-bottom: 5px; transition: 0.3s; }
         .menu-item i { width: 25px; font-size: 18px; }
         .menu-item:hover { background: var(--hover-bg); color: #0078d4; transform: translateX(5px); }
         .menu-item.active { background: #0078d4; color: white; box-shadow: 0 4px 10px rgba(0, 120, 212, 0.3); }
         .menu-title { font-size: 12px; color: #999; margin-top: 20px; margin-bottom: 10px; padding-left: 10px; }
+
+        /* === 主内容区 === */
         .main-content { flex: 1; display: flex; flex-direction: column; background: var(--main-bg); }
         .toolbar { padding: 15px 30px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(0,0,0,0.05); background: var(--toolbar-bg); }
         .page-title { font-size: 20px; font-weight: bold; color: var(--text-main); display: flex; align-items: center; gap: 10px; }
-        
+
         /* 搜索框组样式 */
         .search-group { display: flex; align-items: center; background: var(--input-bg); border-radius: 20px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); padding-right: 15px; }
         .search-select {
-            border: none; background: transparent; padding: 8px 10px; font-size: 12px; color: #666; 
+            border: none; background: transparent; padding: 8px 10px; font-size: 12px; color: #666;
             border-right: 1px solid #eee; outline: none; border-top-left-radius: 20px; border-bottom-left-radius: 20px; cursor: pointer;
         }
         .search-box { display: flex; align-items: center; padding: 5px 10px; width: 220px; }
@@ -71,7 +90,7 @@
 
         .email-list-wrapper { flex: 1; overflow-y: auto; padding: 0; }
         table { width: 100%; border-collapse: collapse; table-layout: fixed; }
-        
+
         th { text-align: left; padding: 15px 30px; color: #888; font-size: 13px; font-weight: 500; position: sticky; top: 0; background: var(--table-header-bg); z-index: 10; }
         th.sortable { cursor: pointer; transition: 0.2s; user-select: none; }
         th.sortable:hover { background: rgba(0,0,0,0.05); color: #0078d4; }
@@ -88,7 +107,7 @@
         .btn-action:hover { transform: scale(1.2); }
         .btn-trash { color: #ccc; }
         .btn-trash:hover { color: #ff4d4f; }
-        
+
         .pagination-bar { background: var(--pag-bg); border-top: 1px solid var(--pag-border); color: var(--pag-text); padding: 10px 20px; display: flex; justify-content: flex-end; align-items: center; font-size: 13px; }
         .pagination-bar a { text-decoration: none; color: #0078d4; margin: 0 5px; cursor: pointer; }
         .pagination-bar a:hover { text-decoration: underline; }
@@ -107,23 +126,50 @@
 <body>
 
 <div class="glass-container">
+
     <div class="sidebar">
-        <div class="user-card">
-            <div class="avatar"><i class="fas fa-user-astronaut"></i></div>
-            <div class="username">我的账号</div>
-            <div class="user-email" th:text="${session.currentUser != null ? session.currentUser.email : '未登录'}"></div>
+        <div class="user-profile-area">
+            <div class="app-user-name">
+                <i class="fas fa-user-astronaut" style="color: #6c5ce7;"></i>
+                <span th:text="${session.appUser.nickname}">主账号昵称</span>
+            </div>
+            <div style="font-size: 12px; color: #999;">
+                <span th:text="${session.appUser.username}">admin</span>
+                <a href="/logout" style="color: #ff4d4f; margin-left: 10px; text-decoration: none;">[退出]</a>
+            </div>
         </div>
 
-        <div class="menu-title">邮箱文件夹</div>
-        <a href="/inbox" class="menu-item" th:classappend="${currentFolder == null || currentFolder == '收件箱'} ? 'active'"><i class="fas fa-inbox"></i> 收件箱</a>
-        <a href="/sent" class="menu-item" th:classappend="${currentFolder == '已发送'} ? 'active'"><i class="fas fa-paper-plane"></i> 已发送</a>
-        <a href="/drafts" class="menu-item"><i class="fas fa-file-alt"></i> 草稿箱</a>
-        <a href="/trash" class="menu-item" th:classappend="${currentFolder == '已删除'} ? 'active'"><i class="fas fa-trash-alt"></i> 已删除</a>
+        <div class="account-list-title">切换邮箱账号</div>
+
+        <a th:each="acc : ${myAccounts}"
+           th:href="@{/account/switch(id=${acc.id})}"
+           class="account-switcher-item"
+           th:classappend="${acc.id == currentEmailId} ? 'active'">
+            <div class="acc-icon">
+                <i th:if="${acc.type == 'qq'}" class="fab fa-qq"></i>
+                <i th:if="${acc.type == '163'}" class="fas fa-envelope"></i>
+            </div>
+            <div style="display: flex; flex-direction: column; overflow: hidden;">
+                <span th:text="${acc.email}" style="font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">user@qq.com</span>
+                <span th:text="${acc.type == 'qq' ? 'QQ邮箱' : '网易邮箱'}" style="font-size: 11px; opacity: 0.7;">Type</span>
+            </div>
+            <i th:if="${acc.id == currentEmailId}" class="fas fa-check" style="margin-left: auto; font-size: 12px;"></i>
+        </a>
+        <a href="/settings" class="add-acc-btn"><i class="fas fa-plus-circle"></i> 绑定新邮箱</a>
+
+        <hr style="border: 0; border-bottom: 1px dashed #ddd; margin: 15px 0; width: 100%;">
+
+        <div class="menu-title" th:if="${currentEmailId != null}">当前邮箱文件夹</div>
+        <div th:if="${currentEmailId == null}" style="color:orange; font-size:12px; padding:10px;">请先选择或绑定一个邮箱</div>
+
+        <a href="/inbox" class="menu-item" th:if="${currentEmailId != null}" th:classappend="${currentFolder == null || currentFolder == '收件箱'} ? 'active'"><i class="fas fa-inbox"></i> 收件箱</a>
+        <a href="/sent" class="menu-item" th:if="${currentEmailId != null}" th:classappend="${currentFolder == '已发送'} ? 'active'"><i class="fas fa-paper-plane"></i> 已发送</a>
+        <a href="/drafts" class="menu-item" th:if="${currentEmailId != null}" th:classappend="${currentFolder == '草稿箱'} ? 'active'"><i class="fas fa-file-alt"></i> 草稿箱</a>
+        <a href="/trash" class="menu-item" th:if="${currentEmailId != null}" th:classappend="${currentFolder == '已删除'} ? 'active'"><i class="fas fa-trash-alt"></i> 垃圾箱</a>
 
         <div class="menu-title">管理</div>
         <a href="/contacts" class="menu-item"><i class="fas fa-address-book"></i> 通讯录</a>
         <a href="/settings" class="menu-item"><i class="fas fa-cog"></i> 设置</a>
-        <a href="/logout" class="menu-item" style="margin-top: auto; color: #ff4d4f;"><i class="fas fa-sign-out-alt"></i> 退出登录</a>
     </div>
 
     <div class="main-content">
@@ -132,7 +178,7 @@
                 <i class="fas fa-envelope-open-text" style="color: #0078d4;"></i>
                 <span th:text="${currentFolder != null ? currentFolder : '收件箱'}">收件箱</span>
             </div>
-            
+
             <div class="search-group">
                 <select id="searchType" class="search-select">
                     <option value="all" th:selected="${searchType == 'all'}">全部</option>
@@ -142,7 +188,7 @@
                 </select>
                 <div class="search-box">
                     <i class="fas fa-search" style="color: #ccc; cursor: pointer;" onclick="doSearch()"></i>
-                    <input type="text" id="searchInput" th:value="${keyword}" placeholder="搜索邮件..." 
+                    <input type="text" id="searchInput" th:value="${keyword}" placeholder="搜索邮件..."
                            onkeydown="if(event.keyCode==13) doSearch()">
                 </div>
             </div>
@@ -157,13 +203,13 @@
             <table>
                 <thead>
                 <tr>
-                    <th class="sender-col sortable" 
+                    <th class="sender-col sortable"
                         th:classappend="${sort == 'sender'} ? 'active-sort'"
                         th:onclick="|location.href='@{${baseUrl}(page=1, sort='sender', order=${sort == 'sender' && order == 'asc' ? 'desc' : 'asc'}, keyword=${keyword}, searchType=${searchType})}'|">
                         <span th:text="${currentFolder == '已发送'} ? '收件人' : '发件人'">发件人/收件人</span>
                         <i class="fas" th:classappend="${sort == 'sender'} ? (order == 'asc' ? 'fa-sort-up' : 'fa-sort-down') : 'fa-sort'"></i>
                     </th>
-                    
+
                     <th width="45%" class="sortable"
                         th:classappend="${sort == 'title'} ? 'active-sort'"
                         th:onclick="|location.href='@{${baseUrl}(page=1, sort='title', order=${sort == 'title' && order == 'asc' ? 'desc' : 'asc'}, keyword=${keyword}, searchType=${searchType})}'|">
@@ -182,13 +228,13 @@
                 </tr>
                 </thead>
                 <tbody id="emailTableBody">
-                <tr th:each="email : ${emails}" 
+                <tr th:each="email : ${emails}"
                     th:data-uid="${email.id}"
                     th:data-folder="${currentFolder}"
                     th:data-title="${email.title}"
                     th:data-sender="${email.sender}"
                     onclick="showEmailDetail(this)">
-                    
+
                     <td class="sender-col">
                         <div style="display: flex; align-items: center;">
                             <span class="sender-avatar" th:text="${#strings.substring(email.sender, 0, 1)}">A</span>
@@ -198,40 +244,40 @@
                             </div>
                         </div>
                     </td>
-                    
+
                     <td th:text="${email.title}" style="font-weight: 500;">主题</td>
                     <td class="date-col" th:text="${email.sendDate}">时间</td>
 
                     <td style="text-align: center; white-space: nowrap;" onclick="event.stopPropagation()">
-                        
+
                         <a th:if="${currentFolder == null || currentFolder == '收件箱'}"
-                        th:href="@{/sendPage(replyUid=${email.id}, folder=${(currentFolder == '收件箱' || currentFolder == null) ? 'INBOX' : currentFolder})}"
-                        class="btn-action" title="回复" 
-                        style="color: #0078d4; margin-right: 5px;"> <i class="fas fa-reply"></i>
+                           th:href="@{/sendPage(replyUid=${email.id}, folder=${(currentFolder == '收件箱' || currentFolder == null) ? 'INBOX' : currentFolder})}"
+                           class="btn-action" title="回复"
+                           style="color: #0078d4; margin-right: 5px;"> <i class="fas fa-reply"></i>
                         </a>
 
                         <a th:if="${currentFolder == null || currentFolder == '收件箱' || currentFolder == '已发送' || currentFolder == '已删除'}"
-                        href="javascript:void(0)"
-                        th:onclick="|openForwardModal(${email.id})|"
-                        class="btn-action" title="转发" style="color: #28a745;">
+                           href="javascript:void(0)"
+                           th:onclick="|openForwardModal(${email.id})|"
+                           class="btn-action" title="转发" style="color: #28a745;">
                             <i class="fas fa-share"></i>
                         </a>
 
                         <a th:if="${currentFolder == null || currentFolder == '收件箱'}"
-                        th:href="@{/deleteFromInbox(id=${email.id})}"
-                        class="btn-action btn-trash" title="移入已删除" onclick="return confirm('确定要删除收件箱的这封邮件吗？')">
-                        <i class="fas fa-trash"></i>
+                           th:href="@{/deleteFromInbox(id=${email.id})}"
+                           class="btn-action btn-trash" title="移入已删除" onclick="return confirm('确定要删除收件箱的这封邮件吗？')">
+                            <i class="fas fa-trash"></i>
                         </a>
 
                         <a th:if="${currentFolder == '已发送'}"
-                            th:href="@{/deleteFromSent(id=${email.id})}"
-                            class="btn-action btn-trash" title="移入已删除" onclick="return confirm('确定要删除吗？')">
+                           th:href="@{/deleteFromSent(id=${email.id})}"
+                           class="btn-action btn-trash" title="移入已删除" onclick="return confirm('确定要删除吗？')">
                             <i class="fas fa-trash"></i>
                         </a>
-                        
+
                         <a th:if="${currentFolder == '已删除'}"
-                            th:href="@{/deleteForever(id=${email.id})}"
-                            class="btn-action btn-trash" title="彻底删除" style="color: #ff4d4f;" onclick="return confirm('确定彻底删除吗？')">
+                           th:href="@{/deleteForever(id=${email.id})}"
+                           class="btn-action btn-trash" title="彻底删除" style="color: #ff4d4f;" onclick="return confirm('确定彻底删除吗？')">
                             <i class="fas fa-times-circle"></i>
                         </a>
                     </td>
@@ -246,7 +292,7 @@
                 </tr>
                 </tbody>
             </table>
-            
+
             <div class="pagination-bar" th:if="${totalPages > 0}">
                 <span style="margin-right: 15px;">
                     <span th:text="${currentPage}">1</span>/<span th:text="${totalPages}">1</span> 页
@@ -296,16 +342,16 @@
         <div style="padding: 20px;">
             <div style="margin-bottom: 15px;">
                 <label style="display:block; margin-bottom:5px; font-weight:bold; color:#666;">收件人</label>
-                <input type="text" id="forwardTo" list="contactsList" placeholder="输入邮箱或选择联系人" 
+                <input type="text" id="forwardTo" list="contactsList" placeholder="输入邮箱或选择联系人"
                        style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 5px; box-sizing: border-box;">
                 <datalist id="contactsList">
                     <option th:each="c : ${contacts}" th:value="${c.email}" th:label="${c.name}"></option>
                 </datalist>
             </div>
-            
+
             <div style="margin-bottom: 15px;">
                 <label style="display:block; margin-bottom:5px; font-weight:bold; color:#666;">附加留言 (可选)</label>
-                <textarea id="forwardComment" rows="3" placeholder="例如：这封邮件很有意思，你看一下..." 
+                <textarea id="forwardComment" rows="3" placeholder="例如：这封邮件很有意思，你看一下..."
                           style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 5px; box-sizing: border-box; font-family: inherit; resize: vertical;"></textarea>
             </div>
 
@@ -332,10 +378,10 @@
         var input = document.getElementById("searchInput");
         var keyword = input.value;
         var searchType = document.getElementById("searchType").value; // 获取类型
-        var baseUrl = "[[${baseUrl}]]"; 
+        var baseUrl = "[[${baseUrl}]]";
         var sort = "[[${sort}]]" || 'date';
         var order = "[[${order}]]" || 'desc';
-        
+
         // 跳转: 带上 keyword 和 searchType
         window.location.href = baseUrl + "?page=1&sort=" + sort + "&order=" + order + "&keyword=" + encodeURIComponent(keyword) + "&searchType=" + searchType;
     }
@@ -343,19 +389,19 @@
     function showEmailDetail(element) {
         document.getElementById('modalTitle').innerText = element.getAttribute("data-title");
         document.getElementById('modalSender').innerText = element.getAttribute("data-sender");
-        
+
         var contentDiv = document.getElementById('modalContent');
         contentDiv.innerHTML = "<div style='text-align:center; padding:30px; color:#666;'><i class='fas fa-spinner fa-spin'></i> 正在从服务器下载邮件内容，请稍候...</div>";
-        
+
         document.getElementById('attachmentArea').style.display = 'none';
         document.getElementById('imagePreviewArea').style.display = 'none';
         document.getElementById('attachmentList').innerHTML = "";
-        
+
         document.getElementById('emailModal').style.display = 'flex';
 
         var uid = element.getAttribute("data-uid");
         var folder = element.getAttribute("data-folder");
-        if(!folder) folder = "收件箱"; 
+        if(!folder) folder = "收件箱";
 
         fetch(`/email/detail?folder=${encodeURIComponent(folder)}&uid=${uid}`)
             .then(response => response.json())
@@ -379,8 +425,8 @@
         var attachArea = document.getElementById('attachmentArea');
         var attachDiv = document.getElementById('attachmentList');
         var imgArea = document.getElementById('imagePreviewArea');
-        
-        attachDiv.innerHTML = ""; 
+
+        attachDiv.innerHTML = "";
         imgArea.innerHTML = "";
         attachArea.style.display = 'block';
 
@@ -388,7 +434,7 @@
             var fName = fileArray[i];
             var downloadUrl = "/download?filename=" + encodeURIComponent(fName);
 
-            var btn = `<a href="${downloadUrl}" target="_blank" 
+            var btn = `<a href="${downloadUrl}" target="_blank"
                         style="font-size:12px; padding:6px 12px; background:#f0f0f0; border-radius:4px; text-decoration:none; color:#333; border:1px solid #ddd; display:flex; align-items:center; gap:5px;">
                         <i class="fas fa-file-download" style="color:#0078d4;"></i> ${fName}
                        </a>`;
@@ -406,13 +452,13 @@
         }
     }
 
-    function closeModal() { 
-        document.getElementById('emailModal').style.display = 'none'; 
+    function closeModal() {
+        document.getElementById('emailModal').style.display = 'none';
     }
 
-    window.onclick = function(e) { 
+    window.onclick = function(e) {
         if (e.target.classList.contains('modal-overlay')) {
-            e.target.style.display = 'none'; 
+            e.target.style.display = 'none';
         }
     }
 
@@ -428,13 +474,13 @@
 
         if (isNaN(p) || p < 1) { alert("无效页码"); return; }
         if (p > max) { alert("超过最大页数"); return; }
-        
+
         var url = baseUrl + "?page=" + p + "&sort=" + sort + "&order=" + order;
         if(keyword) {
             url += "&keyword=" + encodeURIComponent(keyword);
             url += "&searchType=" + searchType;
         }
-        
+
         window.location.href = url;
     }
 
@@ -455,7 +501,7 @@
     function submitForward() {
         var to = document.getElementById('forwardTo').value;
         var comment = document.getElementById('forwardComment').value;
-        var folder = "[[${currentFolder}]]" || "收件箱"; 
+        var folder = "[[${currentFolder}]]" || "收件箱";
 
         if(!to) {
             alert("请填写收件人邮箱！");
@@ -477,25 +523,528 @@
             method: 'POST',
             body: formData
         })
-        .then(response => response.json())
-        .then(data => {
-            if(data.success) {
-                alert("✅ 转发成功！");
-                closeForwardModal();
-            } else {
-                alert("❌ 转发失败：" + (data.error || "未知错误"));
-            }
-        })
-        .catch(err => {
-            alert("网络错误，请重试");
-            console.error(err);
-        })
-        .finally(() => {
-            btn.innerHTML = originalText;
-            btn.disabled = false;
-        });
+            .then(response => response.json())
+            .then(data => {
+                if(data.success) {
+                    alert("✅ 转发成功！");
+                    closeForwardModal();
+                } else {
+                    alert("❌ 转发失败：" + (data.error || "未知错误"));
+                }
+            })
+            .catch(err => {
+                alert("网络错误，请重试");
+                console.error(err);
+            })
+            .finally(() => {
+                btn.innerHTML = originalText;
+                btn.disabled = false;
+            });
     }
 </script>
 
 </body>
 </html>
+
+
+<!--<!DOCTYPE html>-->
+<!--<html xmlns:th="http://www.thymeleaf.org">-->
+<!--<head>-->
+<!--    <meta charset="UTF-8">-->
+<!--    <title>我的邮箱</title>-->
+<!--    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" rel="stylesheet">-->
+<!--    <style>-->
+<!--        :root {-->
+<!--            &#45;&#45;bg-image: url('/images/bg.jpg');-->
+<!--            &#45;&#45;glass-bg: rgba(255, 255, 255, 0.85);-->
+<!--            &#45;&#45;sidebar-bg: rgba(255, 255, 255, 0.5);-->
+<!--            &#45;&#45;main-bg: rgba(255, 255, 255, 0.3);-->
+<!--            &#45;&#45;toolbar-bg: rgba(255, 255, 255, 0.4);-->
+<!--            &#45;&#45;text-main: #333;-->
+<!--            &#45;&#45;text-sub: #666;-->
+<!--            &#45;&#45;border-color: rgba(255, 255, 255, 0.6);-->
+<!--            &#45;&#45;hover-bg: rgba(255, 255, 255, 0.8);-->
+<!--            &#45;&#45;table-header-bg: rgba(255, 255, 255, 0.9);-->
+<!--            &#45;&#45;input-bg: white;-->
+<!--            &#45;&#45;shadow-color: rgba(0, 0, 0, 0.1);-->
+<!--            &#45;&#45;modal-bg: white;-->
+<!--            &#45;&#45;pag-bg: #eef3f8; &#45;&#45;pag-border: #dce4ec; &#45;&#45;pag-text: #333; &#45;&#45;btn-bg: #fff; &#45;&#45;btn-border: #ccc; &#45;&#45;btn-hover: #f0f0f0;-->
+<!--        }-->
+<!--        body.dark-mode {-->
+<!--            &#45;&#45;glass-bg: rgba(30, 30, 30, 0.85);-->
+<!--            &#45;&#45;sidebar-bg: rgba(0, 0, 0, 0.3);-->
+<!--            &#45;&#45;main-bg: rgba(0, 0, 0, 0.2);-->
+<!--            &#45;&#45;toolbar-bg: rgba(0, 0, 0, 0.3);-->
+<!--            &#45;&#45;text-main: #e0e0e0;-->
+<!--            &#45;&#45;text-sub: #aaaaaa;-->
+<!--            &#45;&#45;border-color: rgba(255, 255, 255, 0.1);-->
+<!--            &#45;&#45;hover-bg: rgba(255, 255, 255, 0.1);-->
+<!--            &#45;&#45;table-header-bg: rgba(40, 40, 40, 0.9);-->
+<!--            &#45;&#45;input-bg: #444;-->
+<!--            &#45;&#45;shadow-color: rgba(0, 0, 0, 0.5);-->
+<!--            &#45;&#45;modal-bg: #2d2d2d;-->
+<!--            &#45;&#45;pag-bg: rgba(0, 0, 0, 0.2); &#45;&#45;pag-border: rgba(255, 255, 255, 0.1); &#45;&#45;pag-text: #aaa; &#45;&#45;btn-bg: #444; &#45;&#45;btn-border: #555; &#45;&#45;btn-hover: #555;-->
+<!--        }-->
+<!--        body {-->
+<!--            font-family: 'Segoe UI', sans-serif; margin: 0; padding: 0;-->
+<!--            background-image: var(&#45;&#45;bg-image); background-size: cover; background-position: center; background-attachment: fixed;-->
+<!--            height: 100vh; display: flex; justify-content: center; align-items: center; transition: background-image 0.5s;-->
+<!--        }-->
+<!--        .glass-container {-->
+<!--            width: 90%; height: 90vh; background: var(&#45;&#45;glass-bg); backdrop-filter: blur(12px);-->
+<!--            border: 1px solid var(&#45;&#45;border-color); border-radius: 20px; box-shadow: 0 15px 40px var(&#45;&#45;shadow-color);-->
+<!--            display: flex; overflow: hidden;-->
+<!--        }-->
+<!--        .sidebar { width: 260px; background: var(&#45;&#45;sidebar-bg); border-right: 1px solid rgba(0,0,0,0.05); display: flex; flex-direction: column; padding: 20px; }-->
+<!--        .user-card { text-align: center; margin-bottom: 30px; padding-bottom: 20px; border-bottom: 1px dashed #ccc; }-->
+<!--        .avatar { width: 80px; height: 80px; background: linear-gradient(135deg, #a18cd1 0%, #fbc2eb 100%); border-radius: 50%; margin: 0 auto 10px; display: flex; align-items: center; justify-content: center; font-size: 30px; color: white; }-->
+<!--        .username { font-weight: bold; color: var(&#45;&#45;text-main); font-size: 16px; margin-bottom: 5px;}-->
+<!--        .user-email { font-size: 12px; color: var(&#45;&#45;text-sub); word-break: break-all;}-->
+<!--        .menu-item { display: flex; align-items: center; padding: 12px 15px; color: var(&#45;&#45;text-sub); text-decoration: none; border-radius: 10px; margin-bottom: 5px; transition: 0.3s; }-->
+<!--        .menu-item i { width: 25px; font-size: 18px; }-->
+<!--        .menu-item:hover { background: var(&#45;&#45;hover-bg); color: #0078d4; transform: translateX(5px); }-->
+<!--        .menu-item.active { background: #0078d4; color: white; box-shadow: 0 4px 10px rgba(0, 120, 212, 0.3); }-->
+<!--        .menu-title { font-size: 12px; color: #999; margin-top: 20px; margin-bottom: 10px; padding-left: 10px; }-->
+<!--        .main-content { flex: 1; display: flex; flex-direction: column; background: var(&#45;&#45;main-bg); }-->
+<!--        .toolbar { padding: 15px 30px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(0,0,0,0.05); background: var(&#45;&#45;toolbar-bg); }-->
+<!--        .page-title { font-size: 20px; font-weight: bold; color: var(&#45;&#45;text-main); display: flex; align-items: center; gap: 10px; }-->
+<!--        -->
+<!--        /* 搜索框组样式 */-->
+<!--        .search-group { display: flex; align-items: center; background: var(&#45;&#45;input-bg); border-radius: 20px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); padding-right: 15px; }-->
+<!--        .search-select {-->
+<!--            border: none; background: transparent; padding: 8px 10px; font-size: 12px; color: #666; -->
+<!--            border-right: 1px solid #eee; outline: none; border-top-left-radius: 20px; border-bottom-left-radius: 20px; cursor: pointer;-->
+<!--        }-->
+<!--        .search-box { display: flex; align-items: center; padding: 5px 10px; width: 220px; }-->
+<!--        .search-box input { border: none; outline: none; margin-left: 5px; width: 100%; color: #666; background: transparent; }-->
+
+<!--        .email-list-wrapper { flex: 1; overflow-y: auto; padding: 0; }-->
+<!--        table { width: 100%; border-collapse: collapse; table-layout: fixed; }-->
+<!--        -->
+<!--        th { text-align: left; padding: 15px 30px; color: #888; font-size: 13px; font-weight: 500; position: sticky; top: 0; background: var(&#45;&#45;table-header-bg); z-index: 10; }-->
+<!--        th.sortable { cursor: pointer; transition: 0.2s; user-select: none; }-->
+<!--        th.sortable:hover { background: rgba(0,0,0,0.05); color: #0078d4; }-->
+<!--        th i.fa-sort, th i.fa-sort-up, th i.fa-sort-down { margin-left: 5px; font-size: 11px; color: #aaa; }-->
+<!--        th.active-sort { color: #0078d4; font-weight: bold; }-->
+<!--        th.active-sort i { color: #0078d4; }-->
+
+<!--        td { padding: 15px 30px; border-bottom: 1px solid rgba(0,0,0,0.03); font-size: 14px; color: var(&#45;&#45;text-main); vertical-align: middle; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }-->
+<!--        tr:hover { background: var(&#45;&#45;hover-bg); cursor: pointer; }-->
+<!--        .sender-avatar { width: 35px; height: 35px; background: #e0e0e0; border-radius: 50%; display: inline-flex; justify-content: center; align-items: center; margin-right: 10px; font-size: 12px; color: #666; flex-shrink: 0; }-->
+<!--        .date-col { color: #999; font-size: 13px; text-align: right; width: 150px;}-->
+<!--        .sender-col { width: 30%; font-weight: 600; }-->
+<!--        .btn-action { text-decoration: none; font-size: 15px; padding: 5px; margin: 0 3px; transition: 0.2s; display: inline-block; background: none; border: none; cursor: pointer; }-->
+<!--        .btn-action:hover { transform: scale(1.2); }-->
+<!--        .btn-trash { color: #ccc; }-->
+<!--        .btn-trash:hover { color: #ff4d4f; }-->
+<!--        -->
+<!--        .pagination-bar { background: var(&#45;&#45;pag-bg); border-top: 1px solid var(&#45;&#45;pag-border); color: var(&#45;&#45;pag-text); padding: 10px 20px; display: flex; justify-content: flex-end; align-items: center; font-size: 13px; }-->
+<!--        .pagination-bar a { text-decoration: none; color: #0078d4; margin: 0 5px; cursor: pointer; }-->
+<!--        .pagination-bar a:hover { text-decoration: underline; }-->
+<!--        .pagination-bar a.disabled { color: var(&#45;&#45;text-sub); cursor: default; text-decoration: none; }-->
+<!--        .page-input { width: 30px; height: 22px; margin: 0 5px; background: var(&#45;&#45;input-bg); border: 1px solid var(&#45;&#45;btn-border); color: var(&#45;&#45;text-main); text-align: center; font-size: 12px; }-->
+<!--        .btn-go { background: var(&#45;&#45;btn-bg); border: 1px solid var(&#45;&#45;btn-border); color: var(&#45;&#45;text-main); border-radius: 3px; padding: 2px 8px; font-size: 12px; cursor: pointer; }-->
+<!--        .btn-go:hover { background: var(&#45;&#45;btn-hover); }-->
+
+<!--        .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; justify-content: center; align-items: center; backdrop-filter: blur(5px); }-->
+<!--        .modal-card { background: var(&#45;&#45;modal-bg); border-radius: 12px; display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 20px 50px rgba(0,0,0,0.3); border: 1px solid var(&#45;&#45;border-color); color: var(&#45;&#45;text-main); width: 60%; max-height: 80vh; }-->
+<!--        .modal-header { padding: 20px; border-bottom: 1px solid rgba(0,0,0,0.05); display: flex; justify-content: space-between; align-items: center; background: rgba(0,0,0,0.02); }-->
+<!--        .modal-close { border: none; background: none; font-size: 24px; cursor: pointer; color: #999; transition: 0.2s; }-->
+<!--        .modal-close:hover { color: #ff4d4f; transform: rotate(90deg); }-->
+<!--    </style>-->
+<!--</head>-->
+<!--<body>-->
+
+<!--<div class="glass-container">-->
+<!--    <div class="sidebar">-->
+<!--        <div class="user-card">-->
+<!--            <div class="avatar"><i class="fas fa-user-astronaut"></i></div>-->
+<!--            <div class="username">我的账号</div>-->
+<!--            <div class="user-email" th:text="${session.currentUser != null ? session.currentUser.email : '未登录'}"></div>-->
+<!--        </div>-->
+
+<!--        <div class="menu-title">邮箱文件夹</div>-->
+<!--        <a href="/inbox" class="menu-item" th:classappend="${currentFolder == null || currentFolder == '收件箱'} ? 'active'"><i class="fas fa-inbox"></i> 收件箱</a>-->
+<!--        <a href="/sent" class="menu-item" th:classappend="${currentFolder == '已发送'} ? 'active'"><i class="fas fa-paper-plane"></i> 已发送</a>-->
+<!--        <a href="/drafts" class="menu-item"><i class="fas fa-file-alt"></i> 草稿箱</a>-->
+<!--        <a href="/trash" class="menu-item" th:classappend="${currentFolder == '已删除'} ? 'active'"><i class="fas fa-trash-alt"></i> 已删除</a>-->
+
+<!--        <div class="menu-title">管理</div>-->
+<!--        <a href="/contacts" class="menu-item"><i class="fas fa-address-book"></i> 通讯录</a>-->
+<!--        <a href="/settings" class="menu-item"><i class="fas fa-cog"></i> 设置</a>-->
+<!--        <a href="/logout" class="menu-item" style="margin-top: auto; color: #ff4d4f;"><i class="fas fa-sign-out-alt"></i> 退出登录</a>-->
+<!--    </div>-->
+
+<!--    <div class="main-content">-->
+<!--        <div class="toolbar">-->
+<!--            <div class="page-title">-->
+<!--                <i class="fas fa-envelope-open-text" style="color: #0078d4;"></i>-->
+<!--                <span th:text="${currentFolder != null ? currentFolder : '收件箱'}">收件箱</span>-->
+<!--            </div>-->
+<!--            -->
+<!--            <div class="search-group">-->
+<!--                <select id="searchType" class="search-select">-->
+<!--                    <option value="all" th:selected="${searchType == 'all'}">全部</option>-->
+<!--                    <option value="sender" th:selected="${searchType == 'sender'}">发件人</option>-->
+<!--                    <option value="title" th:selected="${searchType == 'title'}">主题</option>-->
+<!--                    <option value="date" th:selected="${searchType == 'date'}">日期</option>-->
+<!--                </select>-->
+<!--                <div class="search-box">-->
+<!--                    <i class="fas fa-search" style="color: #ccc; cursor: pointer;" onclick="doSearch()"></i>-->
+<!--                    <input type="text" id="searchInput" th:value="${keyword}" placeholder="搜索邮件..." -->
+<!--                           onkeydown="if(event.keyCode==13) doSearch()">-->
+<!--                </div>-->
+<!--            </div>-->
+
+<!--            <div style="display: flex; gap: 10px;">-->
+<!--                <a href="/inbox" class="menu-item" style="background: white; border:1px solid #eee;"><i class="fas fa-sync-alt"></i></a>-->
+<!--                <a href="/sendPage" class="menu-item active" style="background: #0078d4;"><i class="fas fa-pen"></i> 写信</a>-->
+<!--            </div>-->
+<!--        </div>-->
+
+<!--        <div class="email-list-wrapper">-->
+<!--            <table>-->
+<!--                <thead>-->
+<!--                <tr>-->
+<!--                    <th class="sender-col sortable" -->
+<!--                        th:classappend="${sort == 'sender'} ? 'active-sort'"-->
+<!--                        th:onclick="|location.href='@{${baseUrl}(page=1, sort='sender', order=${sort == 'sender' && order == 'asc' ? 'desc' : 'asc'}, keyword=${keyword}, searchType=${searchType})}'|">-->
+<!--                        <span th:text="${currentFolder == '已发送'} ? '收件人' : '发件人'">发件人/收件人</span>-->
+<!--                        <i class="fas" th:classappend="${sort == 'sender'} ? (order == 'asc' ? 'fa-sort-up' : 'fa-sort-down') : 'fa-sort'"></i>-->
+<!--                    </th>-->
+<!--                    -->
+<!--                    <th width="45%" class="sortable"-->
+<!--                        th:classappend="${sort == 'title'} ? 'active-sort'"-->
+<!--                        th:onclick="|location.href='@{${baseUrl}(page=1, sort='title', order=${sort == 'title' && order == 'asc' ? 'desc' : 'asc'}, keyword=${keyword}, searchType=${searchType})}'|">-->
+<!--                        主题-->
+<!--                        <i class="fas" th:classappend="${sort == 'title'} ? (order == 'asc' ? 'fa-sort-up' : 'fa-sort-down') : 'fa-sort'"></i>-->
+<!--                    </th>-->
+
+<!--                    <th width="15%" style="text-align: right;" class="sortable"-->
+<!--                        th:classappend="${sort == 'date'} ? 'active-sort'"-->
+<!--                        th:onclick="|location.href='@{${baseUrl}(page=1, sort='date', order=${sort == 'date' && order == 'asc' ? 'desc' : 'asc'}, keyword=${keyword}, searchType=${searchType})}'|">-->
+<!--                        时间-->
+<!--                        <i class="fas" th:classappend="${sort == 'date'} ? (order == 'asc' ? 'fa-sort-up' : 'fa-sort-down') : 'fa-sort'"></i>-->
+<!--                    </th>-->
+
+<!--                    <th width="12%"></th>-->
+<!--                </tr>-->
+<!--                </thead>-->
+<!--                <tbody id="emailTableBody">-->
+<!--                <tr th:each="email : ${emails}" -->
+<!--                    th:data-uid="${email.id}"-->
+<!--                    th:data-folder="${currentFolder}"-->
+<!--                    th:data-title="${email.title}"-->
+<!--                    th:data-sender="${email.sender}"-->
+<!--                    onclick="showEmailDetail(this)">-->
+<!--                    -->
+<!--                    <td class="sender-col">-->
+<!--                        <div style="display: flex; align-items: center;">-->
+<!--                            <span class="sender-avatar" th:text="${#strings.substring(email.sender, 0, 1)}">A</span>-->
+<!--                            <div style="display: flex; flex-direction: column; justify-content: center;">-->
+<!--                                <span th:text="${email.sender}" style="line-height: 1.2;">张三</span>-->
+<!--                                <span th:text="${email.address}" style="font-size: 12px; color: #999; font-weight: normal; line-height: 1.2;">zhangsan@qq.com</span>-->
+<!--                            </div>-->
+<!--                        </div>-->
+<!--                    </td>-->
+<!--                    -->
+<!--                    <td th:text="${email.title}" style="font-weight: 500;">主题</td>-->
+<!--                    <td class="date-col" th:text="${email.sendDate}">时间</td>-->
+
+<!--                    <td style="text-align: center; white-space: nowrap;" onclick="event.stopPropagation()">-->
+<!--                        -->
+<!--                        <a th:if="${currentFolder == null || currentFolder == '收件箱'}"-->
+<!--                        th:href="@{/sendPage(replyUid=${email.id}, folder=${(currentFolder == '收件箱' || currentFolder == null) ? 'INBOX' : currentFolder})}"-->
+<!--                        class="btn-action" title="回复" -->
+<!--                        style="color: #0078d4; margin-right: 5px;"> <i class="fas fa-reply"></i>-->
+<!--                        </a>-->
+
+<!--                        <a th:if="${currentFolder == null || currentFolder == '收件箱' || currentFolder == '已发送' || currentFolder == '已删除'}"-->
+<!--                        href="javascript:void(0)"-->
+<!--                        th:onclick="|openForwardModal(${email.id})|"-->
+<!--                        class="btn-action" title="转发" style="color: #28a745;">-->
+<!--                            <i class="fas fa-share"></i>-->
+<!--                        </a>-->
+
+<!--                        <a th:if="${currentFolder == null || currentFolder == '收件箱'}"-->
+<!--                        th:href="@{/deleteFromInbox(id=${email.id})}"-->
+<!--                        class="btn-action btn-trash" title="移入已删除" onclick="return confirm('确定要删除收件箱的这封邮件吗？')">-->
+<!--                        <i class="fas fa-trash"></i>-->
+<!--                        </a>-->
+
+<!--                        <a th:if="${currentFolder == '已发送'}"-->
+<!--                            th:href="@{/deleteFromSent(id=${email.id})}"-->
+<!--                            class="btn-action btn-trash" title="移入已删除" onclick="return confirm('确定要删除吗？')">-->
+<!--                            <i class="fas fa-trash"></i>-->
+<!--                        </a>-->
+<!--                        -->
+<!--                        <a th:if="${currentFolder == '已删除'}"-->
+<!--                            th:href="@{/deleteForever(id=${email.id})}"-->
+<!--                            class="btn-action btn-trash" title="彻底删除" style="color: #ff4d4f;" onclick="return confirm('确定彻底删除吗？')">-->
+<!--                            <i class="fas fa-times-circle"></i>-->
+<!--                        </a>-->
+<!--                    </td>-->
+<!--                </tr>-->
+<!--                <tr th:if="${emails.size() == 0}">-->
+<!--                    <td colspan="4" style="text-align: center; padding: 50px; color: #999;">-->
+<!--                        <i class="fas fa-coffee" style="font-size: 30px; margin-bottom: 10px;"></i><br>暂无邮件-->
+<!--                        <div th:if="${keyword != null}" style="font-size: 12px; margin-top: 5px;">-->
+<!--                            (搜索关键词: <span th:text="${keyword}" style="font-weight: bold;"></span>, 类型: <span th:text="${searchType}"></span>)-->
+<!--                        </div>-->
+<!--                    </td>-->
+<!--                </tr>-->
+<!--                </tbody>-->
+<!--            </table>-->
+<!--            -->
+<!--            <div class="pagination-bar" th:if="${totalPages > 0}">-->
+<!--                <span style="margin-right: 15px;">-->
+<!--                    <span th:text="${currentPage}">1</span>/<span th:text="${totalPages}">1</span> 页-->
+<!--                </span>-->
+
+<!--                <a th:if="${currentPage > 1}" th:href="@{${baseUrl}(page=${currentPage - 1}, sort=${sort}, order=${order}, keyword=${keyword}, searchType=${searchType})}">上一页</a>-->
+<!--                <span th:if="${currentPage <= 1}" class="disabled">上一页</span>-->
+
+<!--                <a th:if="${currentPage < totalPages}" th:href="@{${baseUrl}(page=${currentPage + 1}, sort=${sort}, order=${order}, keyword=${keyword}, searchType=${searchType})}">下一页</a>-->
+<!--                <span th:if="${currentPage >= totalPages}" class="disabled">下一页</span>-->
+
+<!--                <span style="margin-left: 15px;">-->
+<!--                    跳转到第 <input type="text" id="jumpInput" class="page-input" th:value="${currentPage}"> 页-->
+<!--                    <button type="button" class="btn-go" onclick="jumpToPage()">确定</button>-->
+<!--                </span>-->
+
+<!--                <input type="hidden" id="maxPage" th:value="${totalPages}">-->
+<!--                <input type="hidden" id="currentBaseUrl" th:value="${baseUrl}">-->
+<!--                <input type="hidden" id="currentSort" th:value="${sort}">-->
+<!--                <input type="hidden" id="currentOrder" th:value="${order}">-->
+<!--                <input type="hidden" id="currentKeyword" th:value="${keyword}">-->
+<!--                <input type="hidden" id="currentSearchType" th:value="${searchType}">-->
+<!--            </div>-->
+<!--        </div>-->
+<!--    </div>-->
+<!--</div>-->
+
+<!--<div id="emailModal" class="modal-overlay">-->
+<!--    <div class="modal-card">-->
+<!--        <div class="modal-header">-->
+<!--            <div><h3 id="modalTitle" style="margin: 0; font-size: 18px;">邮件标题</h3><span id="modalSender" style="font-size: 13px; color: #666;">发件人</span></div>-->
+<!--            <button class="modal-close" onclick="closeModal()">&times;</button>-->
+<!--        </div>-->
+<!--        <div id="modalContent" style="padding: 30px; overflow-y: auto; line-height: 1.6; flex: 1; word-wrap: break-word;">邮件内容...</div>-->
+<!--        <div id="imagePreviewArea" style="padding: 0 30px; display:none;"></div>-->
+<!--        <div id="attachmentArea" style="padding: 0 30px 20px; border-top: 1px dashed #eee; margin-top: 10px; display:none;"><p style="font-size: 12px; color: #999; margin-bottom: 5px;"><i class="fas fa-paperclip"></i> 附件列表：</p><div id="attachmentList" style="display: flex; flex-wrap: wrap; gap: 10px;"></div></div>-->
+<!--        <div style="padding: 15px; text-align: right; border-top: 1px solid rgba(0,0,0,0.05);"><button onclick="closeModal()" style="padding: 8px 20px; background: #0078d4; color: white; border: none; border-radius: 5px; cursor: pointer;">关闭</button></div>-->
+<!--    </div>-->
+<!--</div>-->
+
+<!--<div id="forwardModal" class="modal-overlay">-->
+<!--    <div class="modal-card" style="width: 400px; height: auto;">-->
+<!--        <div class="modal-header">-->
+<!--            <h3><i class="fas fa-share" style="color: #28a745;"></i> 转发邮件</h3>-->
+<!--            <button class="modal-close" onclick="closeForwardModal()">&times;</button>-->
+<!--        </div>-->
+<!--        <div style="padding: 20px;">-->
+<!--            <div style="margin-bottom: 15px;">-->
+<!--                <label style="display:block; margin-bottom:5px; font-weight:bold; color:#666;">收件人</label>-->
+<!--                <input type="text" id="forwardTo" list="contactsList" placeholder="输入邮箱或选择联系人" -->
+<!--                       style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 5px; box-sizing: border-box;">-->
+<!--                <datalist id="contactsList">-->
+<!--                    <option th:each="c : ${contacts}" th:value="${c.email}" th:label="${c.name}"></option>-->
+<!--                </datalist>-->
+<!--            </div>-->
+<!--            -->
+<!--            <div style="margin-bottom: 15px;">-->
+<!--                <label style="display:block; margin-bottom:5px; font-weight:bold; color:#666;">附加留言 (可选)</label>-->
+<!--                <textarea id="forwardComment" rows="3" placeholder="例如：这封邮件很有意思，你看一下..." -->
+<!--                          style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 5px; box-sizing: border-box; font-family: inherit; resize: vertical;"></textarea>-->
+<!--            </div>-->
+
+<!--            <div style="text-align: right;">-->
+<!--                <button onclick="closeForwardModal()" style="padding: 8px 15px; background: #eee; border: none; border-radius: 5px; cursor: pointer; margin-right: 10px;">取消</button>-->
+<!--                <button onclick="submitForward()" id="btnSubmitForward" style="padding: 8px 20px; background: #28a745; color: white; border: none; border-radius: 5px; cursor: pointer;">-->
+<!--                    <i class="fas fa-paper-plane"></i> 立即转发-->
+<!--                </button>-->
+<!--            </div>-->
+<!--        </div>-->
+<!--    </div>-->
+<!--</div>-->
+
+<!--<script>-->
+<!--    window.onload = function() {-->
+<!--        const savedTheme = localStorage.getItem('theme');-->
+<!--        if (savedTheme === 'dark') document.body.classList.add('dark-mode');-->
+<!--        const savedBg = localStorage.getItem('customBg');-->
+<!--        if (savedBg) document.body.style.setProperty('&#45;&#45;bg-image', `url(${savedBg})`);-->
+<!--    }-->
+
+<!--    // 1. 修改：执行服务器端搜索，带上 searchType-->
+<!--    function doSearch() {-->
+<!--        var input = document.getElementById("searchInput");-->
+<!--        var keyword = input.value;-->
+<!--        var searchType = document.getElementById("searchType").value; // 获取类型-->
+<!--        var baseUrl = "[[${baseUrl}]]"; -->
+<!--        var sort = "[[${sort}]]" || 'date';-->
+<!--        var order = "[[${order}]]" || 'desc';-->
+<!--        -->
+<!--        // 跳转: 带上 keyword 和 searchType-->
+<!--        window.location.href = baseUrl + "?page=1&sort=" + sort + "&order=" + order + "&keyword=" + encodeURIComponent(keyword) + "&searchType=" + searchType;-->
+<!--    }-->
+
+<!--    function showEmailDetail(element) {-->
+<!--        document.getElementById('modalTitle').innerText = element.getAttribute("data-title");-->
+<!--        document.getElementById('modalSender').innerText = element.getAttribute("data-sender");-->
+<!--        -->
+<!--        var contentDiv = document.getElementById('modalContent');-->
+<!--        contentDiv.innerHTML = "<div style='text-align:center; padding:30px; color:#666;'><i class='fas fa-spinner fa-spin'></i> 正在从服务器下载邮件内容，请稍候...</div>";-->
+<!--        -->
+<!--        document.getElementById('attachmentArea').style.display = 'none';-->
+<!--        document.getElementById('imagePreviewArea').style.display = 'none';-->
+<!--        document.getElementById('attachmentList').innerHTML = "";-->
+<!--        -->
+<!--        document.getElementById('emailModal').style.display = 'flex';-->
+
+<!--        var uid = element.getAttribute("data-uid");-->
+<!--        var folder = element.getAttribute("data-folder");-->
+<!--        if(!folder) folder = "收件箱"; -->
+
+<!--        fetch(`/email/detail?folder=${encodeURIComponent(folder)}&uid=${uid}`)-->
+<!--            .then(response => response.json())-->
+<!--            .then(data => {-->
+<!--                if(data.success) {-->
+<!--                    contentDiv.innerHTML = data.content ? data.content : "<span style='color:#999'>（无正文内容）</span>";-->
+<!--                    if (data.files && data.files.length > 0) {-->
+<!--                        renderAttachments(data.files);-->
+<!--                    }-->
+<!--                } else {-->
+<!--                    contentDiv.innerHTML = "<span style='color:red'>加载失败：" + (data.error || "未知错误") + "</span>";-->
+<!--                }-->
+<!--            })-->
+<!--            .catch(err => {-->
+<!--                contentDiv.innerHTML = "<span style='color:red'>网络错误，无法加载内容</span>";-->
+<!--                console.error(err);-->
+<!--            });-->
+<!--    }-->
+
+<!--    function renderAttachments(fileArray) {-->
+<!--        var attachArea = document.getElementById('attachmentArea');-->
+<!--        var attachDiv = document.getElementById('attachmentList');-->
+<!--        var imgArea = document.getElementById('imagePreviewArea');-->
+<!--        -->
+<!--        attachDiv.innerHTML = ""; -->
+<!--        imgArea.innerHTML = "";-->
+<!--        attachArea.style.display = 'block';-->
+
+<!--        for(var i=0; i<fileArray.length; i++) {-->
+<!--            var fName = fileArray[i];-->
+<!--            var downloadUrl = "/download?filename=" + encodeURIComponent(fName);-->
+
+<!--            var btn = `<a href="${downloadUrl}" target="_blank" -->
+<!--                        style="font-size:12px; padding:6px 12px; background:#f0f0f0; border-radius:4px; text-decoration:none; color:#333; border:1px solid #ddd; display:flex; align-items:center; gap:5px;">-->
+<!--                        <i class="fas fa-file-download" style="color:#0078d4;"></i> ${fName}-->
+<!--                       </a>`;-->
+<!--            attachDiv.innerHTML += btn;-->
+
+<!--            var lowerName = fName.toLowerCase();-->
+<!--            if(lowerName.endsWith('.jpg') || lowerName.endsWith('.jpeg') || lowerName.endsWith('.png')) {-->
+<!--                imgArea.style.display = 'block';-->
+<!--                var imgTag = `<div style="margin-top:15px; border:1px solid #eee; padding:5px; border-radius:5px; display:inline-block;">-->
+<!--                                <p style="margin:0 0 5px 0; font-size:12px; color:#999;">预览: ${fName}</p>-->
+<!--                                <img src="${downloadUrl}" style="max-width:100%; max-height:400px; display:block;">-->
+<!--                              </div><br>`;-->
+<!--                imgArea.innerHTML += imgTag;-->
+<!--            }-->
+<!--        }-->
+<!--    }-->
+
+<!--    function closeModal() { -->
+<!--        document.getElementById('emailModal').style.display = 'none'; -->
+<!--    }-->
+
+<!--    window.onclick = function(e) { -->
+<!--        if (e.target.classList.contains('modal-overlay')) {-->
+<!--            e.target.style.display = 'none'; -->
+<!--        }-->
+<!--    }-->
+
+<!--    // 2. 修改：跳转页码时携带 keyword 和 searchType-->
+<!--    function jumpToPage() {-->
+<!--        var p = parseInt(document.getElementById("jumpInput").value);-->
+<!--        var max = parseInt(document.getElementById("maxPage").value);-->
+<!--        var baseUrl = document.getElementById("currentBaseUrl").value;-->
+<!--        var sort = document.getElementById("currentSort").value || 'date';-->
+<!--        var order = document.getElementById("currentOrder").value || 'desc';-->
+<!--        var keyword = document.getElementById("currentKeyword").value || '';-->
+<!--        var searchType = document.getElementById("currentSearchType").value || 'all';-->
+
+<!--        if (isNaN(p) || p < 1) { alert("无效页码"); return; }-->
+<!--        if (p > max) { alert("超过最大页数"); return; }-->
+<!--        -->
+<!--        var url = baseUrl + "?page=" + p + "&sort=" + sort + "&order=" + order;-->
+<!--        if(keyword) {-->
+<!--            url += "&keyword=" + encodeURIComponent(keyword);-->
+<!--            url += "&searchType=" + searchType;-->
+<!--        }-->
+<!--        -->
+<!--        window.location.href = url;-->
+<!--    }-->
+
+<!--    let currentForwardUid = null;-->
+
+<!--    function openForwardModal(uid) {-->
+<!--        currentForwardUid = uid;-->
+<!--        document.getElementById('forwardTo').value = '';-->
+<!--        document.getElementById('forwardComment').value = '';-->
+<!--        document.getElementById('forwardModal').style.display = 'flex';-->
+<!--    }-->
+
+<!--    function closeForwardModal() {-->
+<!--        document.getElementById('forwardModal').style.display = 'none';-->
+<!--        currentForwardUid = null;-->
+<!--    }-->
+
+<!--    function submitForward() {-->
+<!--        var to = document.getElementById('forwardTo').value;-->
+<!--        var comment = document.getElementById('forwardComment').value;-->
+<!--        var folder = "[[${currentFolder}]]" || "收件箱"; -->
+
+<!--        if(!to) {-->
+<!--            alert("请填写收件人邮箱！");-->
+<!--            return;-->
+<!--        }-->
+
+<!--        var btn = document.getElementById('btnSubmitForward');-->
+<!--        var originalText = btn.innerHTML;-->
+<!--        btn.innerHTML = "<i class='fas fa-spinner fa-spin'></i> 发送中...";-->
+<!--        btn.disabled = true;-->
+
+<!--        var formData = new FormData();-->
+<!--        formData.append('folder', folder);-->
+<!--        formData.append('uid', currentForwardUid);-->
+<!--        formData.append('to', to);-->
+<!--        formData.append('comment', comment);-->
+
+<!--        fetch('/mail/forward', {-->
+<!--            method: 'POST',-->
+<!--            body: formData-->
+<!--        })-->
+<!--        .then(response => response.json())-->
+<!--        .then(data => {-->
+<!--            if(data.success) {-->
+<!--                alert("✅ 转发成功！");-->
+<!--                closeForwardModal();-->
+<!--            } else {-->
+<!--                alert("❌ 转发失败：" + (data.error || "未知错误"));-->
+<!--            }-->
+<!--        })-->
+<!--        .catch(err => {-->
+<!--            alert("网络错误，请重试");-->
+<!--            console.error(err);-->
+<!--        })-->
+<!--        .finally(() => {-->
+<!--            btn.innerHTML = originalText;-->
+<!--            btn.disabled = false;-->
+<!--        });-->
+<!--    }-->
+<!--</script>-->
+
+<!--</body>-->
+<!--</html>-->

@@ -53,17 +53,37 @@
             display: flex; overflow: hidden;
         }
 
-        .sidebar { width: 260px; background: var(--sidebar-bg); border-right: 1px solid rgba(0,0,0,0.05); display: flex; flex-direction: column; padding: 20px; }
-        .user-card { text-align: center; margin-bottom: 30px; padding-bottom: 20px; border-bottom: 1px dashed #ccc; }
-        .avatar { width: 80px; height: 80px; background: linear-gradient(135deg, #a18cd1 0%, #fbc2eb 100%); border-radius: 50%; margin: 0 auto 10px; display: flex; align-items: center; justify-content: center; font-size: 30px; color: white; }
-        .username { font-weight: bold; color: var(--text-main); font-size: 16px; margin-bottom: 5px;}
-        .user-email { font-size: 12px; color: var(--text-sub); word-break: break-all;}
+        /* ================== 侧边栏样式 (更新) ================== */
+        .sidebar { width: 260px; background: var(--sidebar-bg); border-right: 1px solid rgba(0,0,0,0.05); display: flex; flex-direction: column; padding: 20px; overflow-y: auto; }
+        .user-profile-area { margin-bottom: 20px; border-bottom: 1px dashed #ccc; padding-bottom: 15px; }
+        .app-user-name { font-weight: bold; font-size: 16px; color: var(--text-main); margin-bottom: 10px; display: flex; align-items: center; gap: 8px; }
+        .account-list-title { font-size: 12px; color: #999; margin-bottom: 8px; font-weight: bold; }
+
+        .account-switcher-item {
+            display: flex; align-items: center; padding: 8px 12px;
+            border-radius: 8px; cursor: pointer; transition: 0.2s;
+            margin-bottom: 5px; text-decoration: none; color: var(--text-sub);
+            border: 1px solid transparent;
+        }
+        .account-switcher-item:hover { background: var(--hover-bg); }
+        .account-switcher-item.active {
+            background: rgba(0, 120, 212, 0.1);
+            border-color: rgba(0, 120, 212, 0.3);
+            color: #0078d4; font-weight: bold;
+        }
+
+        .acc-icon { width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; border-radius: 50%; background: #eee; margin-right: 10px; font-size: 12px; }
+        .active .acc-icon { background: #0078d4; color: white; }
+        .add-acc-btn { font-size: 12px; color: #0078d4; text-decoration: none; padding-left: 10px; display: inline-block; margin-top: 5px;}
+        .add-acc-btn:hover { text-decoration: underline; }
+
         .menu-item { display: flex; align-items: center; padding: 12px 15px; color: var(--text-sub); text-decoration: none; border-radius: 10px; margin-bottom: 5px; transition: 0.3s; }
         .menu-item:hover { background: var(--hover-bg); color: #0078d4; transform: translateX(5px); }
         .menu-item.active { background: #0078d4; color: white; box-shadow: 0 4px 10px rgba(0, 120, 212, 0.3); }
         .menu-item i { width: 25px; font-size: 18px; }
         .menu-title { font-size: 12px; color: #999; margin-top: 20px; margin-bottom: 10px; padding-left: 10px; }
 
+        /* ================== 写信主内容区样式 ================== */
         .main-content { flex: 1; padding: 40px; overflow-y: auto; color: var(--text-main); }
         .send-container {
             max-width: 800px; margin: 0 auto; background: var(--card-bg);
@@ -74,7 +94,7 @@
 
         .form-group { margin-bottom: 20px; }
         .form-group label { display: block; margin-bottom: 8px; font-weight: 500; color: var(--text-sub); }
-        
+
         .form-group input[type="text"] {
             width: 100%; padding: 12px; border: 1px solid var(--border-color); border-radius: 8px;
             background: var(--input-bg); color: var(--text-main); font-family: inherit; font-size: 14px;
@@ -82,9 +102,9 @@
         }
         .form-group input:focus { outline: none; border-color: #0078d4; box-shadow: 0 0 0 3px rgba(0, 120, 212, 0.1); }
 
-        /* 【新增】Quill 编辑器自定义样式 */
+        /* Quill 编辑器自定义样式 */
         #editor-container {
-            height: 300px; 
+            height: 300px;
             background: var(--input-bg);
             color: var(--text-main);
             border-bottom-left-radius: 8px;
@@ -107,9 +127,9 @@
         body.dark-mode .ql-stroke { stroke: #ccc !important; }
         body.dark-mode .ql-fill { fill: #ccc !important; }
         body.dark-mode .ql-picker { color: #ccc !important; }
-        
+
         .btn-group { display: flex; gap: 15px; margin-top: 30px; align-items: center; }
-        
+
         .btn-send {
             padding: 10px 30px; background: #0078d4; color: white;
             border: none; border-radius: 5px; cursor: pointer; font-size: 16px;
@@ -133,29 +153,56 @@
 <body>
 
 <div class="glass-container">
+
     <div class="sidebar">
-        <div class="user-card">
-            <div class="avatar"><i class="fas fa-user-astronaut"></i></div>
-            <div class="username">我的账号</div>
-            <div class="user-email" th:text="${session.currentUser != null ? session.currentUser.email : '未登录'}"></div>
+        <div class="user-profile-area">
+            <div class="app-user-name">
+                <i class="fas fa-user-astronaut" style="color: #6c5ce7;"></i>
+                <span th:text="${session.appUser.nickname}">主账号昵称</span>
+            </div>
+            <div style="font-size: 12px; color: #999;">
+                <span th:text="${session.appUser.username}">admin</span>
+                <a href="/logout" style="color: #ff4d4f; margin-left: 10px; text-decoration: none;">[退出]</a>
+            </div>
         </div>
 
-        <div class="menu-title">邮箱文件夹</div>
-        <a href="/inbox" class="menu-item"><i class="fas fa-inbox"></i> 收件箱</a>
-        <a href="/sent" class="menu-item"><i class="fas fa-paper-plane"></i> 已发送</a>
-        <a href="/drafts" class="menu-item"><i class="fas fa-file-alt"></i> 草稿箱</a>
-        <a href="/trash" class="menu-item"><i class="fas fa-trash-alt"></i> 垃圾箱</a>
+        <div class="account-list-title">切换邮箱账号</div>
+
+        <a th:each="acc : ${myAccounts}"
+           th:href="@{/account/switch(id=${acc.id})}"
+           class="account-switcher-item"
+           th:classappend="${acc.id == currentEmailId} ? 'active'">
+            <div class="acc-icon">
+                <i th:if="${acc.type == 'qq'}" class="fab fa-qq"></i>
+                <i th:if="${acc.type == '163'}" class="fas fa-envelope"></i>
+            </div>
+            <div style="display: flex; flex-direction: column; overflow: hidden;">
+                <span th:text="${acc.email}" style="font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">user@qq.com</span>
+                <span th:text="${acc.type == 'qq' ? 'QQ邮箱' : '网易邮箱'}" style="font-size: 11px; opacity: 0.7;">Type</span>
+            </div>
+            <i th:if="${acc.id == currentEmailId}" class="fas fa-check" style="margin-left: auto; font-size: 12px;"></i>
+        </a>
+        <a href="/settings" class="add-acc-btn"><i class="fas fa-plus-circle"></i> 绑定新邮箱</a>
+
+        <hr style="border: 0; border-bottom: 1px dashed #ddd; margin: 15px 0; width: 100%;">
+
+        <div class="menu-title" th:if="${currentEmailId != null}">当前邮箱文件夹</div>
+        <div th:if="${currentEmailId == null}" style="color:orange; font-size:12px; padding:10px;">请先选择或绑定一个邮箱</div>
+
+        <a href="/inbox" class="menu-item" th:if="${currentEmailId != null}"><i class="fas fa-inbox"></i> 收件箱</a>
+        <a href="/sent" class="menu-item" th:if="${currentEmailId != null}"><i class="fas fa-paper-plane"></i> 已发送</a>
+        <a href="/drafts" class="menu-item" th:if="${currentEmailId != null}"><i class="fas fa-file-alt"></i> 草稿箱</a>
+        <a href="/trash" class="menu-item" th:if="${currentEmailId != null}"><i class="fas fa-trash-alt"></i> 垃圾箱</a>
 
         <div class="menu-title">管理</div>
         <a href="/contacts" class="menu-item"><i class="fas fa-address-book"></i> 通讯录</a>
         <a href="/settings" class="menu-item"><i class="fas fa-cog"></i> 设置</a>
-        <a href="/logout" class="menu-item" style="margin-top: auto; color: #ff4d4f;"><i class="fas fa-sign-out-alt"></i> 退出登录</a>
     </div>
 
     <div class="main-content">
         <div class="send-container">
             <div class="send-header"><i class="fas fa-pen" style="color: #0078d4;"></i> 写邮件</div>
-            
+
             <form id="mailForm" method="post" action="/sendMail" enctype="multipart/form-data">
 
                 <input type="hidden" id="replyUid" name="replyUid" th:value="${replyUid != null ? #strings.toString(replyUid) : ''}">
@@ -163,7 +210,7 @@
 
                 <div class="form-group">
                     <label>收件人</label>
-                    <input type="text" name="to" placeholder="user@example.com" 
+                    <input type="text" name="to" placeholder="user@example.com"
                            th:value="${draftReceiver}" list="contactsList" required>
                     <datalist id="contactsList">
                         <option th:each="c : ${contacts}" th:value="${c.email}" th:label="${c.name}"></option>
@@ -172,17 +219,17 @@
 
                 <div class="form-group">
                     <label>主题</label>
-                    <input type="text" name="subject" placeholder="请输入邮件主题" 
+                    <input type="text" name="subject" placeholder="请输入邮件主题"
                            th:value="${draftTitle}" required>
                 </div>
 
                 <div class="form-group">
                     <label>正文内容</label>
-                    
+
                     <input type="hidden" name="text" id="hiddenContent">
-                    
+
                     <textarea id="draftContentData" style="display:none;" th:utext="${draftContent}"></textarea>
-                    
+
                     <div id="editor-container"></div>
                 </div>
 
@@ -190,7 +237,6 @@
                     <label><i class="fas fa-paperclip"></i> 添加附件</label>
                     <input type="file" name="file">
 
-                    <!-- 回复场景：原邮件附件（浏览器出于安全原因无法自动写入 file input，但后端会在发送时自动附带这些附件） -->
                     <div id="replyAttachmentArea" style="display:none; margin-top:10px; padding:10px; border:1px dashed rgba(0,0,0,0.15); border-radius:8px;">
                         <div style="font-size:12px; color:#666; margin-bottom:8px;">将自动附带原邮件附件：</div>
                         <div id="replyAttachmentList" style="display:flex; flex-wrap:wrap; gap:8px;"></div>
@@ -203,11 +249,11 @@
                     <button type="submit" class="btn-send">
                         <i class="fas fa-paper-plane"></i> 发送邮件
                     </button>
-                    
+
                     <button type="submit" formaction="/saveDraft" class="btn-draft" formnovalidate>
                         <i class="fas fa-save"></i> 存入草稿
                     </button>
-                    
+
                     <a href="/inbox" class="btn-cancel">放弃</a>
                 </div>
             </form>
@@ -223,12 +269,10 @@
         if (savedTheme === 'dark') document.body.classList.add('dark-mode');
         const savedBg = localStorage.getItem('customBg');
         if (savedBg) document.body.style.setProperty('--bg-image', `url(${savedBg})`);
-        
+
         // 2. 初始化编辑器
         initEditor();
     }
-
-// 修改 send.html 底部的 initEditor 函数
 
     function initEditor() {
         var quill = new Quill('#editor-container', {
@@ -245,10 +289,10 @@
             }
         });
 
-        // --- 逻辑 A: 处理草稿 (保持不变) ---
+        // --- 逻辑 A: 处理草稿 ---
         var dataArea = document.getElementById('draftContentData');
         if (dataArea) {
-            var draftData = dataArea.value; 
+            var draftData = dataArea.value;
             if (draftData && draftData.trim() !== "") {
                 quill.setContents([]);
                 quill.clipboard.dangerouslyPasteHTML(draftData);
@@ -256,18 +300,17 @@
             }
         }
 
-        // --- 逻辑 B: 处理回复 (新增逻辑：前端异步加载) ---
+        // --- 逻辑 B: 处理回复 ---
         var rUid = document.getElementById('replyUid').value;
         var rFolder = document.getElementById('replyFolder').value;
 
-if (rUid && rFolder) {
+        if (rUid && rFolder) {
             quill.setText('正在加载原邮件内容...');
 
             fetch(`/email/detail?folder=${encodeURIComponent(rFolder)}&uid=${rUid}`)
                 .then(response => {
-                    // 如果后端报错 (比如 400 Bad Request)，这里会捕获到
                     if (!response.ok) {
-                        throw new Error("HTTP error " + response.status); 
+                        throw new Error("HTTP error " + response.status);
                     }
                     return response.json();
                 })
@@ -297,7 +340,6 @@ if (rUid && rFolder) {
                             }
                         }
                         quill.setContents([]);
-                        // 使用 Quill 的粘贴接口，避免直接改 innerHTML 导致内容被清空/不显示
                         quill.clipboard.dangerouslyPasteHTML(splitLine + originalContent);
                     } else {
                         quill.setText('无法加载原邮件: ' + (data.error || '未知错误'));
@@ -305,18 +347,16 @@ if (rUid && rFolder) {
                 })
                 .catch(err => {
                     console.error(err);
-                    // 把错误直接显示在编辑器里，方便你看
                     quill.setText('加载失败: ' + err.message);
                 });
         }
 
-        // 4. 监听表单提交 (保持不变)
+        // 4. 监听表单提交
         var form = document.getElementById('mailForm');
         form.onsubmit = function() {
             var html = quill.root.innerHTML;
             document.getElementById('hiddenContent').value = html;
 
-            // 如果不是回复场景，避免提交空的 replyUid= 触发 Spring 参数转换错误
             var replyUidEl = document.getElementById('replyUid');
             var replyFolderEl = document.getElementById('replyFolder');
             if (replyUidEl && (!replyUidEl.value || replyUidEl.value.trim() === "")) {
@@ -331,3 +371,337 @@ if (rUid && rFolder) {
 
 </body>
 </html>
+
+<!--<!DOCTYPE html>-->
+<!--<html xmlns:th="http://www.thymeleaf.org">-->
+<!--<head>-->
+<!--    <meta charset="UTF-8">-->
+<!--    <title>写信</title>-->
+<!--    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" rel="stylesheet">-->
+<!--    <link href="https://cdn.quilljs.com/1.3.6/quill.snow.css" rel="stylesheet">-->
+
+<!--    <style>-->
+<!--        /* ================== CSS 变量 ================== */-->
+<!--        :root {-->
+<!--            &#45;&#45;bg-image: url('/images/bg.jpg');-->
+<!--            &#45;&#45;glass-bg: rgba(255, 255, 255, 0.85);-->
+<!--            &#45;&#45;sidebar-bg: rgba(255, 255, 255, 0.5);-->
+<!--            &#45;&#45;main-bg: rgba(255, 255, 255, 0.3);-->
+<!--            &#45;&#45;text-main: #333;-->
+<!--            &#45;&#45;text-sub: #666;-->
+<!--            &#45;&#45;border-color: rgba(255, 255, 255, 0.6);-->
+<!--            &#45;&#45;hover-bg: rgba(255, 255, 255, 0.8);-->
+<!--            &#45;&#45;input-bg: white;-->
+<!--            &#45;&#45;shadow-color: rgba(0, 0, 0, 0.1);-->
+<!--            &#45;&#45;card-bg: rgba(255, 255, 255, 0.6);-->
+<!--            /* 编辑器专用颜色 */-->
+<!--            &#45;&#45;editor-border: #ccc;-->
+<!--            &#45;&#45;editor-bg: white;-->
+<!--        }-->
+
+<!--        body.dark-mode {-->
+<!--            &#45;&#45;glass-bg: rgba(30, 30, 30, 0.85);-->
+<!--            &#45;&#45;sidebar-bg: rgba(0, 0, 0, 0.3);-->
+<!--            &#45;&#45;main-bg: rgba(0, 0, 0, 0.2);-->
+<!--            &#45;&#45;text-main: #e0e0e0;-->
+<!--            &#45;&#45;text-sub: #aaaaaa;-->
+<!--            &#45;&#45;border-color: rgba(255, 255, 255, 0.1);-->
+<!--            &#45;&#45;hover-bg: rgba(255, 255, 255, 0.1);-->
+<!--            &#45;&#45;input-bg: #444;-->
+<!--            &#45;&#45;shadow-color: rgba(0, 0, 0, 0.5);-->
+<!--            &#45;&#45;card-bg: rgba(40, 40, 40, 0.6);-->
+<!--            /* 编辑器黑夜模式适配 */-->
+<!--            &#45;&#45;editor-border: #555;-->
+<!--            &#45;&#45;editor-bg: #444;-->
+<!--        }-->
+
+<!--        body {-->
+<!--            font-family: 'Segoe UI', sans-serif; margin: 0; padding: 0;-->
+<!--            background-image: var(&#45;&#45;bg-image); background-size: cover; background-position: center; background-attachment: fixed;-->
+<!--            height: 100vh; display: flex; justify-content: center; align-items: center; transition: background-image 0.5s;-->
+<!--        }-->
+
+<!--        .glass-container {-->
+<!--            width: 90%; height: 90vh; background: var(&#45;&#45;glass-bg); backdrop-filter: blur(12px);-->
+<!--            border: 1px solid var(&#45;&#45;border-color); border-radius: 20px; box-shadow: 0 15px 40px var(&#45;&#45;shadow-color);-->
+<!--            display: flex; overflow: hidden;-->
+<!--        }-->
+
+<!--        .sidebar { width: 260px; background: var(&#45;&#45;sidebar-bg); border-right: 1px solid rgba(0,0,0,0.05); display: flex; flex-direction: column; padding: 20px; }-->
+<!--        .user-card { text-align: center; margin-bottom: 30px; padding-bottom: 20px; border-bottom: 1px dashed #ccc; }-->
+<!--        .avatar { width: 80px; height: 80px; background: linear-gradient(135deg, #a18cd1 0%, #fbc2eb 100%); border-radius: 50%; margin: 0 auto 10px; display: flex; align-items: center; justify-content: center; font-size: 30px; color: white; }-->
+<!--        .username { font-weight: bold; color: var(&#45;&#45;text-main); font-size: 16px; margin-bottom: 5px;}-->
+<!--        .user-email { font-size: 12px; color: var(&#45;&#45;text-sub); word-break: break-all;}-->
+<!--        .menu-item { display: flex; align-items: center; padding: 12px 15px; color: var(&#45;&#45;text-sub); text-decoration: none; border-radius: 10px; margin-bottom: 5px; transition: 0.3s; }-->
+<!--        .menu-item:hover { background: var(&#45;&#45;hover-bg); color: #0078d4; transform: translateX(5px); }-->
+<!--        .menu-item.active { background: #0078d4; color: white; box-shadow: 0 4px 10px rgba(0, 120, 212, 0.3); }-->
+<!--        .menu-item i { width: 25px; font-size: 18px; }-->
+<!--        .menu-title { font-size: 12px; color: #999; margin-top: 20px; margin-bottom: 10px; padding-left: 10px; }-->
+
+<!--        .main-content { flex: 1; padding: 40px; overflow-y: auto; color: var(&#45;&#45;text-main); }-->
+<!--        .send-container {-->
+<!--            max-width: 800px; margin: 0 auto; background: var(&#45;&#45;card-bg);-->
+<!--            border-radius: 15px; padding: 30px; box-shadow: 0 10px 30px rgba(0,0,0,0.05);-->
+<!--            animation: fadeIn 0.3s ease; display: flex; flex-direction: column;-->
+<!--        }-->
+<!--        .send-header { font-size: 24px; font-weight: bold; margin-bottom: 20px; border-bottom: 1px solid rgba(0,0,0,0.1); padding-bottom: 15px; }-->
+
+<!--        .form-group { margin-bottom: 20px; }-->
+<!--        .form-group label { display: block; margin-bottom: 8px; font-weight: 500; color: var(&#45;&#45;text-sub); }-->
+<!--        -->
+<!--        .form-group input[type="text"] {-->
+<!--            width: 100%; padding: 12px; border: 1px solid var(&#45;&#45;border-color); border-radius: 8px;-->
+<!--            background: var(&#45;&#45;input-bg); color: var(&#45;&#45;text-main); font-family: inherit; font-size: 14px;-->
+<!--            box-sizing: border-box; transition: 0.3s;-->
+<!--        }-->
+<!--        .form-group input:focus { outline: none; border-color: #0078d4; box-shadow: 0 0 0 3px rgba(0, 120, 212, 0.1); }-->
+
+<!--        /* 【新增】Quill 编辑器自定义样式 */-->
+<!--        #editor-container {-->
+<!--            height: 300px; -->
+<!--            background: var(&#45;&#45;input-bg);-->
+<!--            color: var(&#45;&#45;text-main);-->
+<!--            border-bottom-left-radius: 8px;-->
+<!--            border-bottom-right-radius: 8px;-->
+<!--            font-family: inherit;-->
+<!--            font-size: 15px;-->
+<!--        }-->
+<!--        .ql-toolbar.ql-snow {-->
+<!--            background: var(&#45;&#45;hover-bg);-->
+<!--            border-top-left-radius: 8px;-->
+<!--            border-top-right-radius: 8px;-->
+<!--            border-color: var(&#45;&#45;border-color) !important;-->
+<!--        }-->
+<!--        .ql-container.ql-snow {-->
+<!--            border-color: var(&#45;&#45;border-color) !important;-->
+<!--            border-bottom-left-radius: 8px;-->
+<!--            border-bottom-right-radius: 8px;-->
+<!--        }-->
+<!--        /* 黑夜模式下 toolbar 图标颜色适配 */-->
+<!--        body.dark-mode .ql-stroke { stroke: #ccc !important; }-->
+<!--        body.dark-mode .ql-fill { fill: #ccc !important; }-->
+<!--        body.dark-mode .ql-picker { color: #ccc !important; }-->
+<!--        -->
+<!--        .btn-group { display: flex; gap: 15px; margin-top: 30px; align-items: center; }-->
+<!--        -->
+<!--        .btn-send {-->
+<!--            padding: 10px 30px; background: #0078d4; color: white;-->
+<!--            border: none; border-radius: 5px; cursor: pointer; font-size: 16px;-->
+<!--            display: flex; align-items: center; gap: 8px; transition: 0.3s;-->
+<!--        }-->
+<!--        .btn-send:hover { background: #005a9e; transform: translateY(-2px); }-->
+
+<!--        .btn-draft {-->
+<!--            padding: 10px 25px; background: #ff9f43; color: white;-->
+<!--            border: none; border-radius: 5px; cursor: pointer; font-size: 16px;-->
+<!--            display: flex; align-items: center; gap: 8px; transition: 0.3s;-->
+<!--        }-->
+<!--        .btn-draft:hover { background: #e58e3c; transform: translateY(-2px); }-->
+
+<!--        .btn-cancel { color: #999; text-decoration: none; font-size: 14px; transition: 0.2s; }-->
+<!--        .btn-cancel:hover { color: #666; }-->
+
+<!--        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }-->
+<!--    </style>-->
+<!--</head>-->
+<!--<body>-->
+
+<!--<div class="glass-container">-->
+<!--    <div class="sidebar">-->
+<!--        <div class="user-card">-->
+<!--            <div class="avatar"><i class="fas fa-user-astronaut"></i></div>-->
+<!--            <div class="username">我的账号</div>-->
+<!--            <div class="user-email" th:text="${session.currentUser != null ? session.currentUser.email : '未登录'}"></div>-->
+<!--        </div>-->
+
+<!--        <div class="menu-title">邮箱文件夹</div>-->
+<!--        <a href="/inbox" class="menu-item"><i class="fas fa-inbox"></i> 收件箱</a>-->
+<!--        <a href="/sent" class="menu-item"><i class="fas fa-paper-plane"></i> 已发送</a>-->
+<!--        <a href="/drafts" class="menu-item"><i class="fas fa-file-alt"></i> 草稿箱</a>-->
+<!--        <a href="/trash" class="menu-item"><i class="fas fa-trash-alt"></i> 垃圾箱</a>-->
+
+<!--        <div class="menu-title">管理</div>-->
+<!--        <a href="/contacts" class="menu-item"><i class="fas fa-address-book"></i> 通讯录</a>-->
+<!--        <a href="/settings" class="menu-item"><i class="fas fa-cog"></i> 设置</a>-->
+<!--        <a href="/logout" class="menu-item" style="margin-top: auto; color: #ff4d4f;"><i class="fas fa-sign-out-alt"></i> 退出登录</a>-->
+<!--    </div>-->
+
+<!--    <div class="main-content">-->
+<!--        <div class="send-container">-->
+<!--            <div class="send-header"><i class="fas fa-pen" style="color: #0078d4;"></i> 写邮件</div>-->
+<!--            -->
+<!--            <form id="mailForm" method="post" action="/sendMail" enctype="multipart/form-data">-->
+
+<!--                <input type="hidden" id="replyUid" name="replyUid" th:value="${replyUid != null ? #strings.toString(replyUid) : ''}">-->
+<!--                <input type="hidden" id="replyFolder" name="replyFolder" th:value="${replyFolder}">-->
+
+<!--                <div class="form-group">-->
+<!--                    <label>收件人</label>-->
+<!--                    <input type="text" name="to" placeholder="user@example.com" -->
+<!--                           th:value="${draftReceiver}" list="contactsList" required>-->
+<!--                    <datalist id="contactsList">-->
+<!--                        <option th:each="c : ${contacts}" th:value="${c.email}" th:label="${c.name}"></option>-->
+<!--                    </datalist>-->
+<!--                </div>-->
+
+<!--                <div class="form-group">-->
+<!--                    <label>主题</label>-->
+<!--                    <input type="text" name="subject" placeholder="请输入邮件主题" -->
+<!--                           th:value="${draftTitle}" required>-->
+<!--                </div>-->
+
+<!--                <div class="form-group">-->
+<!--                    <label>正文内容</label>-->
+<!--                    -->
+<!--                    <input type="hidden" name="text" id="hiddenContent">-->
+<!--                    -->
+<!--                    <textarea id="draftContentData" style="display:none;" th:utext="${draftContent}"></textarea>-->
+<!--                    -->
+<!--                    <div id="editor-container"></div>-->
+<!--                </div>-->
+
+<!--                <div class="form-group">-->
+<!--                    <label><i class="fas fa-paperclip"></i> 添加附件</label>-->
+<!--                    <input type="file" name="file">-->
+
+<!--                    &lt;!&ndash; 回复场景：原邮件附件（浏览器出于安全原因无法自动写入 file input，但后端会在发送时自动附带这些附件） &ndash;&gt;-->
+<!--                    <div id="replyAttachmentArea" style="display:none; margin-top:10px; padding:10px; border:1px dashed rgba(0,0,0,0.15); border-radius:8px;">-->
+<!--                        <div style="font-size:12px; color:#666; margin-bottom:8px;">将自动附带原邮件附件：</div>-->
+<!--                        <div id="replyAttachmentList" style="display:flex; flex-wrap:wrap; gap:8px;"></div>-->
+<!--                    </div>-->
+
+<!--                    <p style="font-size:12px; color:#999; margin-top:5px;">(存入草稿时暂不保存附件)</p>-->
+<!--                </div>-->
+
+<!--                <div class="btn-group">-->
+<!--                    <button type="submit" class="btn-send">-->
+<!--                        <i class="fas fa-paper-plane"></i> 发送邮件-->
+<!--                    </button>-->
+<!--                    -->
+<!--                    <button type="submit" formaction="/saveDraft" class="btn-draft" formnovalidate>-->
+<!--                        <i class="fas fa-save"></i> 存入草稿-->
+<!--                    </button>-->
+<!--                    -->
+<!--                    <a href="/inbox" class="btn-cancel">放弃</a>-->
+<!--                </div>-->
+<!--            </form>-->
+<!--        </div>-->
+<!--    </div>-->
+<!--</div>-->
+
+<!--<script src="https://cdn.quilljs.com/1.3.6/quill.js"></script>-->
+<!--<script>-->
+<!--    // 1. 初始化主题-->
+<!--    window.onload = function() {-->
+<!--        const savedTheme = localStorage.getItem('theme');-->
+<!--        if (savedTheme === 'dark') document.body.classList.add('dark-mode');-->
+<!--        const savedBg = localStorage.getItem('customBg');-->
+<!--        if (savedBg) document.body.style.setProperty('&#45;&#45;bg-image', `url(${savedBg})`);-->
+<!--        -->
+<!--        // 2. 初始化编辑器-->
+<!--        initEditor();-->
+<!--    }-->
+
+<!--// 修改 send.html 底部的 initEditor 函数-->
+
+<!--    function initEditor() {-->
+<!--        var quill = new Quill('#editor-container', {-->
+<!--            theme: 'snow',-->
+<!--            placeholder: '在此输入精彩内容...',-->
+<!--            modules: {-->
+<!--                toolbar: [-->
+<!--                    [{ 'header': [1, 2, 3, false] }],-->
+<!--                    ['bold', 'italic', 'underline', 'strike'],-->
+<!--                    [{ 'color': [] }, { 'background': [] }],-->
+<!--                    [{ 'list': 'ordered'}, { 'list': 'bullet' }],-->
+<!--                    ['link', 'clean']-->
+<!--                ]-->
+<!--            }-->
+<!--        });-->
+
+<!--        // -&#45;&#45; 逻辑 A: 处理草稿 (保持不变) -&#45;&#45;-->
+<!--        var dataArea = document.getElementById('draftContentData');-->
+<!--        if (dataArea) {-->
+<!--            var draftData = dataArea.value; -->
+<!--            if (draftData && draftData.trim() !== "") {-->
+<!--                quill.setContents([]);-->
+<!--                quill.clipboard.dangerouslyPasteHTML(draftData);-->
+<!--                return; // 如果是草稿，填完就结束-->
+<!--            }-->
+<!--        }-->
+
+<!--        // -&#45;&#45; 逻辑 B: 处理回复 (新增逻辑：前端异步加载) -&#45;&#45;-->
+<!--        var rUid = document.getElementById('replyUid').value;-->
+<!--        var rFolder = document.getElementById('replyFolder').value;-->
+
+<!--if (rUid && rFolder) {-->
+<!--            quill.setText('正在加载原邮件内容...');-->
+
+<!--            fetch(`/email/detail?folder=${encodeURIComponent(rFolder)}&uid=${rUid}`)-->
+<!--                .then(response => {-->
+<!--                    // 如果后端报错 (比如 400 Bad Request)，这里会捕获到-->
+<!--                    if (!response.ok) {-->
+<!--                        throw new Error("HTTP error " + response.status); -->
+<!--                    }-->
+<!--                    return response.json();-->
+<!--                })-->
+<!--                .then(data => {-->
+<!--                    if(data.success) {-->
+<!--                        var splitLine = `<br><br><br>-->
+<!--                            <div style="background:#f2f2f2; padding:10px; font-size:12px; color:#333; border-radius:5px; margin-top:20px;">-->
+<!--                                <div>&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45; 原始邮件 &#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;</div>-->
+<!--                            </div><br>`;-->
+<!--                        var originalContent = data.content || "(无内容)";-->
+
+<!--                        // 回复时展示并提示将自动附带原附件-->
+<!--                        if (data.files && data.files.length > 0) {-->
+<!--                            var area = document.getElementById('replyAttachmentArea');-->
+<!--                            var listDiv = document.getElementById('replyAttachmentList');-->
+<!--                            if (area && listDiv) {-->
+<!--                                listDiv.innerHTML = "";-->
+<!--                                data.files.forEach(function(fName) {-->
+<!--                                    var downloadUrl = "/download?filename=" + encodeURIComponent(fName);-->
+<!--                                    var btn = `<a href="${downloadUrl}" target="_blank"-->
+<!--                                                style="font-size:12px; padding:6px 12px; background:#f0f0f0; border-radius:4px; text-decoration:none; color:#333; border:1px solid #ddd; display:flex; align-items:center; gap:5px;">-->
+<!--                                                <i class="fas fa-file-download" style="color:#0078d4;"></i> ${fName}-->
+<!--                                               </a>`;-->
+<!--                                    listDiv.innerHTML += btn;-->
+<!--                                });-->
+<!--                                area.style.display = "block";-->
+<!--                            }-->
+<!--                        }-->
+<!--                        quill.setContents([]);-->
+<!--                        // 使用 Quill 的粘贴接口，避免直接改 innerHTML 导致内容被清空/不显示-->
+<!--                        quill.clipboard.dangerouslyPasteHTML(splitLine + originalContent);-->
+<!--                    } else {-->
+<!--                        quill.setText('无法加载原邮件: ' + (data.error || '未知错误'));-->
+<!--                    }-->
+<!--                })-->
+<!--                .catch(err => {-->
+<!--                    console.error(err);-->
+<!--                    // 把错误直接显示在编辑器里，方便你看-->
+<!--                    quill.setText('加载失败: ' + err.message);-->
+<!--                });-->
+<!--        }-->
+
+<!--        // 4. 监听表单提交 (保持不变)-->
+<!--        var form = document.getElementById('mailForm');-->
+<!--        form.onsubmit = function() {-->
+<!--            var html = quill.root.innerHTML;-->
+<!--            document.getElementById('hiddenContent').value = html;-->
+
+<!--            // 如果不是回复场景，避免提交空的 replyUid= 触发 Spring 参数转换错误-->
+<!--            var replyUidEl = document.getElementById('replyUid');-->
+<!--            var replyFolderEl = document.getElementById('replyFolder');-->
+<!--            if (replyUidEl && (!replyUidEl.value || replyUidEl.value.trim() === "")) {-->
+<!--                replyUidEl.disabled = true;-->
+<!--            }-->
+<!--            if (replyFolderEl && (!replyFolderEl.value || replyFolderEl.value.trim() === "")) {-->
+<!--                replyFolderEl.disabled = true;-->
+<!--            }-->
+<!--        }-->
+<!--    }-->
+<!--</script>-->
+
+<!--</body>-->
+<!--</html>-->

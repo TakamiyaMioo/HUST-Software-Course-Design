@@ -17,8 +17,8 @@
             --hover-bg: rgba(255, 255, 255, 0.8);
             --input-bg: white;
             --shadow-color: rgba(0, 0, 0, 0.1);
-            /* 设置页专用 */
             --card-bg: rgba(255, 255, 255, 0.6);
+            --tag-bg: #e1e1e1;
         }
 
         body.dark-mode {
@@ -32,6 +32,7 @@
             --input-bg: #444;
             --shadow-color: rgba(0, 0, 0, 0.5);
             --card-bg: rgba(40, 40, 40, 0.6);
+            --tag-bg: #555;
         }
 
         body {
@@ -42,25 +43,42 @@
 
         .glass-container {
             width: 90%; height: 90vh; background: var(--glass-bg); backdrop-filter: blur(12px);
-            border: 1px solid var(--border-color); border-radius: 20px; box-shadow: 0 15px 40px var(--shadow-color);
+            border: 1px solid var(--border-color); border-radius: 20px; box-shadow: 0 15px 40px rgba(0,0,0,0.1);
             display: flex; overflow: hidden;
         }
 
         /* 侧边栏样式 */
-        .sidebar { width: 260px; background: var(--sidebar-bg); border-right: 1px solid rgba(0,0,0,0.05); display: flex; flex-direction: column; padding: 20px; }
-        .user-card { text-align: center; margin-bottom: 30px; padding-bottom: 20px; border-bottom: 1px dashed #ccc; }
-        .avatar { width: 80px; height: 80px; background: linear-gradient(135deg, #a18cd1 0%, #fbc2eb 100%); border-radius: 50%; margin: 0 auto 10px; display: flex; align-items: center; justify-content: center; font-size: 30px; color: white; }
-        .username { font-weight: bold; color: var(--text-main); font-size: 16px; margin-bottom: 5px;}
-        .user-email { font-size: 12px; color: var(--text-sub); word-break: break-all;}
+        .sidebar { width: 260px; background: var(--sidebar-bg); border-right: 1px solid rgba(0,0,0,0.05); display: flex; flex-direction: column; padding: 20px; overflow-y: auto; }
+        .user-profile-area { margin-bottom: 20px; border-bottom: 1px dashed #ccc; padding-bottom: 15px; }
+        .app-user-name { font-weight: bold; font-size: 16px; color: var(--text-main); margin-bottom: 10px; display: flex; align-items: center; gap: 8px; }
+        .account-list-title { font-size: 12px; color: #999; margin-bottom: 8px; font-weight: bold; }
+
+        .account-switcher-item {
+            display: flex; align-items: center; padding: 8px 12px;
+            border-radius: 8px; cursor: pointer; transition: 0.2s;
+            margin-bottom: 5px; text-decoration: none; color: var(--text-sub);
+            border: 1px solid transparent;
+        }
+        .account-switcher-item:hover { background: var(--hover-bg); }
+        .account-switcher-item.active {
+            background: rgba(0, 120, 212, 0.1);
+            border-color: rgba(0, 120, 212, 0.3);
+            color: #0078d4; font-weight: bold;
+        }
+
+        .acc-icon { width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; border-radius: 50%; background: #eee; margin-right: 10px; font-size: 12px; }
+        .active .acc-icon { background: #0078d4; color: white; }
+        .add-acc-btn { font-size: 12px; color: #0078d4; text-decoration: none; padding-left: 10px; display: inline-block; margin-top: 5px;}
+        .add-acc-btn:hover { text-decoration: underline; }
+
         .menu-item { display: flex; align-items: center; padding: 12px 15px; color: var(--text-sub); text-decoration: none; border-radius: 10px; margin-bottom: 5px; transition: 0.3s; cursor: pointer; }
-        .menu-item i { width: 25px; font-size: 18px; }
         .menu-item:hover { background: var(--hover-bg); color: #0078d4; transform: translateX(5px); }
         .menu-item.active { background: #0078d4; color: white; box-shadow: 0 4px 10px rgba(0, 120, 212, 0.3); }
         .menu-title { font-size: 12px; color: #999; margin-top: 20px; margin-bottom: 10px; padding-left: 10px; }
 
         /* 设置页主内容区 */
         .main-content { flex: 1; padding: 40px; overflow-y: auto; color: var(--text-main); }
-        
+
         .settings-container {
             max-width: 600px; margin: 0 auto;
             background: var(--card-bg);
@@ -81,13 +99,26 @@
         .setting-icon { width: 40px; height: 40px; border-radius: 8px; display: flex; align-items: center; justify-content: center; margin-right: 15px; font-size: 18px; color: white; }
         .setting-text h4 { margin: 0; font-size: 15px; }
         .setting-text p { margin: 3px 0 0 0; font-size: 12px; color: var(--text-sub); }
-        
+
         .back-btn { display: flex; align-items: center; gap: 8px; color: #666; font-size: 14px; margin-bottom: 20px; cursor: pointer; transition: 0.2s; }
         .back-btn:hover { color: #0078d4; transform: translateX(-3px); }
-        .flex-row { display: flex; align-items: center; }
-        
-        #bgUploadInput { display: none; }
-        /* 简单的淡入动画 */
+
+        /* 账号列表样式 */
+        .account-card {
+            background: white; border: 1px solid rgba(0,0,0,0.1); border-radius: 10px; padding: 15px;
+            margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center;
+        }
+        .account-info { display: flex; align-items: center; gap: 10px; }
+        .account-tag { font-size: 12px; padding: 2px 6px; border-radius: 4px; background: var(--tag-bg); color: var(--text-sub); }
+        .btn-unbind { color: #ff4d4f; font-size: 12px; text-decoration: none; border: 1px solid #ff4d4f; padding: 4px 10px; border-radius: 5px; }
+        .btn-unbind:hover { background: #ff4d4f; color: white; }
+
+        /* 添加表单样式 */
+        .add-form { margin-top: 20px; padding-top: 20px; border-top: 1px dashed #ccc; }
+        .form-input { width: 100%; padding: 10px; margin-bottom: 10px; border-radius: 5px; border: 1px solid #ddd; box-sizing: border-box; }
+        .btn-add { width: 100%; padding: 10px; background: #0078d4; color: white; border: none; border-radius: 5px; cursor: pointer; }
+        .btn-add:hover { background: #005a9e; }
+
         .fade-in { animation: fadeIn 0.3s ease; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
     </style>
@@ -95,38 +126,112 @@
 <body>
 
 <div class="glass-container">
+
     <div class="sidebar">
-        <div class="user-card">
-            <div class="avatar"><i class="fas fa-user-astronaut"></i></div>
-            <div class="username">我的账号</div>
-            <div class="user-email" th:text="${session.currentUser != null ? session.currentUser.email : '未登录'}"></div>
+        <div class="user-profile-area">
+            <div class="app-user-name">
+                <i class="fas fa-user-astronaut" style="color: #6c5ce7;"></i>
+                <span th:text="${session.appUser.nickname}">主账号昵称</span>
+            </div>
+            <div style="font-size: 12px; color: #999;">
+                <span th:text="${session.appUser.username}">admin</span>
+                <a href="/logout" style="color: #ff4d4f; margin-left: 10px; text-decoration: none;">[退出]</a>
+            </div>
         </div>
 
-        <div class="menu-title">邮箱文件夹</div>
-        <a href="/inbox" class="menu-item"><i class="fas fa-inbox"></i> 收件箱</a>
-        <a href="/sent" class="menu-item"><i class="fas fa-paper-plane"></i> 已发送</a>
-        <a href="/drafts" class="menu-item"><i class="fas fa-file-alt"></i> 草稿箱</a>
-        <a href="/trash" class="menu-item"><i class="fas fa-trash-alt"></i> 垃圾箱</a>
+        <div class="account-list-title">切换邮箱账号</div>
+
+        <a th:each="acc : ${myAccounts}"
+           th:href="@{/account/switch(id=${acc.id})}"
+           class="account-switcher-item"
+           th:classappend="${acc.id == currentEmailId} ? 'active'">
+            <div class="acc-icon">
+                <i th:if="${acc.type == 'qq'}" class="fab fa-qq"></i>
+                <i th:if="${acc.type == '163'}" class="fas fa-envelope"></i>
+            </div>
+            <div style="display: flex; flex-direction: column; overflow: hidden;">
+                <span th:text="${acc.email}" style="font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">user@qq.com</span>
+                <span th:text="${acc.type == 'qq' ? 'QQ邮箱' : '网易邮箱'}" style="font-size: 11px; opacity: 0.7;">Type</span>
+            </div>
+            <i th:if="${acc.id == currentEmailId}" class="fas fa-check" style="margin-left: auto; font-size: 12px;"></i>
+        </a>
+        <a href="/settings" class="add-acc-btn"><i class="fas fa-plus-circle"></i> 绑定新邮箱</a>
+
+        <hr style="border: 0; border-bottom: 1px dashed #ddd; margin: 15px 0; width: 100%;">
+
+        <div class="menu-title" th:if="${currentEmailId != null}">当前邮箱文件夹</div>
+        <div th:if="${currentEmailId == null}" style="color:orange; font-size:12px; padding:10px;">请先选择或绑定一个邮箱</div>
+
+        <a href="/inbox" class="menu-item" th:if="${currentEmailId != null}"><i class="fas fa-inbox"></i> 收件箱</a>
+        <a href="/sent" class="menu-item" th:if="${currentEmailId != null}"><i class="fas fa-paper-plane"></i> 已发送</a>
+        <a href="/drafts" class="menu-item" th:if="${currentEmailId != null}"><i class="fas fa-file-alt"></i> 草稿箱</a>
+        <a href="/trash" class="menu-item" th:if="${currentEmailId != null}"><i class="fas fa-trash-alt"></i> 垃圾箱</a>
 
         <div class="menu-title">管理</div>
         <a href="/contacts" class="menu-item"><i class="fas fa-address-book"></i> 通讯录</a>
         <a href="/settings" class="menu-item active"><i class="fas fa-cog"></i> 设置</a>
-        <a href="/logout" class="menu-item" style="margin-top: auto; color: #ff4d4f;"><i class="fas fa-sign-out-alt"></i> 退出登录</a>
     </div>
 
     <div class="main-content">
         <div class="settings-container fade-in">
-            
+
             <div id="settingsMain">
                 <div class="settings-header"><i class="fas fa-cog" style="color: #0078d4;"></i> 设置中心</div>
+
+                <div class="section-title">账号管理</div>
+                <div class="setting-item" onclick="showSection('settingsAccount')">
+                    <div style="display: flex; align-items: center;">
+                        <div class="setting-icon" style="background: #00b894;"><i class="fas fa-at"></i></div>
+                        <div class="setting-text">
+                            <h4>邮箱绑定管理</h4>
+                            <p th:text="'已绑定 ' + ${accounts.size()} + ' 个邮箱'">已绑定 0 个邮箱</p>
+                        </div>
+                    </div>
+                    <i class="fas fa-chevron-right" style="color:#ccc;"></i>
+                </div>
+
                 <div class="section-title">通用设置</div>
-                
-                <div class="setting-item" onclick="goToSubMenu()">
-                    <div class="flex-row">
+                <div class="setting-item" onclick="showSection('settingsPersonalization')">
+                    <div style="display: flex; align-items: center;">
                         <div class="setting-icon" style="background: #a29bfe;"><i class="fas fa-palette"></i></div>
                         <div class="setting-text"><h4>个性化外观</h4><p>主题颜色、背景壁纸</p></div>
                     </div>
                     <i class="fas fa-chevron-right" style="color:#ccc;"></i>
+                </div>
+            </div>
+
+            <div id="settingsAccount" style="display:none;">
+                <div class="back-btn" onclick="goBack()"><i class="fas fa-arrow-left"></i> 返回上一级</div>
+                <div class="settings-header"><i class="fas fa-at" style="color:#00b894;"></i> 绑定邮箱</div>
+
+                <div th:each="acc : ${accounts}" class="account-card">
+                    <div class="account-info">
+                        <i th:if="${acc.type == 'qq'}" class="fab fa-qq" style="color: #333; font-size: 20px;"></i>
+                        <i th:if="${acc.type == '163'}" class="fas fa-envelope" style="color: #d63031; font-size: 20px;"></i>
+                        <div>
+                            <div th:text="${acc.email}" style="font-weight: bold; color: #333;">user@example.com</div>
+                            <span class="account-tag" th:text="${acc.type}">TYPE</span>
+                        </div>
+                    </div>
+                    <a th:href="@{/account/delete(id=${acc.id})}" class="btn-unbind" onclick="return confirm('确定要解绑这个邮箱吗？')">解绑</a>
+                </div>
+
+                <div th:if="${accounts.size() == 0}" style="text-align: center; color: #999; padding: 20px;">
+                    暂无绑定邮箱，请在下方添加
+                </div>
+
+                <div class="add-form">
+                    <h4 style="margin-top: 0; color: #555;">➕ 添加新邮箱</h4>
+                    <form action="/account/add" method="post">
+                        <select name="type" class="form-input" required>
+                            <option value="qq">腾讯 QQ 邮箱</option>
+                            <option value="163">网易 163 邮箱</option>
+                        </select>
+                        <input type="email" name="email" class="form-input" placeholder="邮箱地址 (例如: 123@qq.com)" required>
+                        <input type="password" name="password" class="form-input" placeholder="授权码 (POP3/IMAP/SMTP)" required>
+                        <button type="submit" class="btn-add">立即绑定</button>
+                    </form>
+                    <p style="font-size: 12px; color: #999; margin-top: 5px;">注意：密码请填对应的授权码，非登录密码。</p>
                 </div>
             </div>
 
@@ -135,7 +240,7 @@
                 <div class="settings-header"><i class="fas fa-palette" style="color:#a29bfe;"></i> 个性化外观</div>
 
                 <div class="setting-item" onclick="toggleTheme()">
-                    <div class="flex-row">
+                    <div style="display: flex; align-items: center;">
                         <div class="setting-icon" style="background: #2f3542;"><i class="fas fa-moon"></i></div>
                         <div class="setting-text"><h4>黑夜模式</h4><p id="themeStatusText">点击切换主题</p></div>
                     </div>
@@ -143,16 +248,16 @@
                 </div>
 
                 <div class="setting-item" onclick="triggerBgUpload()">
-                    <div class="flex-row">
+                    <div style="display: flex; align-items: center;">
                         <div class="setting-icon" style="background: #ff9f43;"><i class="fas fa-image"></i></div>
                         <div class="setting-text"><h4>自定义背景</h4><p>上传图片作为壁纸</p></div>
                     </div>
                     <i class="fas fa-upload" style="color:#ccc;"></i>
                 </div>
-                <input type="file" id="bgUploadInput" accept="image/*" onchange="handleBgChange(this)">
+                <input type="file" id="bgUploadInput" accept="image/*" style="display:none;" onchange="handleBgChange(this)">
 
                 <div class="setting-item" onclick="resetBg()">
-                    <div class="flex-row">
+                    <div style="display: flex; align-items: center;">
                         <div class="setting-icon" style="background: #ff6b6b;"><i class="fas fa-undo"></i></div>
                         <div class="setting-text"><h4>恢复默认外观</h4><p>清除自定义设置</p></div>
                     </div>
@@ -164,35 +269,34 @@
 </div>
 
 <script>
-    // 初始化
+    // 初始化逻辑
     window.onload = function() {
         const savedTheme = localStorage.getItem('theme');
         if (savedTheme === 'dark') document.body.classList.add('dark-mode');
-        
         const savedBg = localStorage.getItem('customBg');
         if (savedBg) document.body.style.setProperty('--bg-image', `url(${savedBg})`);
-
         updateUI(savedTheme === 'dark');
     }
 
-    // 菜单切换逻辑
-    function goToSubMenu() {
+    // 菜单切换
+    function showSection(id) {
         document.getElementById('settingsMain').style.display = 'none';
-        document.getElementById('settingsPersonalization').style.display = 'block';
+        document.getElementById(id).style.display = 'block';
     }
     function goBack() {
         document.getElementById('settingsMain').style.display = 'block';
-        document.getElementById('settingsPersonalization').style.display = 'none';
+        document.querySelectorAll('[id^="settings"]').forEach(el => {
+            if(el.id !== 'settingsMain') el.style.display = 'none';
+        });
     }
 
-    // 功能逻辑
+    // 主题逻辑
     function toggleTheme() {
         document.body.classList.toggle('dark-mode');
         const isDark = document.body.classList.contains('dark-mode');
         localStorage.setItem('theme', isDark ? 'dark' : 'light');
         updateUI(isDark);
     }
-
     function updateUI(isDark) {
         const text = document.getElementById('themeStatusText');
         const icon = document.getElementById('themeToggleIcon');
@@ -200,6 +304,7 @@
         if(icon) icon.style.color = isDark ? "#0078d4" : "#ccc";
     }
 
+    // 背景逻辑
     function triggerBgUpload() { document.getElementById('bgUploadInput').click(); }
     function handleBgChange(input) {
         if (input.files && input.files[0]) {
@@ -221,3 +326,229 @@
 
 </body>
 </html>
+
+
+
+<!--<!DOCTYPE html>-->
+<!--<html xmlns:th="http://www.thymeleaf.org">-->
+<!--<head>-->
+<!--    <meta charset="UTF-8">-->
+<!--    <title>设置中心</title>-->
+<!--    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" rel="stylesheet">-->
+<!--    <style>-->
+<!--        /* ================== CSS 变量 (保持与 Inbox 一致) ================== */-->
+<!--        :root {-->
+<!--            &#45;&#45;bg-image: url('/images/bg.jpg');-->
+<!--            &#45;&#45;glass-bg: rgba(255, 255, 255, 0.85);-->
+<!--            &#45;&#45;sidebar-bg: rgba(255, 255, 255, 0.5);-->
+<!--            &#45;&#45;main-bg: rgba(255, 255, 255, 0.3);-->
+<!--            &#45;&#45;text-main: #333;-->
+<!--            &#45;&#45;text-sub: #666;-->
+<!--            &#45;&#45;border-color: rgba(255, 255, 255, 0.6);-->
+<!--            &#45;&#45;hover-bg: rgba(255, 255, 255, 0.8);-->
+<!--            &#45;&#45;input-bg: white;-->
+<!--            &#45;&#45;shadow-color: rgba(0, 0, 0, 0.1);-->
+<!--            /* 设置页专用 */-->
+<!--            &#45;&#45;card-bg: rgba(255, 255, 255, 0.6);-->
+<!--        }-->
+
+<!--        body.dark-mode {-->
+<!--            &#45;&#45;glass-bg: rgba(30, 30, 30, 0.85);-->
+<!--            &#45;&#45;sidebar-bg: rgba(0, 0, 0, 0.3);-->
+<!--            &#45;&#45;main-bg: rgba(0, 0, 0, 0.2);-->
+<!--            &#45;&#45;text-main: #e0e0e0;-->
+<!--            &#45;&#45;text-sub: #aaaaaa;-->
+<!--            &#45;&#45;border-color: rgba(255, 255, 255, 0.1);-->
+<!--            &#45;&#45;hover-bg: rgba(255, 255, 255, 0.1);-->
+<!--            &#45;&#45;input-bg: #444;-->
+<!--            &#45;&#45;shadow-color: rgba(0, 0, 0, 0.5);-->
+<!--            &#45;&#45;card-bg: rgba(40, 40, 40, 0.6);-->
+<!--        }-->
+
+<!--        body {-->
+<!--            font-family: 'Segoe UI', sans-serif; margin: 0; padding: 0;-->
+<!--            background-image: var(&#45;&#45;bg-image); background-size: cover; background-position: center; background-attachment: fixed;-->
+<!--            height: 100vh; display: flex; justify-content: center; align-items: center; transition: background-image 0.5s;-->
+<!--        }-->
+
+<!--        .glass-container {-->
+<!--            width: 90%; height: 90vh; background: var(&#45;&#45;glass-bg); backdrop-filter: blur(12px);-->
+<!--            border: 1px solid var(&#45;&#45;border-color); border-radius: 20px; box-shadow: 0 15px 40px var(&#45;&#45;shadow-color);-->
+<!--            display: flex; overflow: hidden;-->
+<!--        }-->
+
+<!--        /* 侧边栏样式 */-->
+<!--        .sidebar { width: 260px; background: var(&#45;&#45;sidebar-bg); border-right: 1px solid rgba(0,0,0,0.05); display: flex; flex-direction: column; padding: 20px; }-->
+<!--        .user-card { text-align: center; margin-bottom: 30px; padding-bottom: 20px; border-bottom: 1px dashed #ccc; }-->
+<!--        .avatar { width: 80px; height: 80px; background: linear-gradient(135deg, #a18cd1 0%, #fbc2eb 100%); border-radius: 50%; margin: 0 auto 10px; display: flex; align-items: center; justify-content: center; font-size: 30px; color: white; }-->
+<!--        .username { font-weight: bold; color: var(&#45;&#45;text-main); font-size: 16px; margin-bottom: 5px;}-->
+<!--        .user-email { font-size: 12px; color: var(&#45;&#45;text-sub); word-break: break-all;}-->
+<!--        .menu-item { display: flex; align-items: center; padding: 12px 15px; color: var(&#45;&#45;text-sub); text-decoration: none; border-radius: 10px; margin-bottom: 5px; transition: 0.3s; cursor: pointer; }-->
+<!--        .menu-item i { width: 25px; font-size: 18px; }-->
+<!--        .menu-item:hover { background: var(&#45;&#45;hover-bg); color: #0078d4; transform: translateX(5px); }-->
+<!--        .menu-item.active { background: #0078d4; color: white; box-shadow: 0 4px 10px rgba(0, 120, 212, 0.3); }-->
+<!--        .menu-title { font-size: 12px; color: #999; margin-top: 20px; margin-bottom: 10px; padding-left: 10px; }-->
+
+<!--        /* 设置页主内容区 */-->
+<!--        .main-content { flex: 1; padding: 40px; overflow-y: auto; color: var(&#45;&#45;text-main); }-->
+<!--        -->
+<!--        .settings-container {-->
+<!--            max-width: 600px; margin: 0 auto;-->
+<!--            background: var(&#45;&#45;card-bg);-->
+<!--            border-radius: 15px; padding: 30px;-->
+<!--            box-shadow: 0 10px 30px rgba(0,0,0,0.05);-->
+<!--        }-->
+
+<!--        .settings-header { font-size: 24px; font-weight: bold; margin-bottom: 20px; display: flex; align-items: center; gap: 10px; }-->
+<!--        .section-title { font-size: 14px; color: #999; margin-bottom: 15px; font-weight: bold; }-->
+
+<!--        /* 列表项样式 */-->
+<!--        .setting-item {-->
+<!--            display: flex; align-items: center; justify-content: space-between;-->
+<!--            padding: 15px; background: rgba(0,0,0,0.05);-->
+<!--            border-radius: 10px; margin-bottom: 10px; cursor: pointer; transition: 0.2s;-->
+<!--        }-->
+<!--        .setting-item:hover { background: var(&#45;&#45;hover-bg); transform: translateY(-2px); }-->
+<!--        .setting-icon { width: 40px; height: 40px; border-radius: 8px; display: flex; align-items: center; justify-content: center; margin-right: 15px; font-size: 18px; color: white; }-->
+<!--        .setting-text h4 { margin: 0; font-size: 15px; }-->
+<!--        .setting-text p { margin: 3px 0 0 0; font-size: 12px; color: var(&#45;&#45;text-sub); }-->
+<!--        -->
+<!--        .back-btn { display: flex; align-items: center; gap: 8px; color: #666; font-size: 14px; margin-bottom: 20px; cursor: pointer; transition: 0.2s; }-->
+<!--        .back-btn:hover { color: #0078d4; transform: translateX(-3px); }-->
+<!--        .flex-row { display: flex; align-items: center; }-->
+<!--        -->
+<!--        #bgUploadInput { display: none; }-->
+<!--        /* 简单的淡入动画 */-->
+<!--        .fade-in { animation: fadeIn 0.3s ease; }-->
+<!--        @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }-->
+<!--    </style>-->
+<!--</head>-->
+<!--<body>-->
+
+<!--<div class="glass-container">-->
+<!--    <div class="sidebar">-->
+<!--        <div class="user-card">-->
+<!--            <div class="avatar"><i class="fas fa-user-astronaut"></i></div>-->
+<!--            <div class="username">我的账号</div>-->
+<!--            <div class="user-email" th:text="${session.currentUser != null ? session.currentUser.email : '未登录'}"></div>-->
+<!--        </div>-->
+
+<!--        <div class="menu-title">邮箱文件夹</div>-->
+<!--        <a href="/inbox" class="menu-item"><i class="fas fa-inbox"></i> 收件箱</a>-->
+<!--        <a href="/sent" class="menu-item"><i class="fas fa-paper-plane"></i> 已发送</a>-->
+<!--        <a href="/drafts" class="menu-item"><i class="fas fa-file-alt"></i> 草稿箱</a>-->
+<!--        <a href="/trash" class="menu-item"><i class="fas fa-trash-alt"></i> 垃圾箱</a>-->
+
+<!--        <div class="menu-title">管理</div>-->
+<!--        <a href="/contacts" class="menu-item"><i class="fas fa-address-book"></i> 通讯录</a>-->
+<!--        <a href="/settings" class="menu-item active"><i class="fas fa-cog"></i> 设置</a>-->
+<!--        <a href="/logout" class="menu-item" style="margin-top: auto; color: #ff4d4f;"><i class="fas fa-sign-out-alt"></i> 退出登录</a>-->
+<!--    </div>-->
+
+<!--    <div class="main-content">-->
+<!--        <div class="settings-container fade-in">-->
+<!--            -->
+<!--            <div id="settingsMain">-->
+<!--                <div class="settings-header"><i class="fas fa-cog" style="color: #0078d4;"></i> 设置中心</div>-->
+<!--                <div class="section-title">通用设置</div>-->
+<!--                -->
+<!--                <div class="setting-item" onclick="goToSubMenu()">-->
+<!--                    <div class="flex-row">-->
+<!--                        <div class="setting-icon" style="background: #a29bfe;"><i class="fas fa-palette"></i></div>-->
+<!--                        <div class="setting-text"><h4>个性化外观</h4><p>主题颜色、背景壁纸</p></div>-->
+<!--                    </div>-->
+<!--                    <i class="fas fa-chevron-right" style="color:#ccc;"></i>-->
+<!--                </div>-->
+<!--            </div>-->
+
+<!--            <div id="settingsPersonalization" style="display:none;">-->
+<!--                <div class="back-btn" onclick="goBack()"><i class="fas fa-arrow-left"></i> 返回上一级</div>-->
+<!--                <div class="settings-header"><i class="fas fa-palette" style="color:#a29bfe;"></i> 个性化外观</div>-->
+
+<!--                <div class="setting-item" onclick="toggleTheme()">-->
+<!--                    <div class="flex-row">-->
+<!--                        <div class="setting-icon" style="background: #2f3542;"><i class="fas fa-moon"></i></div>-->
+<!--                        <div class="setting-text"><h4>黑夜模式</h4><p id="themeStatusText">点击切换主题</p></div>-->
+<!--                    </div>-->
+<!--                    <i class="fas fa-toggle-on" id="themeToggleIcon" style="color:#ccc; font-size: 20px;"></i>-->
+<!--                </div>-->
+
+<!--                <div class="setting-item" onclick="triggerBgUpload()">-->
+<!--                    <div class="flex-row">-->
+<!--                        <div class="setting-icon" style="background: #ff9f43;"><i class="fas fa-image"></i></div>-->
+<!--                        <div class="setting-text"><h4>自定义背景</h4><p>上传图片作为壁纸</p></div>-->
+<!--                    </div>-->
+<!--                    <i class="fas fa-upload" style="color:#ccc;"></i>-->
+<!--                </div>-->
+<!--                <input type="file" id="bgUploadInput" accept="image/*" onchange="handleBgChange(this)">-->
+
+<!--                <div class="setting-item" onclick="resetBg()">-->
+<!--                    <div class="flex-row">-->
+<!--                        <div class="setting-icon" style="background: #ff6b6b;"><i class="fas fa-undo"></i></div>-->
+<!--                        <div class="setting-text"><h4>恢复默认外观</h4><p>清除自定义设置</p></div>-->
+<!--                    </div>-->
+<!--                </div>-->
+<!--            </div>-->
+
+<!--        </div>-->
+<!--    </div>-->
+<!--</div>-->
+
+<!--<script>-->
+<!--    // 初始化-->
+<!--    window.onload = function() {-->
+<!--        const savedTheme = localStorage.getItem('theme');-->
+<!--        if (savedTheme === 'dark') document.body.classList.add('dark-mode');-->
+<!--        -->
+<!--        const savedBg = localStorage.getItem('customBg');-->
+<!--        if (savedBg) document.body.style.setProperty('&#45;&#45;bg-image', `url(${savedBg})`);-->
+
+<!--        updateUI(savedTheme === 'dark');-->
+<!--    }-->
+
+<!--    // 菜单切换逻辑-->
+<!--    function goToSubMenu() {-->
+<!--        document.getElementById('settingsMain').style.display = 'none';-->
+<!--        document.getElementById('settingsPersonalization').style.display = 'block';-->
+<!--    }-->
+<!--    function goBack() {-->
+<!--        document.getElementById('settingsMain').style.display = 'block';-->
+<!--        document.getElementById('settingsPersonalization').style.display = 'none';-->
+<!--    }-->
+
+<!--    // 功能逻辑-->
+<!--    function toggleTheme() {-->
+<!--        document.body.classList.toggle('dark-mode');-->
+<!--        const isDark = document.body.classList.contains('dark-mode');-->
+<!--        localStorage.setItem('theme', isDark ? 'dark' : 'light');-->
+<!--        updateUI(isDark);-->
+<!--    }-->
+
+<!--    function updateUI(isDark) {-->
+<!--        const text = document.getElementById('themeStatusText');-->
+<!--        const icon = document.getElementById('themeToggleIcon');-->
+<!--        if(text) text.innerText = isDark ? "当前模式：黑夜 🌑" : "当前模式：日间 ☀️";-->
+<!--        if(icon) icon.style.color = isDark ? "#0078d4" : "#ccc";-->
+<!--    }-->
+
+<!--    function triggerBgUpload() { document.getElementById('bgUploadInput').click(); }-->
+<!--    function handleBgChange(input) {-->
+<!--        if (input.files && input.files[0]) {-->
+<!--            var reader = new FileReader();-->
+<!--            reader.onload = function (e) {-->
+<!--                var bgUrl = e.target.result;-->
+<!--                document.body.style.setProperty('&#45;&#45;bg-image', `url(${bgUrl})`);-->
+<!--                localStorage.setItem('customBg', bgUrl);-->
+<!--            };-->
+<!--            reader.readAsDataURL(input.files[0]);-->
+<!--        }-->
+<!--    }-->
+<!--    function resetBg() {-->
+<!--        localStorage.removeItem('customBg');-->
+<!--        document.body.style.removeProperty('&#45;&#45;bg-image');-->
+<!--        alert("已恢复默认背景");-->
+<!--    }-->
+<!--</script>-->
+
+<!--</body>-->
+<!--</html>-->
