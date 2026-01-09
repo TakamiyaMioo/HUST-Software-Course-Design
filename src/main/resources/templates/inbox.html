@@ -312,7 +312,6 @@
             <button class="modal-close" onclick="closeModal()">×</button>
         </div>
         <div id="modalContent" style="padding: 20px; overflow-y: auto; flex: 1;">
-            加载中...
         </div>
     </div>
 </div>
@@ -362,10 +361,9 @@
         var keyword = input.value;
         var searchType = document.getElementById("searchType").value;
         var baseUrl = "[[${baseUrl}]]";
-        var folder = document.getElementById("currentFolderVal").value; // 获取当前文件夹
+        var folder = document.getElementById("currentFolderVal").value;
 
         var url = baseUrl + "?page=1&keyword=" + encodeURIComponent(keyword) + "&searchType=" + searchType;
-        // 如果当前是自定义文件夹，带上它
         if(folder && folder !== '收件箱' && folder !== '已发送' && folder !== '已删除') {
             url += "&folder=" + encodeURIComponent(folder);
         }
@@ -390,7 +388,6 @@
         if(keyword) {
             url += "&keyword=" + encodeURIComponent(keyword) + "&searchType=" + searchType;
         }
-        // 带上 folder 参数
         if(folder && folder !== '收件箱' && folder !== '已发送' && folder !== '已删除') {
             url += "&folder=" + encodeURIComponent(folder);
         }
@@ -400,7 +397,7 @@
 
     function closeModal() { document.getElementById('emailModal').style.display = 'none'; }
 
-    // 【新增】打开转发弹窗
+    // 转发相关逻辑
     function openForwardModal(uid) {
         document.getElementById('fwdUid').value = uid;
         document.getElementById('fwdTo').value = '';
@@ -408,18 +405,14 @@
         document.getElementById('forwardModal').style.display = 'flex';
     }
 
-    // 【新增】关闭转发弹窗
     function closeForwardModal() {
         document.getElementById('forwardModal').style.display = 'none';
     }
 
-    // 【新增】提交转发
     function submitForward() {
         var uid = document.getElementById('fwdUid').value;
         var to = document.getElementById('fwdTo').value;
         var comment = document.getElementById('fwdComment').value;
-
-        // 获取当前文件夹，优先从隐藏域取
         var folderInput = document.getElementById("currentFolderVal");
         var folder = folderInput ? folderInput.value : "收件箱";
         if(!folder) folder = "收件箱";
@@ -434,7 +427,6 @@
         btn.disabled = true;
         btn.innerText = "发送中...";
 
-        // 发送 POST 请求
         var formData = new FormData();
         formData.append("folder", folder);
         formData.append("uid", uid);
@@ -449,7 +441,6 @@
             .then(data => {
                 btn.disabled = false;
                 btn.innerText = originalText;
-
                 if (data.success) {
                     alert("转发成功！");
                     closeForwardModal();
@@ -464,23 +455,28 @@
                 alert("网络错误，请稍后重试");
             });
     }
-</script>
 
-<script src="https://cdn.quilljs.com/1.3.6/quill.js"></script>
-<script>
+    // 显示邮件详情 (修复了视图残留Bug)
     function showEmailDetail(element) {
+        // 1. 显示弹窗
         document.getElementById('emailModal').style.display = 'flex';
+
+        // 2. 【关键修复】立即清空旧内容并显示加载中动画
+        var contentDiv = document.getElementById('modalContent');
+        contentDiv.innerHTML = '<div style="text-align:center; padding:50px; color:#666;"><i class="fas fa-spinner fa-spin" style="font-size: 24px;"></i><br><br>正在加载邮件内容...</div>';
+
+        // 3. 获取 UID 和 Folder
         var uid = element.getAttribute("data-uid");
         var folder = element.getAttribute("data-folder");
         if(!folder) folder = "收件箱";
 
+        // 4. 发起请求
         fetch(`/email/detail?folder=${encodeURIComponent(folder)}&uid=${uid}`)
             .then(response => response.json())
             .then(data => {
-                var contentDiv = document.getElementById('modalContent');
                 if(data.success) {
                     contentDiv.innerHTML = data.content ? data.content : "<span style='color:#999'>（无正文内容）</span>";
-                    // 如果有附件，这里可以继续追加附件的显示逻辑
+
                     if(data.files && data.files.length > 0) {
                         var filesHtml = "<div style='margin-top:20px; border-top:1px solid #eee; padding-top:10px;'><b>附件:</b><br>";
                         data.files.forEach(f => {
@@ -490,16 +486,17 @@
                         contentDiv.innerHTML += filesHtml;
                     }
                 } else {
-                    contentDiv.innerHTML = "<span style='color:red'>加载失败：" + (data.error || "未知错误") + "</span>";
+                    contentDiv.innerHTML = "<div style='text-align:center; padding:20px; color:red'>加载失败：" + (data.error || "未知错误") + "</div>";
                 }
+            })
+            .catch(err => {
+                console.error(err);
+                contentDiv.innerHTML = "<div style='text-align:center; padding:20px; color:red'>网络请求错误</div>";
             });
     }
 </script>
-
 </body>
 </html>
-
-
 
 <!--<!DOCTYPE html>-->
 <!--<html xmlns:th="http://www.thymeleaf.org">-->
@@ -808,8 +805,48 @@
 <!--    </div>-->
 <!--</div>-->
 
-<!--<div id="emailModal" class="modal-overlay"> </div>-->
-<!--<div id="forwardModal" class="modal-overlay"> </div>-->
+<!--<div id="emailModal" class="modal-overlay">-->
+<!--    <div class="modal-card">-->
+<!--        <div class="modal-header">-->
+<!--            <span style="font-size: 18px; font-weight: bold;">邮件详情</span>-->
+<!--            <button class="modal-close" onclick="closeModal()">×</button>-->
+<!--        </div>-->
+<!--        <div id="modalContent" style="padding: 20px; overflow-y: auto; flex: 1;">-->
+<!--            加载中...-->
+<!--        </div>-->
+<!--    </div>-->
+<!--</div>-->
+
+<!--<div id="forwardModal" class="modal-overlay">-->
+<!--    <div class="modal-card" style="width: 500px; height: auto;">-->
+<!--        <div class="modal-header">-->
+<!--            <span style="font-size: 18px; font-weight: bold;">转发邮件</span>-->
+<!--            <button class="modal-close" onclick="closeForwardModal()">×</button>-->
+<!--        </div>-->
+<!--        <div style="padding: 20px;">-->
+<!--            <input type="hidden" id="fwdUid">-->
+
+<!--            <div style="margin-bottom: 15px;">-->
+<!--                <label style="display:block; color:#666; margin-bottom:5px; font-size:13px;">收件人：</label>-->
+<!--                <input type="text" id="fwdTo" placeholder="请输入收件人邮箱"-->
+<!--                       style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 5px; box-sizing: border-box;">-->
+<!--            </div>-->
+
+<!--            <div style="margin-bottom: 20px;">-->
+<!--                <label style="display:block; color:#666; margin-bottom:5px; font-size:13px;">附言 (可选)：</label>-->
+<!--                <textarea id="fwdComment" placeholder="请输入转发附言..."-->
+<!--                          style="width: 100%; height: 100px; padding: 10px; border: 1px solid #ddd; border-radius: 5px; box-sizing: border-box; resize: none;"></textarea>-->
+<!--            </div>-->
+
+<!--            <div style="text-align: right;">-->
+<!--                <button onclick="closeForwardModal()"-->
+<!--                        style="padding: 8px 15px; border: 1px solid #ddd; background: white; border-radius: 5px; cursor: pointer; margin-right: 10px;">取消</button>-->
+<!--                <button onclick="submitForward()" id="btnSendFwd"-->
+<!--                        style="padding: 8px 20px; border: none; background: #0078d4; color: white; border-radius: 5px; cursor: pointer;">发送</button>-->
+<!--            </div>-->
+<!--        </div>-->
+<!--    </div>-->
+<!--</div>-->
 
 <!--<script>-->
 <!--    window.onload = function() {-->
@@ -853,7 +890,7 @@
 <!--        if(keyword) {-->
 <!--            url += "&keyword=" + encodeURIComponent(keyword) + "&searchType=" + searchType;-->
 <!--        }-->
-<!--        // 【关键】带上 folder 参数-->
+<!--        // 带上 folder 参数-->
 <!--        if(folder && folder !== '收件箱' && folder !== '已发送' && folder !== '已删除') {-->
 <!--            url += "&folder=" + encodeURIComponent(folder);-->
 <!--        }-->
@@ -861,14 +898,78 @@
 <!--        window.location.href = url;-->
 <!--    }-->
 
-<!--    // 省略 showEmailDetail 等其他函数（保持不变）-->
+<!--    function closeModal() { document.getElementById('emailModal').style.display = 'none'; }-->
+
+<!--    // 【新增】打开转发弹窗-->
+<!--    function openForwardModal(uid) {-->
+<!--        document.getElementById('fwdUid').value = uid;-->
+<!--        document.getElementById('fwdTo').value = '';-->
+<!--        document.getElementById('fwdComment').value = '';-->
+<!--        document.getElementById('forwardModal').style.display = 'flex';-->
+<!--    }-->
+
+<!--    // 【新增】关闭转发弹窗-->
+<!--    function closeForwardModal() {-->
+<!--        document.getElementById('forwardModal').style.display = 'none';-->
+<!--    }-->
+
+<!--    // 【新增】提交转发-->
+<!--    function submitForward() {-->
+<!--        var uid = document.getElementById('fwdUid').value;-->
+<!--        var to = document.getElementById('fwdTo').value;-->
+<!--        var comment = document.getElementById('fwdComment').value;-->
+
+<!--        // 获取当前文件夹，优先从隐藏域取-->
+<!--        var folderInput = document.getElementById("currentFolderVal");-->
+<!--        var folder = folderInput ? folderInput.value : "收件箱";-->
+<!--        if(!folder) folder = "收件箱";-->
+
+<!--        if (!to) {-->
+<!--            alert("请输入收件人邮箱！");-->
+<!--            return;-->
+<!--        }-->
+
+<!--        var btn = document.getElementById('btnSendFwd');-->
+<!--        var originalText = btn.innerText;-->
+<!--        btn.disabled = true;-->
+<!--        btn.innerText = "发送中...";-->
+
+<!--        // 发送 POST 请求-->
+<!--        var formData = new FormData();-->
+<!--        formData.append("folder", folder);-->
+<!--        formData.append("uid", uid);-->
+<!--        formData.append("to", to);-->
+<!--        formData.append("comment", comment);-->
+
+<!--        fetch("/mail/forward", {-->
+<!--            method: "POST",-->
+<!--            body: formData-->
+<!--        })-->
+<!--            .then(response => response.json())-->
+<!--            .then(data => {-->
+<!--                btn.disabled = false;-->
+<!--                btn.innerText = originalText;-->
+
+<!--                if (data.success) {-->
+<!--                    alert("转发成功！");-->
+<!--                    closeForwardModal();-->
+<!--                } else {-->
+<!--                    alert("转发失败：" + (data.error || "未知错误"));-->
+<!--                }-->
+<!--            })-->
+<!--            .catch(err => {-->
+<!--                btn.disabled = false;-->
+<!--                btn.innerText = originalText;-->
+<!--                console.error(err);-->
+<!--                alert("网络错误，请稍后重试");-->
+<!--            });-->
+<!--    }-->
 <!--</script>-->
 
 <!--<script src="https://cdn.quilljs.com/1.3.6/quill.js"></script>-->
 <!--<script>-->
 <!--    function showEmailDetail(element) {-->
 <!--        document.getElementById('emailModal').style.display = 'flex';-->
-<!--        // ... (保持原有的 fetch 逻辑) ...-->
 <!--        var uid = element.getAttribute("data-uid");-->
 <!--        var folder = element.getAttribute("data-folder");-->
 <!--        if(!folder) folder = "收件箱";-->
@@ -879,15 +980,414 @@
 <!--                var contentDiv = document.getElementById('modalContent');-->
 <!--                if(data.success) {-->
 <!--                    contentDiv.innerHTML = data.content ? data.content : "<span style='color:#999'>（无正文内容）</span>";-->
-<!--                    // 附件处理...-->
+<!--                    // 如果有附件，这里可以继续追加附件的显示逻辑-->
+<!--                    if(data.files && data.files.length > 0) {-->
+<!--                        var filesHtml = "<div style='margin-top:20px; border-top:1px solid #eee; padding-top:10px;'><b>附件:</b><br>";-->
+<!--                        data.files.forEach(f => {-->
+<!--                            filesHtml += `<a href='/download?filename=${encodeURIComponent(f)}' style='color:#0078d4; margin-right:10px;'>${f}</a>`;-->
+<!--                        });-->
+<!--                        filesHtml += "</div>";-->
+<!--                        contentDiv.innerHTML += filesHtml;-->
+<!--                    }-->
 <!--                } else {-->
 <!--                    contentDiv.innerHTML = "<span style='color:red'>加载失败：" + (data.error || "未知错误") + "</span>";-->
 <!--                }-->
 <!--            });-->
 <!--    }-->
-<!--    function closeModal() { document.getElementById('emailModal').style.display = 'none'; }-->
-<!--    // ... 其他辅助函数 ...-->
 <!--</script>-->
 
 <!--</body>-->
 <!--</html>-->
+
+
+
+<!--&lt;!&ndash;<!DOCTYPE html>&ndash;&gt;-->
+<!--&lt;!&ndash;<html xmlns:th="http://www.thymeleaf.org">&ndash;&gt;-->
+<!--&lt;!&ndash;<head>&ndash;&gt;-->
+<!--&lt;!&ndash;    <meta charset="UTF-8">&ndash;&gt;-->
+<!--&lt;!&ndash;    <title>我的邮箱</title>&ndash;&gt;-->
+<!--&lt;!&ndash;    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" rel="stylesheet">&ndash;&gt;-->
+<!--&lt;!&ndash;    <style>&ndash;&gt;-->
+<!--&lt;!&ndash;        :root {&ndash;&gt;-->
+<!--&lt;!&ndash;            &#45;&#45;bg-image: url('/images/bg.jpg');&ndash;&gt;-->
+<!--&lt;!&ndash;            &#45;&#45;glass-bg: rgba(255, 255, 255, 0.85);&ndash;&gt;-->
+<!--&lt;!&ndash;            &#45;&#45;sidebar-bg: rgba(255, 255, 255, 0.5);&ndash;&gt;-->
+<!--&lt;!&ndash;            &#45;&#45;main-bg: rgba(255, 255, 255, 0.3);&ndash;&gt;-->
+<!--&lt;!&ndash;            &#45;&#45;toolbar-bg: rgba(255, 255, 255, 0.4);&ndash;&gt;-->
+<!--&lt;!&ndash;            &#45;&#45;text-main: #333;&ndash;&gt;-->
+<!--&lt;!&ndash;            &#45;&#45;text-sub: #666;&ndash;&gt;-->
+<!--&lt;!&ndash;            &#45;&#45;border-color: rgba(255, 255, 255, 0.6);&ndash;&gt;-->
+<!--&lt;!&ndash;            &#45;&#45;hover-bg: rgba(255, 255, 255, 0.8);&ndash;&gt;-->
+<!--&lt;!&ndash;            &#45;&#45;table-header-bg: rgba(255, 255, 255, 0.9);&ndash;&gt;-->
+<!--&lt;!&ndash;            &#45;&#45;input-bg: white;&ndash;&gt;-->
+<!--&lt;!&ndash;            &#45;&#45;shadow-color: rgba(0, 0, 0, 0.1);&ndash;&gt;-->
+<!--&lt;!&ndash;            &#45;&#45;modal-bg: white;&ndash;&gt;-->
+<!--&lt;!&ndash;            &#45;&#45;pag-bg: #eef3f8; &#45;&#45;pag-border: #dce4ec; &#45;&#45;pag-text: #333; &#45;&#45;btn-bg: #fff; &#45;&#45;btn-border: #ccc; &#45;&#45;btn-hover: #f0f0f0;&ndash;&gt;-->
+<!--&lt;!&ndash;        }&ndash;&gt;-->
+<!--&lt;!&ndash;        body.dark-mode {&ndash;&gt;-->
+<!--&lt;!&ndash;            &#45;&#45;glass-bg: rgba(30, 30, 30, 0.85);&ndash;&gt;-->
+<!--&lt;!&ndash;            &#45;&#45;sidebar-bg: rgba(0, 0, 0, 0.3);&ndash;&gt;-->
+<!--&lt;!&ndash;            &#45;&#45;main-bg: rgba(0, 0, 0, 0.2);&ndash;&gt;-->
+<!--&lt;!&ndash;            &#45;&#45;toolbar-bg: rgba(0, 0, 0, 0.3);&ndash;&gt;-->
+<!--&lt;!&ndash;            &#45;&#45;text-main: #e0e0e0;&ndash;&gt;-->
+<!--&lt;!&ndash;            &#45;&#45;text-sub: #aaaaaa;&ndash;&gt;-->
+<!--&lt;!&ndash;            &#45;&#45;border-color: rgba(255, 255, 255, 0.1);&ndash;&gt;-->
+<!--&lt;!&ndash;            &#45;&#45;hover-bg: rgba(255, 255, 255, 0.1);&ndash;&gt;-->
+<!--&lt;!&ndash;            &#45;&#45;table-header-bg: rgba(40, 40, 40, 0.9);&ndash;&gt;-->
+<!--&lt;!&ndash;            &#45;&#45;input-bg: #444;&ndash;&gt;-->
+<!--&lt;!&ndash;            &#45;&#45;shadow-color: rgba(0, 0, 0, 0.5);&ndash;&gt;-->
+<!--&lt;!&ndash;            &#45;&#45;modal-bg: #2d2d2d;&ndash;&gt;-->
+<!--&lt;!&ndash;            &#45;&#45;pag-bg: rgba(0, 0, 0, 0.2); &#45;&#45;pag-border: rgba(255, 255, 255, 0.1); &#45;&#45;pag-text: #aaa; &#45;&#45;btn-bg: #444; &#45;&#45;btn-border: #555; &#45;&#45;btn-hover: #555;&ndash;&gt;-->
+<!--&lt;!&ndash;        }&ndash;&gt;-->
+<!--&lt;!&ndash;        body {&ndash;&gt;-->
+<!--&lt;!&ndash;            font-family: 'Segoe UI', sans-serif; margin: 0; padding: 0;&ndash;&gt;-->
+<!--&lt;!&ndash;            background-image: var(&#45;&#45;bg-image); background-size: cover; background-position: center; background-attachment: fixed;&ndash;&gt;-->
+<!--&lt;!&ndash;            height: 100vh; display: flex; justify-content: center; align-items: center; transition: background-image 0.5s;&ndash;&gt;-->
+<!--&lt;!&ndash;        }&ndash;&gt;-->
+<!--&lt;!&ndash;        .glass-container {&ndash;&gt;-->
+<!--&lt;!&ndash;            width: 90%; height: 90vh; background: var(&#45;&#45;glass-bg); backdrop-filter: blur(12px);&ndash;&gt;-->
+<!--&lt;!&ndash;            border: 1px solid var(&#45;&#45;border-color); border-radius: 20px; box-shadow: 0 15px 40px var(&#45;&#45;shadow-color);&ndash;&gt;-->
+<!--&lt;!&ndash;            display: flex; overflow: hidden;&ndash;&gt;-->
+<!--&lt;!&ndash;        }&ndash;&gt;-->
+
+<!--&lt;!&ndash;        /* 侧边栏 */&ndash;&gt;-->
+<!--&lt;!&ndash;        .sidebar { width: 260px; background: var(&#45;&#45;sidebar-bg); border-right: 1px solid rgba(0,0,0,0.05); display: flex; flex-direction: column; padding: 20px; overflow-y: auto; }&ndash;&gt;-->
+<!--&lt;!&ndash;        .user-profile-area { margin-bottom: 20px; border-bottom: 1px dashed #ccc; padding-bottom: 15px; }&ndash;&gt;-->
+<!--&lt;!&ndash;        .app-user-name { font-weight: bold; font-size: 16px; color: var(&#45;&#45;text-main); margin-bottom: 10px; display: flex; align-items: center; gap: 8px; }&ndash;&gt;-->
+<!--&lt;!&ndash;        .account-list-title { font-size: 12px; color: #999; margin-bottom: 8px; font-weight: bold; }&ndash;&gt;-->
+<!--&lt;!&ndash;        .account-switcher-item { display: flex; align-items: center; padding: 8px 12px; border-radius: 8px; cursor: pointer; transition: 0.2s; margin-bottom: 5px; text-decoration: none; color: var(&#45;&#45;text-sub); border: 1px solid transparent; }&ndash;&gt;-->
+<!--&lt;!&ndash;        .account-switcher-item:hover { background: var(&#45;&#45;hover-bg); }&ndash;&gt;-->
+<!--&lt;!&ndash;        .account-switcher-item.active { background: rgba(0, 120, 212, 0.1); border-color: rgba(0, 120, 212, 0.3); color: #0078d4; font-weight: bold; }&ndash;&gt;-->
+<!--&lt;!&ndash;        .acc-icon { width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; border-radius: 50%; background: #eee; margin-right: 10px; font-size: 12px; }&ndash;&gt;-->
+<!--&lt;!&ndash;        .active .acc-icon { background: #0078d4; color: white; }&ndash;&gt;-->
+<!--&lt;!&ndash;        .add-acc-btn { font-size: 12px; color: #0078d4; text-decoration: none; padding-left: 10px; display: inline-block; margin-top: 5px;}&ndash;&gt;-->
+<!--&lt;!&ndash;        .add-acc-btn:hover { text-decoration: underline; }&ndash;&gt;-->
+<!--&lt;!&ndash;        .menu-item { display: flex; align-items: center; padding: 12px 15px; color: var(&#45;&#45;text-sub); text-decoration: none; border-radius: 10px; margin-bottom: 5px; transition: 0.3s; }&ndash;&gt;-->
+<!--&lt;!&ndash;        .menu-item:hover { background: var(&#45;&#45;hover-bg); color: #0078d4; transform: translateX(5px); }&ndash;&gt;-->
+<!--&lt;!&ndash;        .menu-item.active { background: #0078d4; color: white; box-shadow: 0 4px 10px rgba(0, 120, 212, 0.3); }&ndash;&gt;-->
+<!--&lt;!&ndash;        .menu-item i { width: 25px; font-size: 18px; }&ndash;&gt;-->
+<!--&lt;!&ndash;        .menu-title { font-size: 12px; color: #999; margin-top: 20px; margin-bottom: 10px; padding-left: 10px; }&ndash;&gt;-->
+
+<!--&lt;!&ndash;        .main-content { flex: 1; display: flex; flex-direction: column; background: var(&#45;&#45;main-bg); }&ndash;&gt;-->
+<!--&lt;!&ndash;        .toolbar { padding: 15px 30px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(0,0,0,0.05); background: var(&#45;&#45;toolbar-bg); }&ndash;&gt;-->
+<!--&lt;!&ndash;        .page-title { font-size: 20px; font-weight: bold; color: var(&#45;&#45;text-main); display: flex; align-items: center; gap: 10px; }&ndash;&gt;-->
+
+<!--&lt;!&ndash;        .search-group { display: flex; align-items: center; background: var(&#45;&#45;input-bg); border-radius: 20px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); padding-right: 15px; }&ndash;&gt;-->
+<!--&lt;!&ndash;        .search-select { border: none; background: transparent; padding: 8px 10px; font-size: 12px; color: #666; border-right: 1px solid #eee; outline: none; border-top-left-radius: 20px; border-bottom-left-radius: 20px; cursor: pointer; }&ndash;&gt;-->
+<!--&lt;!&ndash;        .search-box { display: flex; align-items: center; padding: 5px 10px; width: 220px; }&ndash;&gt;-->
+<!--&lt;!&ndash;        .search-box input { border: none; outline: none; margin-left: 5px; width: 100%; color: #666; background: transparent; }&ndash;&gt;-->
+
+<!--&lt;!&ndash;        .email-list-wrapper { flex: 1; overflow-y: auto; padding: 0; }&ndash;&gt;-->
+<!--&lt;!&ndash;        table { width: 100%; border-collapse: collapse; table-layout: fixed; }&ndash;&gt;-->
+
+<!--&lt;!&ndash;        th { text-align: left; padding: 15px 30px; color: #888; font-size: 13px; font-weight: 500; position: sticky; top: 0; background: var(&#45;&#45;table-header-bg); z-index: 10; }&ndash;&gt;-->
+<!--&lt;!&ndash;        th.sortable { cursor: pointer; transition: 0.2s; user-select: none; }&ndash;&gt;-->
+<!--&lt;!&ndash;        th.sortable:hover { background: rgba(0,0,0,0.05); color: #0078d4; }&ndash;&gt;-->
+
+<!--&lt;!&ndash;        td { padding: 15px 30px; border-bottom: 1px solid rgba(0,0,0,0.03); font-size: 14px; color: var(&#45;&#45;text-main); vertical-align: middle; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }&ndash;&gt;-->
+<!--&lt;!&ndash;        tr:hover { background: var(&#45;&#45;hover-bg); cursor: pointer; }&ndash;&gt;-->
+<!--&lt;!&ndash;        .sender-avatar { width: 35px; height: 35px; background: #e0e0e0; border-radius: 50%; display: inline-flex; justify-content: center; align-items: center; margin-right: 10px; font-size: 12px; color: #666; flex-shrink: 0; }&ndash;&gt;-->
+<!--&lt;!&ndash;        .date-col { color: #999; font-size: 13px; text-align: right; width: 150px;}&ndash;&gt;-->
+<!--&lt;!&ndash;        .sender-col { width: 30%; font-weight: 600; }&ndash;&gt;-->
+
+<!--&lt;!&ndash;        .pagination-bar { background: var(&#45;&#45;pag-bg); border-top: 1px solid var(&#45;&#45;pag-border); color: var(&#45;&#45;pag-text); padding: 10px 20px; display: flex; justify-content: flex-end; align-items: center; font-size: 13px; }&ndash;&gt;-->
+<!--&lt;!&ndash;        .pagination-bar a { text-decoration: none; color: #0078d4; margin: 0 5px; cursor: pointer; }&ndash;&gt;-->
+<!--&lt;!&ndash;        .pagination-bar a:hover { text-decoration: underline; }&ndash;&gt;-->
+<!--&lt;!&ndash;        .pagination-bar a.disabled { color: var(&#45;&#45;text-sub); cursor: default; text-decoration: none; }&ndash;&gt;-->
+<!--&lt;!&ndash;        .page-input { width: 30px; height: 22px; margin: 0 5px; background: var(&#45;&#45;input-bg); border: 1px solid var(&#45;&#45;btn-border); color: var(&#45;&#45;text-main); text-align: center; font-size: 12px; }&ndash;&gt;-->
+<!--&lt;!&ndash;        .btn-go { background: var(&#45;&#45;btn-bg); border: 1px solid var(&#45;&#45;btn-border); color: var(&#45;&#45;text-main); border-radius: 3px; padding: 2px 8px; font-size: 12px; cursor: pointer; }&ndash;&gt;-->
+
+<!--&lt;!&ndash;        .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; justify-content: center; align-items: center; backdrop-filter: blur(5px); }&ndash;&gt;-->
+<!--&lt;!&ndash;        .modal-card { background: var(&#45;&#45;modal-bg); border-radius: 12px; display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 20px 50px rgba(0,0,0,0.3); border: 1px solid var(&#45;&#45;border-color); color: var(&#45;&#45;text-main); width: 60%; max-height: 80vh; }&ndash;&gt;-->
+<!--&lt;!&ndash;        .modal-header { padding: 20px; border-bottom: 1px solid rgba(0,0,0,0.05); display: flex; justify-content: space-between; align-items: center; background: rgba(0,0,0,0.02); }&ndash;&gt;-->
+<!--&lt;!&ndash;        .modal-close { border: none; background: none; font-size: 24px; cursor: pointer; color: #999; }&ndash;&gt;-->
+<!--&lt;!&ndash;    </style>&ndash;&gt;-->
+<!--&lt;!&ndash;</head>&ndash;&gt;-->
+<!--&lt;!&ndash;<body>&ndash;&gt;-->
+
+<!--&lt;!&ndash;<div class="glass-container">&ndash;&gt;-->
+<!--&lt;!&ndash;    <div class="sidebar">&ndash;&gt;-->
+<!--&lt;!&ndash;        <div class="user-profile-area">&ndash;&gt;-->
+<!--&lt;!&ndash;            <div class="app-user-name">&ndash;&gt;-->
+<!--&lt;!&ndash;                <i class="fas fa-user-astronaut" style="color: #6c5ce7;"></i>&ndash;&gt;-->
+<!--&lt;!&ndash;                <span th:text="${session.appUser.nickname}">主账号昵称</span>&ndash;&gt;-->
+<!--&lt;!&ndash;            </div>&ndash;&gt;-->
+<!--&lt;!&ndash;            <div style="font-size: 12px; color: #999;">&ndash;&gt;-->
+<!--&lt;!&ndash;                <span th:text="${session.appUser.username}">admin</span>&ndash;&gt;-->
+<!--&lt;!&ndash;                <a href="/logout" style="color: #ff4d4f; margin-left: 10px; text-decoration: none;">[退出]</a>&ndash;&gt;-->
+<!--&lt;!&ndash;            </div>&ndash;&gt;-->
+<!--&lt;!&ndash;        </div>&ndash;&gt;-->
+
+<!--&lt;!&ndash;        <div class="account-list-title">切换邮箱账号</div>&ndash;&gt;-->
+<!--&lt;!&ndash;        <a th:each="acc : ${myAccounts}" th:href="@{/account/switch(id=${acc.id})}" class="account-switcher-item" th:classappend="${acc.id == currentEmailId} ? 'active'">&ndash;&gt;-->
+<!--&lt;!&ndash;            <div class="acc-icon">&ndash;&gt;-->
+<!--&lt;!&ndash;                <i th:if="${acc.type == 'qq'}" class="fab fa-qq"></i>&ndash;&gt;-->
+<!--&lt;!&ndash;                <i th:if="${acc.type == '163'}" class="fas fa-envelope"></i>&ndash;&gt;-->
+<!--&lt;!&ndash;            </div>&ndash;&gt;-->
+<!--&lt;!&ndash;            <div style="display: flex; flex-direction: column; overflow: hidden;">&ndash;&gt;-->
+<!--&lt;!&ndash;                <span th:text="${acc.email}" style="font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">user@qq.com</span>&ndash;&gt;-->
+<!--&lt;!&ndash;                <span th:text="${acc.type == 'qq' ? 'QQ邮箱' : '网易邮箱'}" style="font-size: 11px; opacity: 0.7;">Type</span>&ndash;&gt;-->
+<!--&lt;!&ndash;            </div>&ndash;&gt;-->
+<!--&lt;!&ndash;            <i th:if="${acc.id == currentEmailId}" class="fas fa-check" style="margin-left: auto; font-size: 12px;"></i>&ndash;&gt;-->
+<!--&lt;!&ndash;        </a>&ndash;&gt;-->
+<!--&lt;!&ndash;        <a href="/settings" class="add-acc-btn"><i class="fas fa-plus-circle"></i> 绑定新邮箱</a>&ndash;&gt;-->
+
+<!--&lt;!&ndash;        <hr style="border: 0; border-bottom: 1px dashed #ddd; margin: 15px 0; width: 100%;">&ndash;&gt;-->
+
+<!--&lt;!&ndash;        <div class="menu-title" th:if="${currentEmailId != null}">当前邮箱文件夹</div>&ndash;&gt;-->
+<!--&lt;!&ndash;        <a href="/inbox" class="menu-item" th:if="${currentEmailId != null}" th:classappend="${currentFolder == null || currentFolder == '收件箱'} ? 'active'"><i class="fas fa-inbox"></i> 收件箱</a>&ndash;&gt;-->
+<!--&lt;!&ndash;        <a href="/sent" class="menu-item" th:if="${currentEmailId != null}" th:classappend="${currentFolder == '已发送'} ? 'active'"><i class="fas fa-paper-plane"></i> 已发送</a>&ndash;&gt;-->
+<!--&lt;!&ndash;        <a href="/drafts" class="menu-item" th:if="${currentEmailId != null}" th:classappend="${currentFolder == '草稿箱'} ? 'active'"><i class="fas fa-file-alt"></i> 草稿箱</a>&ndash;&gt;-->
+<!--&lt;!&ndash;        <a href="/trash" class="menu-item" th:if="${currentEmailId != null}" th:classappend="${currentFolder == '已删除'} ? 'active'"><i class="fas fa-trash-alt"></i> 垃圾箱</a>&ndash;&gt;-->
+
+<!--&lt;!&ndash;        <div th:if="${customFolders != null && customFolders.size() > 0}">&ndash;&gt;-->
+<!--&lt;!&ndash;            <div class="menu-title" style="margin-top: 10px;">我的文件夹</div>&ndash;&gt;-->
+<!--&lt;!&ndash;            <a th:each="folder : ${customFolders}"&ndash;&gt;-->
+<!--&lt;!&ndash;               th:href="@{/inbox(folder=${folder})}"&ndash;&gt;-->
+<!--&lt;!&ndash;               class="menu-item"&ndash;&gt;-->
+<!--&lt;!&ndash;               th:classappend="${currentFolder == folder} ? 'active'">&ndash;&gt;-->
+<!--&lt;!&ndash;                <i class="fas fa-folder" style="color: #ffcc00;"></i>&ndash;&gt;-->
+<!--&lt;!&ndash;                <span th:text="${folder}">FolderName</span>&ndash;&gt;-->
+<!--&lt;!&ndash;            </a>&ndash;&gt;-->
+<!--&lt;!&ndash;        </div>&ndash;&gt;-->
+
+<!--&lt;!&ndash;        <div class="menu-title">管理</div>&ndash;&gt;-->
+<!--&lt;!&ndash;        <a href="/contacts" class="menu-item"><i class="fas fa-address-book"></i> 通讯录</a>&ndash;&gt;-->
+<!--&lt;!&ndash;        <a href="/settings" class="menu-item"><i class="fas fa-cog"></i> 设置</a>&ndash;&gt;-->
+<!--&lt;!&ndash;    </div>&ndash;&gt;-->
+
+<!--&lt;!&ndash;    <div class="main-content">&ndash;&gt;-->
+<!--&lt;!&ndash;        <div class="toolbar">&ndash;&gt;-->
+<!--&lt;!&ndash;            <div class="page-title">&ndash;&gt;-->
+<!--&lt;!&ndash;                <i class="fas fa-envelope-open-text" style="color: #0078d4;"></i>&ndash;&gt;-->
+<!--&lt;!&ndash;                <span th:text="${currentFolder != null ? currentFolder : '收件箱'}">收件箱</span>&ndash;&gt;-->
+<!--&lt;!&ndash;            </div>&ndash;&gt;-->
+
+<!--&lt;!&ndash;            <div class="search-group">&ndash;&gt;-->
+<!--&lt;!&ndash;                <select id="searchType" class="search-select">&ndash;&gt;-->
+<!--&lt;!&ndash;                    <option value="all" th:selected="${searchType == 'all'}">全部</option>&ndash;&gt;-->
+<!--&lt;!&ndash;                    <option value="sender" th:selected="${searchType == 'sender'}">发件人</option>&ndash;&gt;-->
+<!--&lt;!&ndash;                    <option value="title" th:selected="${searchType == 'title'}">主题</option>&ndash;&gt;-->
+<!--&lt;!&ndash;                    <option value="date" th:selected="${searchType == 'date'}">日期</option>&ndash;&gt;-->
+<!--&lt;!&ndash;                </select>&ndash;&gt;-->
+<!--&lt;!&ndash;                <div class="search-box">&ndash;&gt;-->
+<!--&lt;!&ndash;                    <i class="fas fa-search" style="color: #ccc; cursor: pointer;" onclick="doSearch()"></i>&ndash;&gt;-->
+<!--&lt;!&ndash;                    <input type="text" id="searchInput" th:value="${keyword}" placeholder="搜索邮件..."&ndash;&gt;-->
+<!--&lt;!&ndash;                           onkeydown="if(event.keyCode==13) doSearch()">&ndash;&gt;-->
+<!--&lt;!&ndash;                </div>&ndash;&gt;-->
+<!--&lt;!&ndash;            </div>&ndash;&gt;-->
+
+<!--&lt;!&ndash;            <div style="display: flex; gap: 10px;">&ndash;&gt;-->
+<!--&lt;!&ndash;                <a href="/inbox" class="menu-item" style="background: white; border:1px solid #eee;"><i class="fas fa-sync-alt"></i></a>&ndash;&gt;-->
+<!--&lt;!&ndash;                <a href="/sendPage" class="menu-item active" style="background: #0078d4;"><i class="fas fa-pen"></i> 写信</a>&ndash;&gt;-->
+<!--&lt;!&ndash;            </div>&ndash;&gt;-->
+<!--&lt;!&ndash;        </div>&ndash;&gt;-->
+
+<!--&lt;!&ndash;        <div class="email-list-wrapper">&ndash;&gt;-->
+<!--&lt;!&ndash;            <table>&ndash;&gt;-->
+<!--&lt;!&ndash;                <thead>&ndash;&gt;-->
+<!--&lt;!&ndash;                <tr>&ndash;&gt;-->
+<!--&lt;!&ndash;                    <th class="sender-col sortable"&ndash;&gt;-->
+<!--&lt;!&ndash;                        th:classappend="${sort == 'sender'} ? 'active-sort'"&ndash;&gt;-->
+<!--&lt;!&ndash;                        th:onclick="|location.href='@{${baseUrl}(page=1, sort='sender', order=${sort == 'sender' && order == 'asc' ? 'desc' : 'asc'}, keyword=${keyword}, searchType=${searchType}, folder=${currentFolder})}'|">&ndash;&gt;-->
+<!--&lt;!&ndash;                        <span th:text="${currentFolder == '已发送'} ? '收件人' : '发件人'">发件人/收件人</span>&ndash;&gt;-->
+<!--&lt;!&ndash;                        <i class="fas" th:classappend="${sort == 'sender'} ? (order == 'asc' ? 'fa-sort-up' : 'fa-sort-down') : 'fa-sort'"></i>&ndash;&gt;-->
+<!--&lt;!&ndash;                    </th>&ndash;&gt;-->
+
+<!--&lt;!&ndash;                    <th width="45%" class="sortable"&ndash;&gt;-->
+<!--&lt;!&ndash;                        th:classappend="${sort == 'title'} ? 'active-sort'"&ndash;&gt;-->
+<!--&lt;!&ndash;                        th:onclick="|location.href='@{${baseUrl}(page=1, sort='title', order=${sort == 'title' && order == 'asc' ? 'desc' : 'asc'}, keyword=${keyword}, searchType=${searchType}, folder=${currentFolder})}'|">&ndash;&gt;-->
+<!--&lt;!&ndash;                        主题&ndash;&gt;-->
+<!--&lt;!&ndash;                        <i class="fas" th:classappend="${sort == 'title'} ? (order == 'asc' ? 'fa-sort-up' : 'fa-sort-down') : 'fa-sort'"></i>&ndash;&gt;-->
+<!--&lt;!&ndash;                    </th>&ndash;&gt;-->
+
+<!--&lt;!&ndash;                    <th width="15%" style="text-align: right;" class="sortable"&ndash;&gt;-->
+<!--&lt;!&ndash;                        th:classappend="${sort == 'date'} ? 'active-sort'"&ndash;&gt;-->
+<!--&lt;!&ndash;                        th:onclick="|location.href='@{${baseUrl}(page=1, sort='date', order=${sort == 'date' && order == 'asc' ? 'desc' : 'asc'}, keyword=${keyword}, searchType=${searchType}, folder=${currentFolder})}'|">&ndash;&gt;-->
+<!--&lt;!&ndash;                        时间&ndash;&gt;-->
+<!--&lt;!&ndash;                        <i class="fas" th:classappend="${sort == 'date'} ? (order == 'asc' ? 'fa-sort-up' : 'fa-sort-down') : 'fa-sort'"></i>&ndash;&gt;-->
+<!--&lt;!&ndash;                    </th>&ndash;&gt;-->
+
+<!--&lt;!&ndash;                    <th width="12%"></th>&ndash;&gt;-->
+<!--&lt;!&ndash;                </tr>&ndash;&gt;-->
+<!--&lt;!&ndash;                </thead>&ndash;&gt;-->
+<!--&lt;!&ndash;                <tbody id="emailTableBody">&ndash;&gt;-->
+<!--&lt;!&ndash;                <tr th:each="email : ${emails}"&ndash;&gt;-->
+<!--&lt;!&ndash;                    th:data-uid="${email.id}"&ndash;&gt;-->
+<!--&lt;!&ndash;                    th:data-folder="${currentFolder}"&ndash;&gt;-->
+<!--&lt;!&ndash;                    th:data-title="${email.title}"&ndash;&gt;-->
+<!--&lt;!&ndash;                    th:data-sender="${email.sender}"&ndash;&gt;-->
+<!--&lt;!&ndash;                    onclick="showEmailDetail(this)">&ndash;&gt;-->
+
+<!--&lt;!&ndash;                    <td class="sender-col">&ndash;&gt;-->
+<!--&lt;!&ndash;                        <div style="display: flex; align-items: center;">&ndash;&gt;-->
+<!--&lt;!&ndash;                            <span class="sender-avatar" th:text="${#strings.substring(email.sender, 0, 1)}">A</span>&ndash;&gt;-->
+<!--&lt;!&ndash;                            <div style="display: flex; flex-direction: column; justify-content: center;">&ndash;&gt;-->
+<!--&lt;!&ndash;                                <span th:text="${email.sender}" style="line-height: 1.2;">张三</span>&ndash;&gt;-->
+<!--&lt;!&ndash;                                <span th:text="${email.address}" style="font-size: 12px; color: #999; font-weight: normal; line-height: 1.2;">zhangsan@qq.com</span>&ndash;&gt;-->
+<!--&lt;!&ndash;                            </div>&ndash;&gt;-->
+<!--&lt;!&ndash;                        </div>&ndash;&gt;-->
+<!--&lt;!&ndash;                    </td>&ndash;&gt;-->
+
+<!--&lt;!&ndash;                    <td th:text="${email.title}" style="font-weight: 500;">主题</td>&ndash;&gt;-->
+<!--&lt;!&ndash;                    <td class="date-col" th:text="${email.sendDate}">时间</td>&ndash;&gt;-->
+
+<!--&lt;!&ndash;                    <td style="text-align: center; white-space: nowrap;" onclick="event.stopPropagation()">&ndash;&gt;-->
+
+<!--&lt;!&ndash;                        <a th:if="${currentFolder != '已删除'}"&ndash;&gt;-->
+<!--&lt;!&ndash;                           th:href="@{/sendPage(replyUid=${email.id}, folder=${(currentFolder == '收件箱' || currentFolder == null) ? 'INBOX' : currentFolder})}"&ndash;&gt;-->
+<!--&lt;!&ndash;                           class="btn-action" title="回复"&ndash;&gt;-->
+<!--&lt;!&ndash;                           style="color: #0078d4; margin-right: 5px;">&ndash;&gt;-->
+<!--&lt;!&ndash;                            <i class="fas fa-reply"></i>&ndash;&gt;-->
+<!--&lt;!&ndash;                        </a>&ndash;&gt;-->
+
+<!--&lt;!&ndash;                        <a href="javascript:void(0)"&ndash;&gt;-->
+<!--&lt;!&ndash;                           th:onclick="|openForwardModal(${email.id})|"&ndash;&gt;-->
+<!--&lt;!&ndash;                           class="btn-action" title="转发"&ndash;&gt;-->
+<!--&lt;!&ndash;                           style="color: #28a745; margin-right: 5px;">&ndash;&gt;-->
+<!--&lt;!&ndash;                            <i class="fas fa-share"></i>&ndash;&gt;-->
+<!--&lt;!&ndash;                        </a>&ndash;&gt;-->
+
+<!--&lt;!&ndash;                        <a th:if="${currentFolder == '已发送'}"&ndash;&gt;-->
+<!--&lt;!&ndash;                           th:href="@{/deleteFromSent(id=${email.id})}"&ndash;&gt;-->
+<!--&lt;!&ndash;                           class="btn-action btn-trash" title="移入垃圾箱" onclick="return confirm('确定要删除吗？')">&ndash;&gt;-->
+<!--&lt;!&ndash;                            <i class="fas fa-trash"></i>&ndash;&gt;-->
+<!--&lt;!&ndash;                        </a>&ndash;&gt;-->
+
+<!--&lt;!&ndash;                        <a th:if="${currentFolder == '已删除'}"&ndash;&gt;-->
+<!--&lt;!&ndash;                           th:href="@{/deleteForever(id=${email.id})}"&ndash;&gt;-->
+<!--&lt;!&ndash;                           class="btn-action btn-trash" title="彻底删除" style="color: #ff4d4f;" onclick="return confirm('确定彻底删除吗？此操作无法恢复！')">&ndash;&gt;-->
+<!--&lt;!&ndash;                            <i class="fas fa-times-circle"></i>&ndash;&gt;-->
+<!--&lt;!&ndash;                        </a>&ndash;&gt;-->
+
+<!--&lt;!&ndash;                        <a th:if="${currentFolder != '已发送' && currentFolder != '已删除'}"&ndash;&gt;-->
+<!--&lt;!&ndash;                           th:href="@{/deleteFromInbox(id=${email.id})}"&ndash;&gt;-->
+<!--&lt;!&ndash;                           class="btn-action btn-trash" title="移入垃圾箱" onclick="return confirm('确定要删除吗？')">&ndash;&gt;-->
+<!--&lt;!&ndash;                            <i class="fas fa-trash"></i>&ndash;&gt;-->
+<!--&lt;!&ndash;                        </a>&ndash;&gt;-->
+<!--&lt;!&ndash;                    </td>&ndash;&gt;-->
+<!--&lt;!&ndash;                </tr>&ndash;&gt;-->
+<!--&lt;!&ndash;                <tr th:if="${emails.size() == 0}">&ndash;&gt;-->
+<!--&lt;!&ndash;                    <td colspan="4" style="text-align: center; padding: 50px; color: #999;">&ndash;&gt;-->
+<!--&lt;!&ndash;                        <i class="fas fa-coffee" style="font-size: 30px; margin-bottom: 10px;"></i><br>暂无邮件&ndash;&gt;-->
+<!--&lt;!&ndash;                        <div th:if="${keyword != null}" style="font-size: 12px; margin-top: 5px;">&ndash;&gt;-->
+<!--&lt;!&ndash;                            (搜索关键词: <span th:text="${keyword}"></span>)&ndash;&gt;-->
+<!--&lt;!&ndash;                        </div>&ndash;&gt;-->
+<!--&lt;!&ndash;                    </td>&ndash;&gt;-->
+<!--&lt;!&ndash;                </tr>&ndash;&gt;-->
+<!--&lt;!&ndash;                </tbody>&ndash;&gt;-->
+<!--&lt;!&ndash;            </table>&ndash;&gt;-->
+
+<!--&lt;!&ndash;            <div class="pagination-bar" th:if="${totalPages > 0}">&ndash;&gt;-->
+<!--&lt;!&ndash;                <span style="margin-right: 15px;">&ndash;&gt;-->
+<!--&lt;!&ndash;                    <span th:text="${currentPage}">1</span>/<span th:text="${totalPages}">1</span> 页&ndash;&gt;-->
+<!--&lt;!&ndash;                </span>&ndash;&gt;-->
+
+<!--&lt;!&ndash;                <a th:if="${currentPage > 1}"&ndash;&gt;-->
+<!--&lt;!&ndash;                   th:href="@{${baseUrl}(page=${currentPage - 1}, sort=${sort}, order=${order}, keyword=${keyword}, searchType=${searchType}, folder=${currentFolder})}">上一页</a>&ndash;&gt;-->
+<!--&lt;!&ndash;                <span th:if="${currentPage <= 1}" class="disabled">上一页</span>&ndash;&gt;-->
+
+<!--&lt;!&ndash;                <a th:if="${currentPage < totalPages}"&ndash;&gt;-->
+<!--&lt;!&ndash;                   th:href="@{${baseUrl}(page=${currentPage + 1}, sort=${sort}, order=${order}, keyword=${keyword}, searchType=${searchType}, folder=${currentFolder})}">下一页</a>&ndash;&gt;-->
+<!--&lt;!&ndash;                <span th:if="${currentPage >= totalPages}" class="disabled">下一页</span>&ndash;&gt;-->
+
+<!--&lt;!&ndash;                <span style="margin-left: 15px;">&ndash;&gt;-->
+<!--&lt;!&ndash;                    跳转到第 <input type="text" id="jumpInput" class="page-input" th:value="${currentPage}"> 页&ndash;&gt;-->
+<!--&lt;!&ndash;                    <button type="button" class="btn-go" onclick="jumpToPage()">确定</button>&ndash;&gt;-->
+<!--&lt;!&ndash;                </span>&ndash;&gt;-->
+
+<!--&lt;!&ndash;                <input type="hidden" id="maxPage" th:value="${totalPages}">&ndash;&gt;-->
+<!--&lt;!&ndash;                <input type="hidden" id="currentBaseUrl" th:value="${baseUrl}">&ndash;&gt;-->
+<!--&lt;!&ndash;                <input type="hidden" id="currentSort" th:value="${sort}">&ndash;&gt;-->
+<!--&lt;!&ndash;                <input type="hidden" id="currentOrder" th:value="${order}">&ndash;&gt;-->
+<!--&lt;!&ndash;                <input type="hidden" id="currentKeyword" th:value="${keyword}">&ndash;&gt;-->
+<!--&lt;!&ndash;                <input type="hidden" id="currentSearchType" th:value="${searchType}">&ndash;&gt;-->
+<!--&lt;!&ndash;                <input type="hidden" id="currentFolderVal" th:value="${currentFolder}">&ndash;&gt;-->
+<!--&lt;!&ndash;            </div>&ndash;&gt;-->
+<!--&lt;!&ndash;        </div>&ndash;&gt;-->
+<!--&lt;!&ndash;    </div>&ndash;&gt;-->
+<!--&lt;!&ndash;</div>&ndash;&gt;-->
+
+<!--&lt;!&ndash;<div id="emailModal" class="modal-overlay"> </div>&ndash;&gt;-->
+<!--&lt;!&ndash;<div id="forwardModal" class="modal-overlay"> </div>&ndash;&gt;-->
+
+<!--&lt;!&ndash;<script>&ndash;&gt;-->
+<!--&lt;!&ndash;    window.onload = function() {&ndash;&gt;-->
+<!--&lt;!&ndash;        const savedTheme = localStorage.getItem('theme');&ndash;&gt;-->
+<!--&lt;!&ndash;        if (savedTheme === 'dark') document.body.classList.add('dark-mode');&ndash;&gt;-->
+<!--&lt;!&ndash;        const savedBg = localStorage.getItem('customBg');&ndash;&gt;-->
+<!--&lt;!&ndash;        if (savedBg) document.body.style.setProperty('&#45;&#45;bg-image', `url(${savedBg})`);&ndash;&gt;-->
+<!--&lt;!&ndash;    }&ndash;&gt;-->
+
+<!--&lt;!&ndash;    // 搜索逻辑&ndash;&gt;-->
+<!--&lt;!&ndash;    function doSearch() {&ndash;&gt;-->
+<!--&lt;!&ndash;        var input = document.getElementById("searchInput");&ndash;&gt;-->
+<!--&lt;!&ndash;        var keyword = input.value;&ndash;&gt;-->
+<!--&lt;!&ndash;        var searchType = document.getElementById("searchType").value;&ndash;&gt;-->
+<!--&lt;!&ndash;        var baseUrl = "[[${baseUrl}]]";&ndash;&gt;-->
+<!--&lt;!&ndash;        var folder = document.getElementById("currentFolderVal").value; // 获取当前文件夹&ndash;&gt;-->
+
+<!--&lt;!&ndash;        var url = baseUrl + "?page=1&keyword=" + encodeURIComponent(keyword) + "&searchType=" + searchType;&ndash;&gt;-->
+<!--&lt;!&ndash;        // 如果当前是自定义文件夹，带上它&ndash;&gt;-->
+<!--&lt;!&ndash;        if(folder && folder !== '收件箱' && folder !== '已发送' && folder !== '已删除') {&ndash;&gt;-->
+<!--&lt;!&ndash;            url += "&folder=" + encodeURIComponent(folder);&ndash;&gt;-->
+<!--&lt;!&ndash;        }&ndash;&gt;-->
+<!--&lt;!&ndash;        window.location.href = url;&ndash;&gt;-->
+<!--&lt;!&ndash;    }&ndash;&gt;-->
+
+<!--&lt;!&ndash;    // 跳转页码逻辑&ndash;&gt;-->
+<!--&lt;!&ndash;    function jumpToPage() {&ndash;&gt;-->
+<!--&lt;!&ndash;        var p = parseInt(document.getElementById("jumpInput").value);&ndash;&gt;-->
+<!--&lt;!&ndash;        var max = parseInt(document.getElementById("maxPage").value);&ndash;&gt;-->
+<!--&lt;!&ndash;        var baseUrl = document.getElementById("currentBaseUrl").value;&ndash;&gt;-->
+<!--&lt;!&ndash;        var sort = document.getElementById("currentSort").value || 'date';&ndash;&gt;-->
+<!--&lt;!&ndash;        var order = document.getElementById("currentOrder").value || 'desc';&ndash;&gt;-->
+<!--&lt;!&ndash;        var keyword = document.getElementById("currentKeyword").value || '';&ndash;&gt;-->
+<!--&lt;!&ndash;        var searchType = document.getElementById("currentSearchType").value || 'all';&ndash;&gt;-->
+<!--&lt;!&ndash;        var folder = document.getElementById("currentFolderVal").value;&ndash;&gt;-->
+
+<!--&lt;!&ndash;        if (isNaN(p) || p < 1) { alert("无效页码"); return; }&ndash;&gt;-->
+<!--&lt;!&ndash;        if (p > max) { alert("超过最大页数"); return; }&ndash;&gt;-->
+
+<!--&lt;!&ndash;        var url = baseUrl + "?page=" + p + "&sort=" + sort + "&order=" + order;&ndash;&gt;-->
+<!--&lt;!&ndash;        if(keyword) {&ndash;&gt;-->
+<!--&lt;!&ndash;            url += "&keyword=" + encodeURIComponent(keyword) + "&searchType=" + searchType;&ndash;&gt;-->
+<!--&lt;!&ndash;        }&ndash;&gt;-->
+<!--&lt;!&ndash;        // 【关键】带上 folder 参数&ndash;&gt;-->
+<!--&lt;!&ndash;        if(folder && folder !== '收件箱' && folder !== '已发送' && folder !== '已删除') {&ndash;&gt;-->
+<!--&lt;!&ndash;            url += "&folder=" + encodeURIComponent(folder);&ndash;&gt;-->
+<!--&lt;!&ndash;        }&ndash;&gt;-->
+
+<!--&lt;!&ndash;        window.location.href = url;&ndash;&gt;-->
+<!--&lt;!&ndash;    }&ndash;&gt;-->
+
+<!--&lt;!&ndash;    // 省略 showEmailDetail 等其他函数（保持不变）&ndash;&gt;-->
+<!--&lt;!&ndash;</script>&ndash;&gt;-->
+
+<!--&lt;!&ndash;<script src="https://cdn.quilljs.com/1.3.6/quill.js"></script>&ndash;&gt;-->
+<!--&lt;!&ndash;<script>&ndash;&gt;-->
+<!--&lt;!&ndash;    function showEmailDetail(element) {&ndash;&gt;-->
+<!--&lt;!&ndash;        document.getElementById('emailModal').style.display = 'flex';&ndash;&gt;-->
+<!--&lt;!&ndash;        // ... (保持原有的 fetch 逻辑) ...&ndash;&gt;-->
+<!--&lt;!&ndash;        var uid = element.getAttribute("data-uid");&ndash;&gt;-->
+<!--&lt;!&ndash;        var folder = element.getAttribute("data-folder");&ndash;&gt;-->
+<!--&lt;!&ndash;        if(!folder) folder = "收件箱";&ndash;&gt;-->
+
+<!--&lt;!&ndash;        fetch(`/email/detail?folder=${encodeURIComponent(folder)}&uid=${uid}`)&ndash;&gt;-->
+<!--&lt;!&ndash;            .then(response => response.json())&ndash;&gt;-->
+<!--&lt;!&ndash;            .then(data => {&ndash;&gt;-->
+<!--&lt;!&ndash;                var contentDiv = document.getElementById('modalContent');&ndash;&gt;-->
+<!--&lt;!&ndash;                if(data.success) {&ndash;&gt;-->
+<!--&lt;!&ndash;                    contentDiv.innerHTML = data.content ? data.content : "<span style='color:#999'>（无正文内容）</span>";&ndash;&gt;-->
+<!--&lt;!&ndash;                    // 附件处理...&ndash;&gt;-->
+<!--&lt;!&ndash;                } else {&ndash;&gt;-->
+<!--&lt;!&ndash;                    contentDiv.innerHTML = "<span style='color:red'>加载失败：" + (data.error || "未知错误") + "</span>";&ndash;&gt;-->
+<!--&lt;!&ndash;                }&ndash;&gt;-->
+<!--&lt;!&ndash;            });&ndash;&gt;-->
+<!--&lt;!&ndash;    }&ndash;&gt;-->
+<!--&lt;!&ndash;    function closeModal() { document.getElementById('emailModal').style.display = 'none'; }&ndash;&gt;-->
+<!--&lt;!&ndash;    // ... 其他辅助函数 ...&ndash;&gt;-->
+<!--&lt;!&ndash;</script>&ndash;&gt;-->
+
+<!--&lt;!&ndash;</body>&ndash;&gt;-->
+<!--&lt;!&ndash;</html>&ndash;&gt;-->
