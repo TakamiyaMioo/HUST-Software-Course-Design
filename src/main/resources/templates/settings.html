@@ -158,10 +158,16 @@
             <div class="acc-icon">
                 <i th:if="${acc.type == 'qq'}" class="fab fa-qq"></i>
                 <i th:if="${acc.type == '163'}" class="fas fa-envelope"></i>
+                <i th:if="${acc.type == 'hust'}" class="fas fa-university"></i>
             </div>
             <div style="display: flex; flex-direction: column; overflow: hidden;">
                 <span th:text="${acc.email}" style="font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">user@qq.com</span>
-                <span th:text="${acc.type == 'qq' ? 'QQ邮箱' : '网易邮箱'}" style="font-size: 11px; opacity: 0.7;">Type</span>
+                <span style="font-size: 11px; opacity: 0.7;" th:switch="${acc.type}">
+                <span th:case="'qq'">QQ邮箱</span>
+                <span th:case="'163'">网易邮箱</span>
+                <span th:case="'hust'">华中大邮箱</span>
+                <span th:case="*">其他邮箱</span>
+            </span>
             </div>
             <i th:if="${acc.id == currentEmailId}" class="fas fa-check" style="margin-left: auto; font-size: 12px;"></i>
         </a>
@@ -248,6 +254,7 @@
                     <div class="account-info">
                         <i th:if="${acc.type == 'qq'}" class="fab fa-qq" style="color: #333; font-size: 20px;"></i>
                         <i th:if="${acc.type == '163'}" class="fas fa-envelope" style="color: #d63031; font-size: 20px;"></i>
+                        <i th:if="${acc.type == 'hust'}" class="fas fa-university" style="color: #00d2d3; font-size: 20px;"></i>
                         <div>
                             <div th:text="${acc.email}" style="font-weight: bold; color: #333;">user@example.com</div>
                             <span class="account-tag" th:text="${acc.type}">TYPE</span>
@@ -266,6 +273,7 @@
                         <select name="type" class="form-input" required>
                             <option value="qq">腾讯 QQ 邮箱</option>
                             <option value="163">网易 163 邮箱</option>
+                            <option value="hust">HUST 邮箱</option>
                         </select>
                         <input type="email" name="email" class="form-input" placeholder="邮箱地址 (例如: 123@qq.com)" required>
                         <input type="password" name="password" class="form-input" placeholder="授权码 (POP3/IMAP/SMTP)" required>

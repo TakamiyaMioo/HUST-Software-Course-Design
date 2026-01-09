@@ -139,10 +139,16 @@
             <div class="acc-icon">
                 <i th:if="${acc.type == 'qq'}" class="fab fa-qq"></i>
                 <i th:if="${acc.type == '163'}" class="fas fa-envelope"></i>
+                <i th:if="${acc.type == 'hust'}" class="fas fa-university"></i>
             </div>
             <div style="display: flex; flex-direction: column; overflow: hidden;">
-                <span th:text="${acc.email}" style="font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">user@email.com</span>
-                <span th:text="${acc.type == 'qq' ? 'QQ邮箱' : '网易邮箱'}" style="font-size: 11px; opacity: 0.7;">Type</span>
+                <span th:text="${acc.email}" style="font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">user@qq.com</span>
+                <span style="font-size: 11px; opacity: 0.7;" th:switch="${acc.type}">
+                    <span th:case="'qq'">QQ邮箱</span>
+                    <span th:case="'163'">网易邮箱</span>
+                    <span th:case="'hust'">华中大邮箱</span>
+                    <span th:case="*">其他邮箱</span>
+                </span>
             </div>
             <i th:if="${acc.id == currentEmailId}" class="fas fa-check" style="margin-left: auto; font-size: 12px;"></i>
         </a>
