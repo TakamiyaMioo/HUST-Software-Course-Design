@@ -134,25 +134,23 @@ public class HelloController {
 
 
     // ================== 2. 邮件列表视图 (原有逻辑微调) ==================
-
-    // 1. 收件箱
+// 1. 收件箱 (通用文件夹视图)
     @GetMapping("/inbox")
     public ModelAndView inbox(HttpSession session,
                               @RequestParam(defaultValue = "1") int page,
                               @RequestParam(defaultValue = "date") String sort,
                               @RequestParam(defaultValue = "desc") String order,
                               @RequestParam(required = false) String keyword,
-                              @RequestParam(defaultValue = "all") String searchType) {
-        // 检查：如果连主账号都没登，踢回登录页
-        if (session.getAttribute("appUser") == null) {
-            return new ModelAndView("redirect:/");
-        }
-        // 检查：如果登了主账号但没绑邮箱，踢去设置页
-        if (session.getAttribute("currentUser") == null) {
-            return new ModelAndView("redirect:/settings");
-        }
+                              @RequestParam(defaultValue = "all") String searchType,
+                              @RequestParam(required = false) String folder) { // 【新增参数】
 
-        return getFolderView(session, "收件箱", "/inbox", page, sort, order, keyword, searchType);
+        if (session.getAttribute("appUser") == null) return new ModelAndView("redirect:/");
+        if (session.getAttribute("currentUser") == null) return new ModelAndView("redirect:/settings");
+
+        // 【核心修改】如果前端传了 folder 就用，没传就默认 "收件箱"
+        String targetFolder = StringUtils.hasText(folder) ? folder : "收件箱";
+
+        return getFolderView(session, targetFolder, "/inbox", page, sort, order, keyword, searchType);
     }
 
     // 2. 已发送
