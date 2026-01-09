@@ -3,21 +3,21 @@ package com.example.demo.entity;
 import jakarta.persistence.*;
 
 @Entity
-@Table(name = "local_emails") // 避免和某些数据库关键字冲突
+@Table(name = "local_emails") // 避免表名冲突
 public class LocalEmail {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    private Long folderId;       // 属于哪个本地文件夹 (关联 LocalFolder 的 id)
-    private Long emailAccountId; // 冗余字段，方便查询属于哪个账号
+    private Long folderId;       // 属于哪个本地文件夹
+    private Long emailAccountId; // 冗余字段，方便查询
 
     private String subject;      // 标题
     private String sender;       // 发件人名称
     private String address;      // 发件人邮箱地址
-    private String sentDate;     // 发送时间 (字符串格式)
+    private String sentDate;     // 发送时间
 
-    @Lob // 大文本，用于存邮件正文HTML
+    @Lob // 大文本存储HTML正文
     @Column(columnDefinition = "LONGTEXT")
     private String content;
 
