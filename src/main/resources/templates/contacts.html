@@ -94,57 +94,18 @@
         td { padding: 15px 20px; border-bottom: 1px solid rgba(0,0,0,0.05); color: var(--text-main); vertical-align: middle; }
         tr:hover { background-color: var(--hover-bg); }
 
-        /* ================== 【关键修改】按钮样式优化 ================== */
-        /* 1. 操作列强制不换行，且居中 */
+        /* 按钮样式优化 */
         td.action-col { text-align: center; white-space: nowrap; width: 180px; }
-
-        /* 2. 按钮容器：使用 Flex 保证一行 */
-        .action-group {
-            display: inline-flex;
-            justify-content: center;
-            align-items: center;
-            gap: 10px; /* 按钮间距 */
-        }
-
-        /* 3. 统一按钮基础样式 (去除 button 和 a 的差异) */
+        .action-group { display: inline-flex; justify-content: center; align-items: center; gap: 10px; }
         .btn-action-base {
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            gap: 5px;
-            padding: 6px 12px;
-            font-size: 13px;
-            border-radius: 6px;
-            text-decoration: none;
-            cursor: pointer;
-            transition: all 0.2s ease;
-            border: 1px solid transparent;
-            line-height: 1.2;
-            font-family: inherit;
+            display: inline-flex; align-items: center; justify-content: center; gap: 5px; padding: 6px 12px;
+            font-size: 13px; border-radius: 6px; text-decoration: none; cursor: pointer; transition: all 0.2s ease;
+            border: 1px solid transparent; line-height: 1.2; font-family: inherit;
         }
-
-        /* 编辑按钮：淡蓝背景 */
-        .btn-edit {
-            background: rgba(0, 120, 212, 0.1);
-            color: #0078d4;
-        }
-        .btn-edit:hover {
-            background: #0078d4;
-            color: white;
-            box-shadow: 0 2px 5px rgba(0, 120, 212, 0.3);
-        }
-
-        /* 删除按钮：淡红背景 */
-        .btn-del {
-            background: rgba(255, 77, 79, 0.1);
-            color: #ff4d4f;
-        }
-        .btn-del:hover {
-            background: #ff4d4f;
-            color: white;
-            box-shadow: 0 2px 5px rgba(255, 77, 79, 0.3);
-        }
-        /* ======================================================== */
+        .btn-edit { background: rgba(0, 120, 212, 0.1); color: #0078d4; }
+        .btn-edit:hover { background: #0078d4; color: white; box-shadow: 0 2px 5px rgba(0, 120, 212, 0.3); }
+        .btn-del { background: rgba(255, 77, 79, 0.1); color: #ff4d4f; }
+        .btn-del:hover { background: #ff4d4f; color: white; box-shadow: 0 2px 5px rgba(255, 77, 79, 0.3); }
 
         .add-section { background: rgba(0,0,0,0.02); padding: 20px; border-radius: 12px; border: 1px dashed #ced4da; margin-top: auto; }
         .form-title { font-size: 14px; color: #2d6a4f; margin-bottom: 15px; font-weight: bold; display: flex; align-items: center; gap: 8px; }
@@ -174,7 +135,9 @@
     <div class="sidebar">
         <div class="user-profile-area">
             <div class="app-user-name">
-                <i class="fas fa-user-astronaut" style="color: #6c5ce7;"></i>
+                <img th:if="${session.appUser.avatar != null}" th:src="${session.appUser.avatar}" style="width:30px; height:30px; margin-right:5px; border-radius:50%; object-fit:cover;">
+                <i th:if="${session.appUser.avatar == null}" class="fas fa-user-astronaut" style="color: #6c5ce7; margin-right:5px;"></i>
+
                 <span th:text="${session.appUser.nickname}">主账号昵称</span>
             </div>
             <div style="font-size: 12px; color: #999;">

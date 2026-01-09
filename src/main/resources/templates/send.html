@@ -23,6 +23,7 @@
             /* 编辑器专用颜色 */
             --editor-border: #ccc;
             --editor-bg: white;
+            --modal-bg: white;
         }
 
         body.dark-mode {
@@ -39,6 +40,7 @@
             /* 编辑器黑夜模式适配 */
             --editor-border: #555;
             --editor-bg: #444;
+            --modal-bg: #2d2d2d;
         }
 
         body {
@@ -151,7 +153,7 @@
 
         /* 通讯录弹窗样式 */
         .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 2000; justify-content: center; align-items: center; }
-        .modal-card { background: white; width: 400px; max-height: 80vh; border-radius: 10px; padding: 20px; display: flex; flex-direction: column; box-shadow: 0 10px 30px rgba(0,0,0,0.3); }
+        .modal-card { background: var(--modal-bg); color: var(--text-main); width: 400px; max-height: 80vh; border-radius: 10px; padding: 20px; display: flex; flex-direction: column; box-shadow: 0 10px 30px rgba(0,0,0,0.3); }
         .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; border-bottom: 1px solid #eee; padding-bottom: 10px; }
         body.dark-mode .modal-card { background: #2d2d2d; color: #e0e0e0; }
     </style>
@@ -163,7 +165,9 @@
     <div class="sidebar">
         <div class="user-profile-area">
             <div class="app-user-name">
-                <i class="fas fa-user-astronaut" style="color: #6c5ce7;"></i>
+                <img th:if="${session.appUser.avatar != null}" th:src="${session.appUser.avatar}" style="width:30px; height:30px; margin-right:5px; border-radius:50%; object-fit:cover;">
+                <i th:if="${session.appUser.avatar == null}" class="fas fa-user-astronaut" style="color: #6c5ce7; margin-right:5px;"></i>
+
                 <span th:text="${session.appUser.nickname}">主账号昵称</span>
             </div>
             <div style="font-size: 12px; color: #999;">
@@ -322,7 +326,6 @@
 
     // 2. 通讯录弹窗逻辑
     function openContactModal() {
-        // 清空之前的勾选
         document.querySelectorAll('input[name="selectedContact"]').forEach(el => el.checked = false);
         document.getElementById('contactModal').style.display = 'flex';
     }
@@ -337,7 +340,6 @@
             var input = document.getElementById('toInput');
             var currentVal = input.value.trim();
             
-            // 简单处理：如果已有值且不以逗号结尾，加个逗号
             if (currentVal && !currentVal.endsWith(',') && !currentVal.endsWith(';')) {
                 currentVal += ", ";
             } else if (currentVal === "") {
@@ -428,7 +430,6 @@
         form.onsubmit = function() {
             var html = quill.root.innerHTML;
             document.getElementById('hiddenContent').value = html;
-            // 防止空值提交导致报错
             var replyUidEl = document.getElementById('replyUid');
             var replyFolderEl = document.getElementById('replyFolder');
             if (replyUidEl && (!replyUidEl.value || replyUidEl.value.trim() === "")) replyUidEl.disabled = true;

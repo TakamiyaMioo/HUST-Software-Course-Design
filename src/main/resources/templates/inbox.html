@@ -6,7 +6,7 @@
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" rel="stylesheet">
     <style>
         :root {
-            --bg-image: url('/images/bg.jpg');  
+            --bg-image: url('/images/bg.jpg');
             --glass-bg: rgba(255, 255, 255, 0.85);
             --sidebar-bg: rgba(255, 255, 255, 0.5);
             --main-bg: rgba(255, 255, 255, 0.3);
@@ -106,7 +106,9 @@
     <div class="sidebar">
         <div class="user-profile-area">
             <div class="app-user-name">
-                <i class="fas fa-user-astronaut" style="color: #6c5ce7;"></i>
+                <img th:if="${session.appUser.avatar != null}" th:src="${session.appUser.avatar}" style="width:30px; height:30px; margin-right:5px; border-radius:50%; object-fit:cover;">
+                <i th:if="${session.appUser.avatar == null}" class="fas fa-user-astronaut" style="color: #6c5ce7; margin-right:5px;"></i>
+                
                 <span th:text="${session.appUser.nickname}">主账号昵称</span>
             </div>
             <div style="font-size: 12px; color: #999;">
@@ -384,7 +386,6 @@
         if (savedBg) document.body.style.setProperty('--bg-image', `url(${savedBg})`);
     }
 
-    // 搜索逻辑
     function doSearch() {
         var input = document.getElementById("searchInput");
         var keyword = input.value;
@@ -399,7 +400,6 @@
         window.location.href = url;
     }
 
-    // 跳转页码逻辑
     function jumpToPage() {
         var p = parseInt(document.getElementById("jumpInput").value);
         var max = parseInt(document.getElementById("maxPage").value);
@@ -426,7 +426,6 @@
 
     function closeModal() { document.getElementById('emailModal').style.display = 'none'; }
 
-    // 转发相关逻辑
     function openForwardModal(uid) {
         document.getElementById('fwdUid').value = uid;
         document.getElementById('fwdTo').value = '';
@@ -438,7 +437,6 @@
         document.getElementById('forwardModal').style.display = 'none';
     }
     
-    // 【新增：转发通讯录逻辑】
     function openFwdContactModal() {
         document.querySelectorAll('input[name="fwdSelectedContact"]').forEach(el => el.checked = false);
         document.getElementById('fwdContactModal').style.display = 'flex';
@@ -510,7 +508,6 @@
             });
     }
 
-    // 显示邮件详情 (【保留了你的预览逻辑】)
     function showEmailDetail(element) {
         document.getElementById('emailModal').style.display = 'flex';
         var contentDiv = document.getElementById('modalContent');
@@ -526,7 +523,6 @@
                 if(data.success) {
                     contentDiv.innerHTML = data.content ? data.content : "<span style='color:#999'>（无正文内容）</span>";
 
-                    // ================= 增强的附件展示逻辑 =================
                     if(data.files && data.files.length > 0) {
                         var filesHtml = "<div style='margin-top:20px; border-top:1px solid #eee; padding-top:15px;'>";
                         filesHtml += "<b style='font-size:14px; color:#333;'><i class='fas fa-paperclip'></i> 附件 (" + data.files.length + ") :</b><br>";
