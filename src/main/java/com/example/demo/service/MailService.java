@@ -16,6 +16,10 @@ import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.Arrays;
+import jakarta.mail.Flags;
+import jakarta.mail.Folder;
+import jakarta.mail.Message;
+import jakarta.mail.UIDFolder;
 
 @Service
 public class MailService {
@@ -704,5 +708,116 @@ public class MailService {
                 store.close();
         } catch (Exception e) {
         }
+    }
+
+    /**
+     * 1. 创建自定义文件夹
+     */
+    public void createFolder(UserAccount user, String folderName) throws Exception {
+        Store store = null;
+        try {
+            // 获取连接 (复用原有的连接逻辑，这里简化写出，建议抽取 getStore 方法)
+            store = getStore(user); // 这里的 getStore 是为了节省篇幅，实际可以用你原有的连接代码
+
+            Folder defaultFolder = store.getDefaultFolder();
+            Folder newFolder = defaultFolder.getFolder(folderName);
+
+            if (newFolder.exists()) {
+                throw new RuntimeException("文件夹已存在");
+            }
+
+            // HOLDS_MESSAGES 表示该文件夹用于存放邮件
+            boolean success = newFolder.create(Folder.HOLDS_MESSAGES);
+            if (!success) {
+                throw new RuntimeException("创建文件夹失败");
+            }
+        } finally {
+            closeQuietly(null, store);
+        }
+    }
+
+    /**
+     * 2. 删除文件夹 (包含安全校验)
+     */
+    public void deleteFolder(UserAccount user, String folderName) throws Exception {
+        // 安全检查：禁止删除系统文件夹
+        // 注意：不同邮箱服务商的系统文件夹可能不同，这里列出常见的
+        List<String> systemFolders = Arrays.asList("INBOX", "收件箱", "Sent", "已发送", "Drafts", "草稿箱", "Trash", "已删除", "Junk", "垃圾箱");
+        if (systemFolders.stream().anyMatch(s -> s.equalsIgnoreCase(folderName))) {
+            throw new RuntimeException("系统文件夹不能删除");
+        }
+
+        Store store = null;
+        try {
+            store = getStore(user);
+            Folder folder = store.getFolder(folderName);
+
+            if (folder.exists()) {
+                // true 表示递归删除 (如果里面有邮件也一并删除)
+                folder.delete(true);
+            } else {
+                throw new RuntimeException("文件夹不存在");
+            }
+        } finally {
+            closeQuietly(null, store);
+        }
+    }
+
+    /**
+     * 3. 移动邮件 (复制 + 删除)
+     */
+    public void moveMessage(UserAccount user, String fromFolder, String toFolder, long uid) throws Exception {
+        Store store = null;
+        Folder source = null;
+        Folder target = null;
+        try {
+            store = getStore(user);
+
+            // 打开源文件夹
+            String realSource = getCorrectFolderName(user.getType(), fromFolder);
+            source = store.getFolder(realSource);
+            source.open(Folder.READ_WRITE);
+
+            // 打开目标文件夹
+            // 注意：移动操作通常不涉及系统名称映射转换，直接用 folderName 即可，除非目标也是系统文件夹
+            String realTarget = getCorrectFolderName(user.getType(), toFolder);
+            // 如果目标是自定义文件夹，getCorrectFolderName 会直接返回原名，所以这样写兼容性好
+
+            target = store.getFolder(realTarget);
+            if (!target.exists()) {
+                throw new RuntimeException("目标文件夹不存在");
+            }
+            target.open(Folder.READ_WRITE);
+
+            UIDFolder uidSource = (UIDFolder) source;
+            Message msg = uidSource.getMessageByUID(uid);
+
+            if (msg != null) {
+                // 1. 复制到新文件夹
+                source.copyMessages(new Message[]{msg}, target);
+                // 2. 在旧文件夹标记删除
+                msg.setFlag(Flags.Flag.DELETED, true);
+                // 3. 物理清除 (部分邮箱服务器需要这一步才能真正移走)
+                source.expunge();
+            }
+        } finally {
+            closeQuietly(target, null); // 先关 target
+            closeQuietly(source, store); // 再关 source 和 store
+        }
+    }
+
+    // --- 辅助方法：为了减少重复代码，建议抽取一个获取 Store 的方法 ---
+    private Store getStore(UserAccount user) throws Exception {
+        Properties props = new Properties();
+        props.put("mail.store.protocol", "imap");
+        props.put("mail.imap.host", user.getImapHost());
+        props.put("mail.imap.port", "993");
+        props.put("mail.imap.ssl.enable", "true");
+        props.put("mail.imap.ssl.trust", "*");
+
+        jakarta.mail.Session session = jakarta.mail.Session.getInstance(props);
+        Store store = session.getStore("imap");
+        store.connect(user.getImapHost(), user.getEmail(), user.getPassword());
+        return store;
     }
 }

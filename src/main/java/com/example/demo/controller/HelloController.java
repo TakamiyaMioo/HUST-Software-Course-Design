@@ -478,4 +478,75 @@ public class HelloController {
         });
         return "redirect:/inbox";
     }
+
+    // ... 在 HelloController 中添加以下方法 ...
+
+    // 1. 创建文件夹接口
+    @PostMapping("/folder/add")
+    @ResponseBody
+    public Map<String, Object> addFolder(@RequestParam String folderName, HttpSession session) {
+        UserAccount user = (UserAccount) session.getAttribute("currentUser");
+        Map<String, Object> resp = new HashMap<>();
+        if (user == null) {
+            resp.put("success", false);
+            resp.put("error", "未登录");
+            return resp;
+        }
+        try {
+            mailService.createFolder(user, folderName);
+            resp.put("success", true);
+        } catch (Exception e) {
+            e.printStackTrace();
+            resp.put("success", false);
+            resp.put("error", e.getMessage());
+        }
+        return resp;
+    }
+
+    // 2. 删除文件夹接口
+    @PostMapping("/folder/delete")
+    @ResponseBody
+    public Map<String, Object> deleteFolder(@RequestParam String folderName, HttpSession session) {
+        UserAccount user = (UserAccount) session.getAttribute("currentUser");
+        Map<String, Object> resp = new HashMap<>();
+        if (user == null) {
+            resp.put("success", false);
+            resp.put("error", "未登录");
+            return resp;
+        }
+        try {
+            mailService.deleteFolder(user, folderName);
+            resp.put("success", true);
+        } catch (Exception e) {
+            e.printStackTrace();
+            resp.put("success", false);
+            resp.put("error", e.getMessage());
+        }
+        return resp;
+    }
+
+    // 3. 移动邮件接口
+    @PostMapping("/mail/move")
+    @ResponseBody
+    public Map<String, Object> moveMail(@RequestParam String fromFolder,
+                                        @RequestParam String toFolder,
+                                        @RequestParam Long uid,
+                                        HttpSession session) {
+        UserAccount user = (UserAccount) session.getAttribute("currentUser");
+        Map<String, Object> resp = new HashMap<>();
+        if (user == null) {
+            resp.put("success", false);
+            resp.put("error", "未登录");
+            return resp;
+        }
+        try {
+            mailService.moveMessage(user, fromFolder, toFolder, uid);
+            resp.put("success", true);
+        } catch (Exception e) {
+            e.printStackTrace();
+            resp.put("success", false);
+            resp.put("error", e.getMessage());
+        }
+        return resp;
+    }
 }
