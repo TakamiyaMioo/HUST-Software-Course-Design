@@ -53,7 +53,7 @@
             display: flex; overflow: hidden;
         }
 
-        /* ================== 侧边栏样式 (更新) ================== */
+        /* ================== 侧边栏样式 ================== */
         .sidebar { width: 260px; background: var(--sidebar-bg); border-right: 1px solid rgba(0,0,0,0.05); display: flex; flex-direction: column; padding: 20px; overflow-y: auto; }
         .user-profile-area { margin-bottom: 20px; border-bottom: 1px dashed #ccc; padding-bottom: 15px; }
         .app-user-name { font-weight: bold; font-size: 16px; color: var(--text-main); margin-bottom: 10px; display: flex; align-items: center; gap: 8px; }
@@ -148,6 +148,12 @@
         .btn-cancel:hover { color: #666; }
 
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* 通讯录弹窗样式 */
+        .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 2000; justify-content: center; align-items: center; }
+        .modal-card { background: white; width: 400px; max-height: 80vh; border-radius: 10px; padding: 20px; display: flex; flex-direction: column; box-shadow: 0 10px 30px rgba(0,0,0,0.3); }
+        .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; border-bottom: 1px solid #eee; padding-bottom: 10px; }
+        body.dark-mode .modal-card { background: #2d2d2d; color: #e0e0e0; }
     </style>
 </head>
 <body>
@@ -221,12 +227,15 @@
 
                 <div class="form-group">
                     <label>收件人</label>
-                    <input type="text" name="to" placeholder="多个收件人请用分号 ; 隔开 (如: a@qq.com; b@163.com)"
-                           title="支持群发，请用分号隔开"
-                           th:value="${draftReceiver}" list="contactsList" required>
-                    <datalist id="contactsList">
-                        <option th:each="c : ${contacts}" th:value="${c.email}" th:label="${c.name}"></option>
-                    </datalist>
+                    <div style="display: flex; gap: 10px;">
+                        <input type="text" name="to" id="toInput" placeholder="多个收件人请用逗号隔开 (如: a@qq.com, b@163.com)"
+                               th:value="${draftReceiver}" required style="flex: 1;">
+                        
+                        <button type="button" onclick="openContactModal()" 
+                                style="padding: 0 15px; border: 1px solid var(--border-color); background: var(--input-bg); border-radius: 8px; cursor: pointer; color: #0078d4; display: flex; align-items: center; gap: 5px;">
+                            <i class="fas fa-address-book"></i> 选择
+                        </button>
+                    </div>
                 </div>
 
                 <div class="form-group">
@@ -273,19 +282,74 @@
     </div>
 </div>
 
+<div id="contactModal" class="modal-overlay">
+    <div class="modal-card">
+        <div class="modal-header">
+            <span style="font-weight: bold; font-size: 16px;">从通讯录选择</span>
+            <button onclick="document.getElementById('contactModal').style.display='none'" style="border: none; background: none; font-size: 20px; cursor: pointer; color:#999;">×</button>
+        </div>
+        
+        <div style="overflow-y: auto; flex: 1; margin-bottom: 15px; border: 1px solid #eee; border-radius: 5px; padding: 5px;">
+            <div th:each="c : ${contacts}" style="padding: 10px; border-bottom: 1px dashed #eee; display: flex; align-items: center;">
+                <input type="checkbox" name="selectedContact" th:value="${c.email}" style="margin-right: 12px; transform: scale(1.2); cursor: pointer;">
+                <div>
+                    <div th:text="${c.name}" style="font-weight: 500; font-size: 14px;">Name</div>
+                    <div th:text="${c.email}" style="font-size: 12px; color: #888;">email@test.com</div>
+                </div>
+            </div>
+            <div th:if="${contacts == null || contacts.size() == 0}" style="text-align: center; color: #999; padding: 20px;">
+                通讯录暂无联系人
+            </div>
+        </div>
+        
+        <div style="text-align: right;">
+            <button type="button" onclick="confirmContacts()" style="padding: 8px 20px; background: #0078d4; color: white; border: none; border-radius: 5px; cursor: pointer;">确定</button>
+        </div>
+    </div>
+</div>
+
 <script src="https://cdn.quilljs.com/1.3.6/quill.js"></script>
 <script>
-    // 1. 初始化主题
+    // 1. 初始化
     window.onload = function() {
         const savedTheme = localStorage.getItem('theme');
         if (savedTheme === 'dark') document.body.classList.add('dark-mode');
         const savedBg = localStorage.getItem('customBg');
         if (savedBg) document.body.style.setProperty('--bg-image', `url(${savedBg})`);
 
-        // 2. 初始化编辑器
         initEditor();
     }
 
+    // 2. 通讯录弹窗逻辑
+    function openContactModal() {
+        // 清空之前的勾选
+        document.querySelectorAll('input[name="selectedContact"]').forEach(el => el.checked = false);
+        document.getElementById('contactModal').style.display = 'flex';
+    }
+
+    function confirmContacts() {
+        var selected = [];
+        document.querySelectorAll('input[name="selectedContact"]:checked').forEach(el => {
+            selected.push(el.value);
+        });
+
+        if (selected.length > 0) {
+            var input = document.getElementById('toInput');
+            var currentVal = input.value.trim();
+            
+            // 简单处理：如果已有值且不以逗号结尾，加个逗号
+            if (currentVal && !currentVal.endsWith(',') && !currentVal.endsWith(';')) {
+                currentVal += ", ";
+            } else if (currentVal === "") {
+                currentVal = ""; 
+            }
+            
+            input.value = currentVal + selected.join(", ");
+        }
+        document.getElementById('contactModal').style.display = 'none';
+    }
+
+    // 3. 编辑器逻辑
     function initEditor() {
         var quill = new Quill('#editor-container', {
             theme: 'snow',
@@ -301,18 +365,18 @@
             }
         });
 
-        // --- 逻辑 A: 处理草稿 ---
+        // 处理草稿回填
         var dataArea = document.getElementById('draftContentData');
         if (dataArea) {
             var draftData = dataArea.value;
             if (draftData && draftData.trim() !== "") {
                 quill.setContents([]);
                 quill.clipboard.dangerouslyPasteHTML(draftData);
-                return; // 如果是草稿，填完就结束
+                return; 
             }
         }
 
-        // --- 逻辑 B: 处理回复 ---
+        // 处理回复回填
         var rUid = document.getElementById('replyUid').value;
         var rFolder = document.getElementById('replyFolder').value;
 
@@ -321,9 +385,7 @@
 
             fetch(`/email/detail?folder=${encodeURIComponent(rFolder)}&uid=${rUid}`)
                 .then(response => {
-                    if (!response.ok) {
-                        throw new Error("HTTP error " + response.status);
-                    }
+                    if (!response.ok) throw new Error("HTTP error " + response.status);
                     return response.json();
                 })
                 .then(data => {
@@ -334,7 +396,6 @@
                             </div><br>`;
                         var originalContent = data.content || "(无内容)";
 
-                        // 回复时展示并提示将自动附带原附件
                         if (data.files && data.files.length > 0) {
                             var area = document.getElementById('replyAttachmentArea');
                             var listDiv = document.getElementById('replyAttachmentList');
@@ -363,20 +424,15 @@
                 });
         }
 
-        // 4. 监听表单提交
         var form = document.getElementById('mailForm');
         form.onsubmit = function() {
             var html = quill.root.innerHTML;
             document.getElementById('hiddenContent').value = html;
-
+            // 防止空值提交导致报错
             var replyUidEl = document.getElementById('replyUid');
             var replyFolderEl = document.getElementById('replyFolder');
-            if (replyUidEl && (!replyUidEl.value || replyUidEl.value.trim() === "")) {
-                replyUidEl.disabled = true;
-            }
-            if (replyFolderEl && (!replyFolderEl.value || replyFolderEl.value.trim() === "")) {
-                replyFolderEl.disabled = true;
-            }
+            if (replyUidEl && (!replyUidEl.value || replyUidEl.value.trim() === "")) replyUidEl.disabled = true;
+            if (replyFolderEl && (!replyFolderEl.value || replyFolderEl.value.trim() === "")) replyFolderEl.disabled = true;
         }
     }
 </script>
