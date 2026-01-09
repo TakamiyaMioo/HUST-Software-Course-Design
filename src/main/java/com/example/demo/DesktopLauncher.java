@@ -3,6 +3,8 @@ package com.example.demo;
 import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.scene.Scene;
+import javafx.scene.control.Alert;
+import javafx.scene.control.ButtonType;
 import javafx.scene.web.WebEngine;
 import javafx.scene.web.WebView;
 import javafx.stage.Stage;
@@ -11,6 +13,7 @@ import org.springframework.context.ConfigurableApplicationContext;
 
 import java.awt.Desktop;
 import java.net.URI;
+import java.util.Optional;
 
 public class DesktopLauncher extends Application {
 
@@ -18,7 +21,7 @@ public class DesktopLauncher extends Application {
 
     @Override
     public void init() {
-        // 1. 开启 headless(false) 以支持 AWT 调用
+        // 1. 开启 headless(false) 以支持 AWT 调用 (队友的修改)
         springContext = new SpringApplicationBuilder(DemoApplication.class)
                 .headless(false)
                 .run();
@@ -29,8 +32,37 @@ public class DesktopLauncher extends Application {
         WebView webView = new WebView();
         WebEngine webEngine = webView.getEngine();
 
-        // 2. 防止 JavaFX 在最后一个窗口还没关闭时就自动退出（保险起见）
+        // 2. 防止 JavaFX 在最后一个窗口还没关闭时就自动退出
         Platform.setImplicitExit(false);
+
+        // ============================================================
+        // 【核心修复 A】恢复弹窗处理功能 (解决删除垃圾箱没反应的问题)
+        // ============================================================
+
+        // 1. 处理 JavaScript 的 alert() 弹窗
+        webEngine.setOnAlert(event -> {
+            Alert alert = new Alert(Alert.AlertType.INFORMATION);
+            alert.setTitle("提示");
+            alert.setHeaderText(null);
+            alert.setContentText(event.getData());
+            alert.showAndWait();
+        });
+
+        // 2. 处理 JavaScript 的 confirm() 确认框
+        webEngine.setConfirmHandler(message -> {
+            Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
+            alert.setTitle("确认操作");
+            alert.setHeaderText(null);
+            alert.setContentText(message);
+
+            Optional<ButtonType> result = alert.showAndWait();
+            // 如果用户点击了“确定/OK”，返回 true 给 JS，否则返回 false
+            return result.isPresent() && result.get() == ButtonType.OK;
+        });
+
+        // ============================================================
+        // 【核心修复 B】保留队友的下载链接处理 (防止下载白屏)
+        // ============================================================
 
         // 监听 URL 变化
         webEngine.locationProperty().addListener((observable, oldUrl, newUrl) -> {
@@ -51,8 +83,7 @@ public class DesktopLauncher extends Application {
                         }
                     });
 
-                    // B. 【核心修复】启动一个新线程去调用系统浏览器
-                    // 这样 AWT 就不会搞崩 JavaFX 的主线程了
+                    // B. 启动一个新线程去调用系统浏览器
                     new Thread(() -> {
                         try {
                             Desktop.getDesktop().browse(new URI(newUrl));
