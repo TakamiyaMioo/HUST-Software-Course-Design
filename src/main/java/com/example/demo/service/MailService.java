@@ -7,6 +7,7 @@ import jakarta.mail.internet.MimeUtility;
 import org.springframework.mail.javamail.JavaMailSenderImpl;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
+import org.eclipse.angus.mail.imap.IMAPStore;
 
 import java.io.File;
 import java.io.InputStream;
@@ -15,11 +16,6 @@ import java.nio.file.StandardCopyOption;
 import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.stream.Collectors;
-import java.util.Arrays;
-import jakarta.mail.Flags;
-import jakarta.mail.Folder;
-import jakarta.mail.Message;
-import jakarta.mail.UIDFolder;
 
 @Service
 public class MailService {
@@ -42,29 +38,36 @@ public class MailService {
         Store store = null;
         Folder folder = null;
         try {
-            Properties props = new Properties();
-            props.put("mail.store.protocol", "imap");
-            props.put("mail.imap.host", user.getImapHost());
-            props.put("mail.imap.port", "993");
-            props.put("mail.imap.ssl.enable", "true");
-            // 关闭部分抓取，确保获取完整信头
-            props.put("mail.imap.partialfetch", "false");
-
-            // 【新增】针对 163 等邮箱的 SSL 证书信任配置，防止握手失败
-            props.put("mail.imap.ssl.trust", "*");
-
-            Session session = Session.getInstance(props);
-            store = session.getStore("imap");
-
-            // 连接服务器
-            store.connect(user.getImapHost(), user.getEmail(), user.getPassword());
+            store = getImapStore(user);
 
             String realFolder = getCorrectFolderName(user.getType(), folderName);
             folder = store.getFolder(realFolder);
 
-            // 如果文件夹不存在（比如163没有"Deleted Messages"），回退到 INBOX 防止报错
+            // 【核心修改】删除之前的 "如果不存在就回退到 INBOX" 的代码
+            // if (!folder.exists()) { folder = store.getFolder("INBOX"); } <-- 删掉这行！
+
             if (!folder.exists()) {
-                folder = store.getFolder("INBOX");
+                // 如果找不到，不再自作主张回退，而是抛出明确错误或返回空
+                System.err.println("❌ 严重错误：在服务器上找不到文件夹 [" + realFolder + "]");
+                // 尝试一些备用名称 (自动纠错逻辑)
+                if (realFolder.equals("Sent Messages")) {
+                    // 163 有时也叫 "Sent" 或 "已发送"
+                    if (store.getFolder("Sent").exists())
+                        folder = store.getFolder("Sent");
+                    else if (store.getFolder("已发送").exists())
+                        folder = store.getFolder("已发送");
+                } else if (realFolder.equals("Deleted Messages")) {
+                    if (store.getFolder("Trash").exists())
+                        folder = store.getFolder("Trash");
+                    else if (store.getFolder("已删除").exists())
+                        folder = store.getFolder("已删除");
+                }
+            }
+
+            // 二次检查，如果还是不存在，就只能报错了，不要显示收件箱混淆视听
+            if (!folder.exists()) {
+                System.err.println("❌ 最终确认文件夹不存在: " + realFolder);
+                return result; // 直接返回空列表
             }
 
             folder.open(Folder.READ_ONLY);
@@ -203,17 +206,7 @@ public class MailService {
         Store store = null;
         Folder defaultFolder = null;
         try {
-            Properties props = new Properties();
-            props.put("mail.store.protocol", "imap");
-            props.put("mail.imap.host", user.getImapHost());
-            props.put("mail.imap.port", "993");
-            props.put("mail.imap.ssl.enable", "true");
-            // 针对 163 等的 SSL 信任配置
-            props.put("mail.imap.ssl.trust", "*");
-
-            Session session = Session.getInstance(props);
-            store = session.getStore("imap");
-            store.connect(user.getImapHost(), user.getEmail(), user.getPassword());
+            store = getImapStore(user);
 
             // 获取根目录下的所有文件夹
             defaultFolder = store.getDefaultFolder();
@@ -312,14 +305,7 @@ public class MailService {
         Store store = null;
         Folder folder = null;
         try {
-            Properties props = new Properties();
-            props.put("mail.store.protocol", "imap");
-            props.put("mail.imap.host", user.getImapHost());
-            props.put("mail.imap.port", "993");
-            props.put("mail.imap.ssl.enable", "true");
-            Session session = Session.getInstance(props);
-            store = session.getStore("imap");
-            store.connect(user.getImapHost(), user.getEmail(), user.getPassword());
+            store = getImapStore(user);
             String realFolder = getCorrectFolderName(user.getType(), folderName);
             folder = store.getFolder(realFolder);
             folder.open(Folder.READ_ONLY);
@@ -369,43 +355,68 @@ public class MailService {
         }
     }
 
+    /**
+     * 移动邮件到垃圾箱 (增强版：修复 163 无法删除的问题)
+     * 策略：尝试复制到垃圾箱 -> 如果成功，标记原邮件删除 -> 如果复制失败，也强制标记原邮件删除
+     */
     public void moveToTrash(UserAccount user, String fromFolderName, long uid) {
         Store store = null;
         Folder sourceFolder = null;
         Folder trashFolder = null;
         try {
-            Properties props = new Properties();
-            props.put("mail.store.protocol", "imap");
-            props.put("mail.imap.host", user.getImapHost());
-            props.put("mail.imap.port", "993");
-            props.put("mail.imap.ssl.enable", "true");
-            Session session = Session.getInstance(props);
-            store = session.getStore("imap");
-            store.connect(user.getImapHost(), user.getEmail(), user.getPassword());
+            store = getImapStore(user);
+
+            // 1. 获取源文件夹
             String sourceRealName = getCorrectFolderName(user.getType(), fromFolderName);
             sourceFolder = store.getFolder(sourceRealName);
+            if (!sourceFolder.exists()) {
+                System.err.println("❌ 删除失败：源文件夹不存在 [" + sourceRealName + "]");
+                return;
+            }
             sourceFolder.open(Folder.READ_WRITE);
-            String trashRealName = getCorrectFolderName(user.getType(), "已删除");
-            trashFolder = store.getFolder(trashRealName);
-            if (!trashFolder.exists()) {
-                if ("qq".equals(user.getType()))
-                    trashFolder = store.getFolder("Deleted Messages");
-                else
-                    trashFolder = store.getFolder("已删除");
+
+            // 2. 获取目标垃圾箱
+            // 优先尝试映射的名字 "已删除"
+            String trashName = getCorrectFolderName(user.getType(), "已删除");
+            trashFolder = store.getFolder(trashName);
+
+            // 【163 特殊保险】如果 "已删除" 不存在，尝试找 "Trash"
+            if (!trashFolder.exists() && "163".equals(user.getType())) {
+                if (store.getFolder("Trash").exists()) {
+                    trashFolder = store.getFolder("Trash");
+                }
             }
-            if (trashFolder.exists()) {
-                trashFolder.open(Folder.READ_WRITE);
-            }
+
+            // 3. 执行移动逻辑
             UIDFolder uidFolder = (UIDFolder) sourceFolder;
             Message msg = uidFolder.getMessageByUID(uid);
+
             if (msg != null) {
-                if (trashFolder.exists() && trashFolder.isOpen()) {
-                    sourceFolder.copyMessages(new Message[] { msg }, trashFolder);
+                boolean copySuccess = false;
+
+                // 尝试复制到垃圾箱
+                if (trashFolder != null && trashFolder.exists()) {
+                    try {
+                        trashFolder.open(Folder.READ_WRITE);
+                        sourceFolder.copyMessages(new Message[] { msg }, trashFolder);
+                        copySuccess = true;
+                    } catch (Exception e) {
+                        // 【关键修复】如果复制失败 (比如 163 经常报编码错误或禁止复制)，打印日志但不要停止
+                        System.err.println("⚠️ 警告：无法移动到垃圾箱 (将执行强制删除): " + e.getMessage());
+                        copySuccess = false;
+                    }
                 }
+
+                // 【核心逻辑】无论复制是否成功，只要用户点了删除，就在原文件夹标记删除！
+                // 这样能保证收件箱里的邮件一定会被删掉，解决了"删不掉"的问题。
                 msg.setFlag(Flags.Flag.DELETED, true);
             }
+
+            // 4. 物理清除 (提交删除操作)
             sourceFolder.expunge();
+
         } catch (Exception e) {
+            System.err.println("❌ 删除流程严重错误: " + e.getMessage());
             e.printStackTrace();
         } finally {
             closeQuietly(trashFolder, null);
@@ -417,14 +428,7 @@ public class MailService {
         Store store = null;
         Folder folder = null;
         try {
-            Properties props = new Properties();
-            props.put("mail.store.protocol", "imap");
-            props.put("mail.imap.host", user.getImapHost());
-            props.put("mail.imap.port", "993");
-            props.put("mail.imap.ssl.enable", "true");
-            Session session = Session.getInstance(props);
-            store = session.getStore("imap");
-            store.connect(user.getImapHost(), user.getEmail(), user.getPassword());
+            store = getImapStore(user);
             String realFolder = getCorrectFolderName(user.getType(), folderName);
             folder = store.getFolder(realFolder);
             folder.open(Folder.READ_WRITE);
@@ -563,14 +567,7 @@ public class MailService {
         Store store = null;
         Folder sentFolder = null;
         try {
-            Properties props = new Properties();
-            props.put("mail.store.protocol", "imap");
-            props.put("mail.imap.host", user.getImapHost());
-            props.put("mail.imap.port", "993");
-            props.put("mail.imap.ssl.enable", "true");
-            Session session = Session.getInstance(props);
-            store = session.getStore("imap");
-            store.connect(user.getImapHost(), user.getEmail(), user.getPassword());
+            store = getImapStore(user);
             String sentName = getCorrectFolderName(user.getType(), "已发送");
             sentFolder = store.getFolder(sentName);
             if (!sentFolder.exists())
@@ -586,40 +583,64 @@ public class MailService {
         }
     }
 
+
+    /**
+     * 【最终版】获取正确的服务器文件夹名称
+     * 根据抓取到的真实文件夹列表进行精确映射
+     */
     private String getCorrectFolderName(String mailType, String uiFolderName) {
-        if ("收件箱".equals(uiFolderName))
+        // 1. 收件箱：所有邮箱统一叫 INBOX
+        if ("收件箱".equals(uiFolderName)) {
             return "INBOX";
+        }
+
+        // 2. QQ 邮箱映射 (基于真实抓取结果)
         if ("qq".equals(mailType)) {
             if ("已发送".equals(uiFolderName))
                 return "Sent Messages";
-            if ("已删除".equals(uiFolderName) || "垃圾箱".equals(uiFolderName))
+            if ("已删除".equals(uiFolderName))
                 return "Deleted Messages";
+            if ("草稿箱".equals(uiFolderName))
+                return "Drafts";
+            if ("垃圾箱".equals(uiFolderName))
+                return "Junk";
         }
+
+        // 3. 163 邮箱映射 (基于真实抓取结果：全是中文)
         if ("163".equals(mailType)) {
             if ("已发送".equals(uiFolderName))
                 return "已发送";
-            if ("已删除".equals(uiFolderName) || "垃圾箱".equals(uiFolderName))
+            if ("已删除".equals(uiFolderName))
                 return "已删除";
+            if ("草稿箱".equals(uiFolderName))
+                return "草稿箱"; // 对应你列表里的 "草稿箱"
+            if ("垃圾箱".equals(uiFolderName))
+                return "垃圾邮件"; // 对应你列表里的 "垃圾邮件"
         }
+
+        // 4. 其他情况返回原名
         return uiFolderName;
     }
 
     private JavaMailSenderImpl createSender(UserAccount user) {
         JavaMailSenderImpl sender = new JavaMailSenderImpl();
         sender.setHost(user.getSmtpHost());
-        sender.setPort(user.getSmtpPort());
+        sender.setPort(user.getSmtpPort()); // 465
         sender.setUsername(user.getEmail());
         sender.setPassword(user.getPassword());
         sender.setDefaultEncoding("UTF-8");
+
         Properties props = sender.getJavaMailProperties();
         props.put("mail.transport.protocol", "smtp");
         props.put("mail.smtp.auth", "true");
-        if ("qq".equals(user.getType())) {
+        props.put("mail.smtp.ssl.trust", "*");
+
+        // 【修复】163 和 QQ 使用 465 端口时，都必须开启 SSL
+        if ("qq".equals(user.getType()) || "163".equals(user.getType())) {
             props.put("mail.smtp.ssl.enable", "true");
         }
         return sender;
     }
-
     /**
      * 递归解析邮件内容（修复版）
      * 1. 智能处理 multipart/alternative，优先取 HTML，避免重复
@@ -819,5 +840,65 @@ public class MailService {
         Store store = session.getStore("imap");
         store.connect(user.getImapHost(), user.getEmail(), user.getPassword());
         return store;
+    }
+    // ================== 核心通用方法 (复用逻辑) ==================
+
+    /**
+     * 【通用 IMAP 连接器】
+     * 统一处理了 SSL、端口、Trust 设置，最重要的是统一处理了 163 的 IMAP ID 验证
+     */
+    private Store getImapStore(UserAccount user) throws Exception {
+        Properties props = new Properties();
+        props.put("mail.store.protocol", "imap");
+        props.put("mail.imap.host", user.getImapHost());
+        props.put("mail.imap.port", "993");
+        props.put("mail.imap.ssl.enable", "true");
+        props.put("mail.imap.partialfetch", "false"); // 关闭部分抓取，防乱码
+        props.put("mail.imap.ssl.trust", "*"); // 信任所有证书，防握手失败
+
+        Session session = Session.getInstance(props);
+        Store store = session.getStore("imap");
+        store.connect(user.getImapHost(), user.getEmail(), user.getPassword());
+
+        // --- 核心：统一发送 IMAP ID (解决 163 报错问题) ---
+        if (store instanceof IMAPStore) {
+            IMAPStore imapStore = (IMAPStore) store;
+            Map<String, String> idMap = new HashMap<>();
+            idMap.put("name", "my-email-client");
+            idMap.put("version", "1.0.0");
+            idMap.put("vendor", "my-company");
+            idMap.put("support-email", "test@test.com");
+            try {
+                imapStore.id(idMap);
+            } catch (Exception e) {
+                // 忽略非关键错误
+            }
+        }
+        return store;
+    }
+    // 在 MailService.java 中添加这个方法
+
+    /**
+     * 【调试专用】获取服务器上所有的文件夹名称列表
+     */
+    public List<String> getAllFolders(UserAccount user) {
+        List<String> folderNames = new ArrayList<>();
+        Store store = null;
+        try {
+            store = getImapStore(user); // 复用之前的连接方法
+            Folder defaultFolder = store.getDefaultFolder();
+
+            // list("*") 表示列出所有层级的文件夹
+            for (Folder f : defaultFolder.list("*")) {
+                // 将 "名称 (全名)" 的格式存入列表
+                folderNames.add(f.getName());
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            folderNames.add("获取失败: " + e.getMessage());
+        } finally {
+            closeQuietly(null, store);
+        }
+        return folderNames;
     }
 }
