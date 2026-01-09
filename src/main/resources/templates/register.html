@@ -2,42 +2,267 @@
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
-    <title>注册账号</title>
+    <title>注册 - HUST EIC 邮件系统</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" rel="stylesheet">
     <style>
+        /* ================== CSS 变量 (保持与 Login 一致) ================== */
+        :root {
+            --bg-image: url('/images/bglogin.jpg');
+            --side-glass: rgba(30, 30, 30, 0.6);
+            --text-color: #ffffff;
+            --input-bg: rgba(255, 255, 255, 0.9);
+            --input-text: #333;
+            --btn-bg: #0078d4;
+            --btn-hover: #005a9e;
+        }
+
+        * { box-sizing: border-box; }
+
         body {
-            font-family: 'Segoe UI', sans-serif;
-            background-image: url('/images/bglogin.jpg');
-            background-size: cover; height: 100vh;
-            display: flex; justify-content: center; align-items: center; margin: 0;
+            font-family: 'Segoe UI', 'Microsoft YaHei', sans-serif;
+            background-image: var(--bg-image);
+            background-size: cover;
+            background-position: center;
+            height: 100vh;
+            margin: 0;
+            overflow: hidden;
+            position: relative;
         }
-        .card {
-            background: rgba(255, 255, 255, 0.85); backdrop-filter: blur(10px);
-            padding: 40px; border-radius: 15px; width: 350px; text-align: center;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+
+        /* === 1. 左上角 Logo === */
+        .header {
+            position: absolute;
+            top: 40px;
+            left: 50px;
+            z-index: 10;
+            display: flex;
+            align-items: center;
+            color: white;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+            animation: fadeInDown 1s ease;
         }
-        h2 { color: #333; margin-bottom: 20px; }
+        .logo-icon { font-size: 36px; margin-right: 15px; color: #00d2d3; }
+        .logo-main { display: flex; flex-direction: column; }
+        .logo-text { font-size: 28px; font-weight: 800; letter-spacing: 2px; font-family: 'Arial', sans-serif; }
+        .logo-sub { font-size: 14px; opacity: 0.85; margin-top: 2px; font-weight: 300; }
+
+        /* === 2. 右侧通栏毛玻璃 === */
+        .right-panel {
+            position: absolute;
+            top: 0;
+            right: 0;
+            bottom: 0;
+            width: 420px;
+
+            background: var(--side-glass);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+
+            border-left: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: -10px 0 30px rgba(0,0,0,0.3);
+
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            padding: 50px;
+            color: var(--text-color);
+            animation: slideInRight 0.8s ease;
+        }
+
+        /* 注册框内容 */
+        .login-box { width: 100%; }
+
+        .login-title {
+            font-size: 24px;
+            margin-bottom: 30px;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .login-title::before {
+            content: '';
+            display: block;
+            width: 4px;
+            height: 24px;
+            background: #00d2d3;
+            border-radius: 2px;
+        }
+
+        .form-group { margin-bottom: 20px; position: relative; }
+
+        .form-group i {
+            position: absolute;
+            left: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #666;
+            z-index: 2;
+        }
+
         input {
-            width: 100%; padding: 12px; margin-bottom: 15px;
-            border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box;
+            width: 100%;
+            padding: 14px 15px 14px 45px;
+            border: none;
+            border-radius: 4px;
+            outline: none;
+            background: var(--input-bg);
+            color: var(--input-text);
+            font-size: 15px;
+            transition: 0.3s;
         }
+        input:focus {
+            background: #fff;
+            box-shadow: 0 0 0 3px rgba(0, 210, 211, 0.3);
+        }
+
         .btn {
-            width: 100%; padding: 12px; background: #0078d4; color: white;
-            border: none; border-radius: 8px; font-size: 16px; cursor: pointer;
+            width: 100%;
+            padding: 14px;
+            background: var(--btn-bg);
+            color: white;
+            border: none;
+            border-radius: 4px;
+            font-size: 16px;
+            font-weight: bold;
+            letter-spacing: 2px;
+            cursor: pointer;
+            transition: 0.3s;
+            box-shadow: 0 4px 15px rgba(0, 120, 212, 0.3);
+            margin-top: 10px;
         }
-        .btn:hover { background: #005a9e; }
-        .link { margin-top: 15px; display: block; color: #666; font-size: 14px; text-decoration: none;}
+        .btn:hover { background: var(--btn-hover); transform: translateY(-2px); }
+
+        .login-link {
+            margin-top: 30px;
+            text-align: center;
+            font-size: 14px;
+            color: rgba(255,255,255,0.6);
+            border-top: 1px solid rgba(255,255,255,0.1);
+            padding-top: 20px;
+        }
+        .login-link a { color: #00d2d3; font-weight: bold; text-decoration: none; }
+        .login-link a:hover { text-decoration: underline; }
+
+        /* === 3. 底部版权 === */
+        .footer {
+            position: absolute;
+            bottom: 20px;
+            left: 0;
+            width: 100%;
+            text-align: center;
+            font-size: 12px;
+            color: rgba(255,255,255,0.3);
+            line-height: 1.5;
+        }
+
+        /* 动画 */
+        @keyframes fadeInDown { from { opacity: 0; transform: translateY(-30px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes slideInRight { from { transform: translateX(100%); } to { transform: translateX(0); } }
+
+        /* 响应式 */
+        @media (max-width: 768px) {
+            .header { top: 20px; left: 20px; transform: scale(0.8); transform-origin: left top; }
+            .right-panel { width: 100%; background: rgba(30,30,30,0.85); }
+        }
     </style>
 </head>
 <body>
-<div class="card">
-    <h2>📝 注册新账号</h2>
-    <form action="/register" method="post">
-        <input type="text" name="username" placeholder="设置用户名 (如: admin)" required>
-        <input type="text" name="nickname" placeholder="您的昵称 (如: 管理员)" required>
-        <input type="password" name="password" placeholder="设置登录密码" required>
-        <button type="submit" class="btn">立即注册</button>
-    </form>
-    <a href="/" class="link">已有账号？去登录</a>
+
+<div class="header">
+    <i class="fas fa-university logo-icon"></i>
+    <div class="logo-main">
+        <span class="logo-text">HUST EIC</span>
+        <span class="logo-sub">Electronic Information & Communications</span>
+    </div>
 </div>
+
+<div class="right-panel">
+
+    <div class="login-box">
+        <div class="login-title">注册账号 / Register</div>
+
+        <form action="/register" method="post">
+            <div class="form-group">
+                <i class="fas fa-user"></i>
+                <input type="text" name="username" placeholder="设置用户名 / Username" required autocomplete="off">
+            </div>
+
+            <div class="form-group">
+                <i class="fas fa-id-badge"></i> <input type="text" name="nickname" placeholder="您的昵称 / Nickname" required autocomplete="off">
+            </div>
+
+            <div class="form-group">
+                <i class="fas fa-lock"></i>
+                <input type="password" name="password" placeholder="设置密码 / Password" required>
+            </div>
+
+            <button type="submit" class="btn">立即注册</button>
+        </form>
+
+        <div class="login-link">
+            已有账号？ <a href="/">立即登录</a>
+        </div>
+    </div>
+
+    <div class="footer">
+        Copyright © 2024 HUST EIC.<br>
+        All Rights Reserved.
+    </div>
+</div>
+
+<script>
+    window.onload = function() {
+        const savedBg = localStorage.getItem('customBg');
+        if (savedBg) {
+            document.body.style.setProperty('--bg-image', `url(${savedBg})`);
+        }
+    }
+</script>
+
 </body>
 </html>
+
+<!--<!DOCTYPE html>-->
+<!--<html xmlns:th="http://www.thymeleaf.org">-->
+<!--<head>-->
+<!--    <meta charset="UTF-8">-->
+<!--    <title>注册账号</title>-->
+<!--    <style>-->
+<!--        body {-->
+<!--            font-family: 'Segoe UI', sans-serif;-->
+<!--            background-image: url('/images/bglogin.jpg');-->
+<!--            background-size: cover; height: 100vh;-->
+<!--            display: flex; justify-content: center; align-items: center; margin: 0;-->
+<!--        }-->
+<!--        .card {-->
+<!--            background: rgba(255, 255, 255, 0.85); backdrop-filter: blur(10px);-->
+<!--            padding: 40px; border-radius: 15px; width: 350px; text-align: center;-->
+<!--            box-shadow: 0 10px 25px rgba(0,0,0,0.2);-->
+<!--        }-->
+<!--        h2 { color: #333; margin-bottom: 20px; }-->
+<!--        input {-->
+<!--            width: 100%; padding: 12px; margin-bottom: 15px;-->
+<!--            border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box;-->
+<!--        }-->
+<!--        .btn {-->
+<!--            width: 100%; padding: 12px; background: #0078d4; color: white;-->
+<!--            border: none; border-radius: 8px; font-size: 16px; cursor: pointer;-->
+<!--        }-->
+<!--        .btn:hover { background: #005a9e; }-->
+<!--        .link { margin-top: 15px; display: block; color: #666; font-size: 14px; text-decoration: none;}-->
+<!--    </style>-->
+<!--</head>-->
+<!--<body>-->
+<!--<div class="card">-->
+<!--    <h2>📝 注册新账号</h2>-->
+<!--    <form action="/register" method="post">-->
+<!--        <input type="text" name="username" placeholder="设置用户名 (如: admin)" required>-->
+<!--        <input type="text" name="nickname" placeholder="您的昵称 (如: 管理员)" required>-->
+<!--        <input type="password" name="password" placeholder="设置登录密码" required>-->
+<!--        <button type="submit" class="btn">立即注册</button>-->
+<!--    </form>-->
+<!--    <a href="/" class="link">已有账号？去登录</a>-->
+<!--</div>-->
+<!--</body>-->
+<!--</html>-->

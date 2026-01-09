@@ -2,88 +2,253 @@
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
-    <title>登录 - 多账号邮件管理</title>
+    <title>登录 - HUST EIC 邮件系统</title>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" rel="stylesheet">
     <style>
-        /* ================== CSS 变量 (与系统其他页面保持一致) ================== */
+        /* ================== CSS 变量 ================== */
         :root {
-            --bg-image: url('/images/bglogin.jpg'); /* 登录页默认背景 */
-            --glass-bg: rgba(255, 255, 255, 0.8);
-            --text-main: #333;
-            --input-bg: white;
-            --input-border: #ddd;
-            --shadow-color: rgba(0, 0, 0, 0.2);
-            --btn-bg: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --bg-image: url('/images/bglogin.jpg');
+            /* 右侧栏背景：深灰色半透明 */
+            --side-glass: rgba(30, 30, 30, 0.6);
+            --text-color: #ffffff;
+            --input-bg: rgba(255, 255, 255, 0.9);
+            --input-text: #333;
+            --btn-bg: #0078d4;
+            --btn-hover: #005a9e;
         }
 
-        body.dark-mode {
-            --glass-bg: rgba(30, 30, 30, 0.85);
-            --text-main: #e0e0e0;
-            --input-bg: #444;
-            --input-border: #555;
-            --shadow-color: rgba(0, 0, 0, 0.5);
-        }
+        * { box-sizing: border-box; }
 
         body {
-            font-family: 'Segoe UI', sans-serif;
+            font-family: 'Segoe UI', 'Microsoft YaHei', sans-serif;
             background-image: var(--bg-image);
-            background-size: cover; background-position: center;
-            height: 100vh; display: flex; justify-content: center; align-items: center; margin: 0;
-            transition: background-image 0.5s;
+            background-size: cover;
+            background-position: center;
+            height: 100vh;
+            margin: 0;
+            overflow: hidden;
+            position: relative;
         }
 
-        .login-card {
-            background: var(--glass-bg); backdrop-filter: blur(15px);
-            width: 360px; padding: 40px; border-radius: 20px;
-            box-shadow: 0 15px 35px var(--shadow-color); text-align: center;
-            color: var(--text-main);
+        /* === 1. 左上角 Logo (绝对定位) === */
+        .header {
+            position: absolute;
+            top: 40px;
+            left: 50px;
+            z-index: 10;
+            display: flex;
+            align-items: center;
+            color: white;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+            animation: fadeInDown 1s ease;
+        }
+        .logo-icon { font-size: 36px; margin-right: 15px; color: #00d2d3; }
+        .logo-main { display: flex; flex-direction: column; }
+        .logo-text { font-size: 28px; font-weight: 800; letter-spacing: 2px; font-family: 'Arial', sans-serif; }
+        .logo-sub { font-size: 14px; opacity: 0.85; margin-top: 2px; font-weight: 300; }
+
+        /* === 2. 右侧通栏毛玻璃 (顶满上下) === */
+        .right-panel {
+            position: absolute;
+            top: 0;
+            right: 0;
+            bottom: 0;
+            width: 420px;
+
+            background: var(--side-glass);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+
+            border-left: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: -10px 0 30px rgba(0,0,0,0.3);
+
+            /* 【核心修改】这里控制垂直居中 */
+            display: flex;
+            flex-direction: column;
+            justify-content: center; /* 让登录框垂直居中 */
+            padding: 50px;
+            color: var(--text-color);
+            animation: slideInRight 0.8s ease;
         }
 
-        h2 { margin-bottom: 25px; color: var(--text-main); }
+        /* 登录框内容 */
+        .login-box {
+            width: 100%;
+            /* 不需要额外的 margin，justify-content: center 会自动处理 */
+        }
+
+        .login-title {
+            font-size: 24px;
+            margin-bottom: 30px;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .login-title::before {
+            content: '';
+            display: block;
+            width: 4px;
+            height: 24px;
+            background: #00d2d3;
+            border-radius: 2px;
+        }
+
+        .error-msg {
+            background: rgba(255, 77, 79, 0.2);
+            border: 1px solid rgba(255, 77, 79, 0.3);
+            color: #ffccc7;
+            padding: 10px;
+            border-radius: 4px;
+            margin-bottom: 20px;
+            font-size: 13px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .form-group { margin-bottom: 20px; position: relative; }
+
+        .form-group i {
+            position: absolute;
+            left: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #666;
+            z-index: 2;
+        }
 
         input {
-            width: 100%; padding: 12px 15px; margin-bottom: 15px;
-            border: 1px solid var(--input-border); border-radius: 10px; outline: none; box-sizing: border-box;
-            background: var(--input-bg); color: var(--text-main); transition: 0.3s;
+            width: 100%;
+            padding: 14px 15px 14px 45px;
+            border: none;
+            border-radius: 4px;
+            outline: none;
+            background: var(--input-bg);
+            color: var(--input-text);
+            font-size: 15px;
+            transition: 0.3s;
         }
-        input:focus { border-color: #667eea; box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1); }
+        input:focus {
+            background: #fff;
+            box-shadow: 0 0 0 3px rgba(0, 210, 211, 0.3);
+        }
+
+        .options {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 13px;
+            color: rgba(255,255,255,0.7);
+            margin-bottom: 25px;
+        }
+        .options a { color: rgba(255,255,255,0.9); text-decoration: none; }
+        .options a:hover { text-decoration: underline; color: #fff; }
 
         .btn {
-            width: 100%; padding: 12px; background: var(--btn-bg);
-            color: white; border: none; border-radius: 10px; font-size: 16px; font-weight: bold; cursor: pointer;
+            width: 100%;
+            padding: 14px;
+            background: var(--btn-bg);
+            color: white;
+            border: none;
+            border-radius: 4px;
+            font-size: 16px;
+            font-weight: bold;
+            letter-spacing: 2px;
+            cursor: pointer;
+            transition: 0.3s;
+            box-shadow: 0 4px 15px rgba(0, 120, 212, 0.3);
         }
-        .btn:hover { opacity: 0.9; transform: translateY(-1px); }
+        .btn:hover { background: var(--btn-hover); transform: translateY(-2px); }
 
-        .links { margin-top: 20px; font-size: 14px; }
-        .links a { color: #667eea; text-decoration: none; margin: 0 10px; }
+        .register-link {
+            margin-top: 30px;
+            text-align: center;
+            font-size: 14px;
+            color: rgba(255,255,255,0.6);
+            border-top: 1px solid rgba(255,255,255,0.1);
+            padding-top: 20px;
+        }
+        .register-link a { color: #00d2d3; font-weight: bold; text-decoration: none; }
+        .register-link a:hover { text-decoration: underline; }
+
+        /* === 3. 底部版权 (绝对定位，避免干扰垂直居中) === */
+        .footer {
+            position: absolute; /* 【核心修改】脱离文档流 */
+            bottom: 20px;
+            left: 0;
+            width: 100%;
+            text-align: center;
+            font-size: 12px;
+            color: rgba(255,255,255,0.3);
+            line-height: 1.5;
+        }
+
+        /* 动画 */
+        @keyframes fadeInDown { from { opacity: 0; transform: translateY(-30px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes slideInRight { from { transform: translateX(100%); } to { transform: translateX(0); } }
+
+        /* 响应式适配 */
+        @media (max-width: 768px) {
+            .header { top: 20px; left: 20px; transform: scale(0.8); transform-origin: left top; }
+            .right-panel { width: 100%; background: rgba(30,30,30,0.85); }
+        }
     </style>
 </head>
 <body>
-<div class="login-card">
-    <h2>🔐 账号登录</h2>
 
-    <div th:if="${error}" style="color: #ff4d4f; margin-bottom: 15px; font-size: 14px;">
-        <i class="fas fa-exclamation-circle"></i> <span th:text="${error}"></span>
+<div class="header">
+    <i class="fas fa-university logo-icon"></i>
+    <div class="logo-main">
+        <span class="logo-text">HUST EIC</span>
+        <span class="logo-sub">Electronic Information & Communications</span>
+    </div>
+</div>
+
+<div class="right-panel">
+
+    <div class="login-box">
+        <div class="login-title">用户登录 / Login</div>
+
+        <div th:if="${error}" class="error-msg">
+            <i class="fas fa-exclamation-triangle"></i>
+            <span th:text="${error}"></span>
+        </div>
+
+        <form action="/login" method="post">
+            <div class="form-group">
+                <i class="fas fa-user"></i>
+                <input type="text" name="username" placeholder="用户名 / Username" required autocomplete="off">
+            </div>
+
+            <div class="form-group">
+                <i class="fas fa-lock"></i>
+                <input type="password" name="password" placeholder="密码 / Password" required>
+            </div>
+
+            <div class="options">
+                <label style="cursor: pointer;">
+                    <input type="checkbox" style="width: auto; vertical-align: middle;"> 记住我
+                </label>
+                <a href="#">忘记密码?</a>
+            </div>
+
+            <button type="submit" class="btn">登 录</button>
+        </form>
+
+        <div class="register-link">
+            新同学？ <a href="/register">激活/注册账号</a>
+        </div>
     </div>
 
-    <form action="/login" method="post">
-        <input type="text" name="username" placeholder="请输入用户名" required>
-        <input type="password" name="password" placeholder="请输入密码" required>
-        <button type="submit" class="btn">登 录</button>
-    </form>
-
-    <div class="links">
-        <a href="/register">注册新账号</a>
+    <div class="footer">
+        Copyright © 2024 HUST EIC.<br>
+        All Rights Reserved.
     </div>
 </div>
 
 <script>
-    // 自动加载用户设置的主题和背景，保持体验一致
     window.onload = function() {
-        const savedTheme = localStorage.getItem('theme');
-        if (savedTheme === 'dark') {
-            document.body.classList.add('dark-mode');
-        }
         const savedBg = localStorage.getItem('customBg');
         if (savedBg) {
             document.body.style.setProperty('--bg-image', `url(${savedBg})`);
@@ -93,252 +258,3 @@
 
 </body>
 </html>
-
-
-
-<!--<!DOCTYPE html>-->
-<!--<html xmlns:th="http://www.thymeleaf.org">-->
-<!--<head>-->
-<!--    <meta charset="UTF-8">-->
-<!--    <meta name="viewport" content="width=device-width, initial-scale=1.0">-->
-<!--    <title>登录 - 桌面邮件系统</title>-->
-<!--    <style>-->
-<!--        * { box-sizing: border-box; margin: 0; padding: 0; }-->
-
-<!--        body {-->
-<!--            font-family: 'Segoe UI', 'Microsoft YaHei', sans-serif;-->
-<!--            background-image: url('/images/bglogin.jpg');-->
-<!--            background-size: cover;-->
-<!--            background-position: center;-->
-<!--            background-repeat: no-repeat;-->
-<!--            background-attachment: fixed;-->
-
-<!--            height: 100vh;-->
-<!--            display: flex;-->
-<!--            justify-content: center;-->
-<!--            align-items: center;-->
-<!--        }-->
-
-<!--        .login-card {-->
-<!--            background: rgba(255, 255, 255, 0.75);-->
-<!--            backdrop-filter: blur(15px);-->
-<!--            border: 1px solid rgba(255, 255, 255, 0.6);-->
-
-<!--            width: 90%;-->
-<!--            max-width: 400px;-->
-<!--            padding: 40px;-->
-<!--            border-radius: 20px;-->
-<!--            box-shadow: 0 15px 35px rgba(0,0,0,0.2);-->
-<!--            text-align: center;-->
-<!--            transition: transform 0.3s;-->
-<!--        }-->
-
-<!--        .login-card:hover {-->
-<!--            transform: translateY(-5px);-->
-<!--        }-->
-
-<!--        h2 {-->
-<!--            color: #333;-->
-<!--            margin-bottom: 30px;-->
-<!--            font-weight: 600;-->
-<!--            letter-spacing: 1px;-->
-<!--        }-->
-
-<!--        .icon-title {-->
-<!--            font-size: 40px;-->
-<!--            margin-bottom: 10px;-->
-<!--            display: block;-->
-<!--        }-->
-
-<!--        .form-group {-->
-<!--            margin-bottom: 20px;-->
-<!--            text-align: left;-->
-<!--        }-->
-
-<!--        label {-->
-<!--            display: block;-->
-<!--            margin-bottom: 8px;-->
-<!--            color: #444;-->
-<!--            font-size: 14px;-->
-<!--            font-weight: 500;-->
-<!--        }-->
-
-<!--        input, select {-->
-<!--            width: 100%;-->
-<!--            padding: 12px 15px;-->
-<!--            border: 2px solid transparent;-->
-<!--            border-radius: 10px;-->
-<!--            background: rgba(255, 255, 255, 0.9);-->
-<!--            font-size: 15px;-->
-<!--            outline: none;-->
-<!--            transition: 0.3s;-->
-<!--            color: #333;-->
-<!--        }-->
-
-<!--        input:focus, select:focus {-->
-<!--            border-color: #667eea;-->
-<!--            background: #fff;-->
-<!--            box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.1);-->
-<!--        }-->
-
-<!--        select {-->
-<!--            cursor: pointer;-->
-<!--            appearance: none;-->
-<!--            background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");-->
-<!--            background-repeat: no-repeat;-->
-<!--            background-position: right 10px center;-->
-<!--            background-size: 16px;-->
-<!--        }-->
-
-<!--        .btn {-->
-<!--            width: 100%;-->
-<!--            padding: 14px;-->
-<!--            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);-->
-<!--            color: white;-->
-<!--            border: none;-->
-<!--            border-radius: 10px;-->
-<!--            font-size: 16px;-->
-<!--            font-weight: bold;-->
-<!--            cursor: pointer;-->
-<!--            margin-top: 10px;-->
-<!--            transition: 0.3s;-->
-<!--            box-shadow: 0 5px 15px rgba(118, 75, 162, 0.3);-->
-<!--        }-->
-
-<!--        .btn:hover {-->
-<!--            transform: scale(1.02);-->
-<!--            box-shadow: 0 8px 20px rgba(118, 75, 162, 0.4);-->
-<!--        }-->
-
-<!--        .btn:active {-->
-<!--            transform: scale(0.98);-->
-<!--        }-->
-
-<!--        /* 底部提示文字 */-->
-<!--        .tips {-->
-<!--            font-size: 12px;-->
-<!--            color: #666;-->
-<!--            margin-top: 25px;-->
-<!--            line-height: 1.6;-->
-<!--            background: rgba(255,255,255,0.5);-->
-<!--            padding: 10px;-->
-<!--            border-radius: 8px;-->
-<!--        }-->
-
-<!--        .tips a {-->
-<!--            color: #667eea;-->
-<!--            text-decoration: none;-->
-<!--        }-->
-<!--    </style>-->
-<!--</head>-->
-<!--<body>-->
-<!--<div class="login-card">-->
-<!--    <span class="icon-title"></span>-->
-<!--    <h2>桌面邮件系统</h2>-->
-
-<!--    <form action="/login" method="post">-->
-<!--        <div class="form-group">-->
-<!--            <label>选择邮箱服务商</label>-->
-<!--            <select name="type">-->
-<!--                <option value="qq">腾讯 QQ 邮箱</option>-->
-<!--                <option value="163">网易 163 邮箱</option>-->
-<!--            </select>-->
-<!--        </div>-->
-
-<!--        <div class="form-group">-->
-<!--            <label>邮箱账号</label>-->
-<!--            <input type="text" name="email" placeholder="例如：123456@qq.com" required>-->
-<!--        </div>-->
-
-<!--        <div class="form-group">-->
-<!--            <label>授权码 (Authorization Code)</label>-->
-<!--            <input type="password" name="password" placeholder="请输入 POP3/SMTP 授权码" required>-->
-<!--        </div>-->
-
-<!--        <button type="submit" class="btn">✨ 立即登录</button>-->
-<!--    </form>-->
-
-<!--    <div class="tips">-->
-<!--        ⚠️ 注意：密码请填 <b>授权码</b>，不是登录密码。<br>-->
-<!--        <span style="opacity: 0.7">支持电脑、手机端访问</span>-->
-<!--    </div>-->
-<!--</div>-->
-<!--</body>-->
-<!--</html>-->
-
-<!--&lt;!&ndash;<!DOCTYPE html>&ndash;&gt;-->
-<!--&lt;!&ndash;<html xmlns:th="http://www.thymeleaf.org">&ndash;&gt;-->
-<!--&lt;!&ndash;<head>&ndash;&gt;-->
-<!--&lt;!&ndash;    <meta charset="UTF-8">&ndash;&gt;-->
-<!--&lt;!&ndash;    <title>邮箱登录</title>&ndash;&gt;-->
-<!--&lt;!&ndash;    <style>&ndash;&gt;-->
-<!--&lt;!&ndash;        body {&ndash;&gt;-->
-<!--&lt;!&ndash;            font-family: 'Microsoft YaHei', sans-serif;&ndash;&gt;-->
-<!--&lt;!&ndash;            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);&ndash;&gt;-->
-<!--&lt;!&ndash;            height: 100vh;&ndash;&gt;-->
-<!--&lt;!&ndash;            display: flex;&ndash;&gt;-->
-<!--&lt;!&ndash;            justify-content: center;&ndash;&gt;-->
-<!--&lt;!&ndash;            align-items: center;&ndash;&gt;-->
-<!--&lt;!&ndash;            margin: 0;&ndash;&gt;-->
-<!--&lt;!&ndash;        }&ndash;&gt;-->
-<!--&lt;!&ndash;        .login-card {&ndash;&gt;-->
-<!--&lt;!&ndash;            background: white;&ndash;&gt;-->
-<!--&lt;!&ndash;            padding: 40px;&ndash;&gt;-->
-<!--&lt;!&ndash;            border-radius: 10px;&ndash;&gt;-->
-<!--&lt;!&ndash;            box-shadow: 0 10px 25px rgba(0,0,0,0.2);&ndash;&gt;-->
-<!--&lt;!&ndash;            width: 350px;&ndash;&gt;-->
-<!--&lt;!&ndash;            text-align: center;&ndash;&gt;-->
-<!--&lt;!&ndash;        }&ndash;&gt;-->
-<!--&lt;!&ndash;        h2 { color: #333; margin-bottom: 30px; }&ndash;&gt;-->
-<!--&lt;!&ndash;        .form-group { margin-bottom: 20px; text-align: left; }&ndash;&gt;-->
-<!--&lt;!&ndash;        label { display: block; margin-bottom: 8px; color: #666; font-size: 14px; }&ndash;&gt;-->
-<!--&lt;!&ndash;        input, select {&ndash;&gt;-->
-<!--&lt;!&ndash;            width: 100%;&ndash;&gt;-->
-<!--&lt;!&ndash;            padding: 12px;&ndash;&gt;-->
-<!--&lt;!&ndash;            border: 1px solid #ddd;&ndash;&gt;-->
-<!--&lt;!&ndash;            border-radius: 6px;&ndash;&gt;-->
-<!--&lt;!&ndash;            box-sizing: border-box; /* 关键：防止padding撑大盒子 */&ndash;&gt;-->
-<!--&lt;!&ndash;            outline: none;&ndash;&gt;-->
-<!--&lt;!&ndash;            transition: 0.3s;&ndash;&gt;-->
-<!--&lt;!&ndash;        }&ndash;&gt;-->
-<!--&lt;!&ndash;        input:focus, select:focus { border-color: #764ba2; }&ndash;&gt;-->
-<!--&lt;!&ndash;        .btn {&ndash;&gt;-->
-<!--&lt;!&ndash;            width: 100%;&ndash;&gt;-->
-<!--&lt;!&ndash;            padding: 12px;&ndash;&gt;-->
-<!--&lt;!&ndash;            background: #764ba2;&ndash;&gt;-->
-<!--&lt;!&ndash;            color: white;&ndash;&gt;-->
-<!--&lt;!&ndash;            border: none;&ndash;&gt;-->
-<!--&lt;!&ndash;            border-radius: 6px;&ndash;&gt;-->
-<!--&lt;!&ndash;            font-size: 16px;&ndash;&gt;-->
-<!--&lt;!&ndash;            cursor: pointer;&ndash;&gt;-->
-<!--&lt;!&ndash;            margin-top: 10px;&ndash;&gt;-->
-<!--&lt;!&ndash;        }&ndash;&gt;-->
-<!--&lt;!&ndash;        .btn:hover { background: #5a367f; }&ndash;&gt;-->
-<!--&lt;!&ndash;        .tips { font-size: 12px; color: #999; margin-top: 20px; }&ndash;&gt;-->
-<!--&lt;!&ndash;    </style>&ndash;&gt;-->
-<!--&lt;!&ndash;</head>&ndash;&gt;-->
-<!--&lt;!&ndash;<body>&ndash;&gt;-->
-<!--&lt;!&ndash;<div class="login-card">&ndash;&gt;-->
-<!--&lt;!&ndash;    <h2>💌 邮箱登录</h2>&ndash;&gt;-->
-<!--&lt;!&ndash;    <form action="/login" method="post">&ndash;&gt;-->
-<!--&lt;!&ndash;        <div class="form-group">&ndash;&gt;-->
-<!--&lt;!&ndash;            <label>邮箱类型</label>&ndash;&gt;-->
-<!--&lt;!&ndash;            <select name="type">&ndash;&gt;-->
-<!--&lt;!&ndash;                <option value="163">网易 163 邮箱</option>&ndash;&gt;-->
-<!--&lt;!&ndash;                <option value="qq">腾讯 QQ 邮箱</option>&ndash;&gt;-->
-<!--&lt;!&ndash;            </select>&ndash;&gt;-->
-<!--&lt;!&ndash;        </div>&ndash;&gt;-->
-<!--&lt;!&ndash;        <div class="form-group">&ndash;&gt;-->
-<!--&lt;!&ndash;            <label>邮箱账号</label>&ndash;&gt;-->
-<!--&lt;!&ndash;            <input type="text" name="email" placeholder="例如：zhangsan@163.com" required>&ndash;&gt;-->
-<!--&lt;!&ndash;        </div>&ndash;&gt;-->
-<!--&lt;!&ndash;        <div class="form-group">&ndash;&gt;-->
-<!--&lt;!&ndash;            <label>授权码 (不是密码!)</label>&ndash;&gt;-->
-<!--&lt;!&ndash;            <input type="password" name="password" placeholder="请输入POP3/SMTP授权码" required>&ndash;&gt;-->
-<!--&lt;!&ndash;        </div>&ndash;&gt;-->
-<!--&lt;!&ndash;        <button type="submit" class="btn">立即登录</button>&ndash;&gt;-->
-<!--&lt;!&ndash;    </form>&ndash;&gt;-->
-<!--&lt;!&ndash;    <div class="tips">请确保已在网页版邮箱开启 POP3/SMTP 服务</div>&ndash;&gt;-->
-<!--&lt;!&ndash;</div>&ndash;&gt;-->
-<!--&lt;!&ndash;</body>&ndash;&gt;-->
-<!--&lt;!&ndash;</html>&ndash;&gt;-->
