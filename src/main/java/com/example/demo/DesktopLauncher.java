@@ -18,13 +18,10 @@ public class DesktopLauncher extends Application {
 
     @Override
     public void init() {
-        // ==================== 【修改点】 ====================
-        // .headless(false) 告诉 Spring Boot 我们不是在跑服务器，是在跑桌面软件
-        // 这样 java.awt.Desktop 才能正常工作
+        // 1. 开启 headless(false) 以支持 AWT 调用
         springContext = new SpringApplicationBuilder(DemoApplication.class)
                 .headless(false)
                 .run();
-        // ===================================================
     }
 
     @Override
@@ -32,44 +29,63 @@ public class DesktopLauncher extends Application {
         WebView webView = new WebView();
         WebEngine webEngine = webView.getEngine();
 
-        // 监听 URL 变化，接管下载
+        // 2. 防止 JavaFX 在最后一个窗口还没关闭时就自动退出（保险起见）
+        Platform.setImplicitExit(false);
+
+        // 监听 URL 变化
         webEngine.locationProperty().addListener((observable, oldUrl, newUrl) -> {
             if (newUrl != null && !newUrl.isEmpty()) {
                 String lowUrl = newUrl.toLowerCase();
+
+                // 判断是不是下载链接
                 if (lowUrl.contains("/download") ||
                         lowUrl.endsWith(".zip") || lowUrl.endsWith(".rar") ||
                         lowUrl.endsWith(".doc") || lowUrl.endsWith(".docx") ||
                         lowUrl.endsWith(".xls") || lowUrl.endsWith(".xlsx") ||
                         lowUrl.endsWith(".pdf") || lowUrl.endsWith(".txt")) {
 
+                    // A. 马上让 WebView 停止跳转并回退，防止白屏
                     Platform.runLater(() -> {
                         if (oldUrl != null) {
                             webEngine.load(oldUrl);
                         }
                     });
 
-                    try {
-                        // 现在加上了 headless(false)，这就不会报错了
-                        Desktop.getDesktop().browse(new URI(newUrl));
-                    } catch (Exception e) {
-                        e.printStackTrace();
-                        System.err.println("❌ 无法调用系统浏览器下载: " + e.getMessage());
-                    }
+                    // B. 【核心修复】启动一个新线程去调用系统浏览器
+                    // 这样 AWT 就不会搞崩 JavaFX 的主线程了
+                    new Thread(() -> {
+                        try {
+                            Desktop.getDesktop().browse(new URI(newUrl));
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                            System.err.println("❌ 无法调用系统浏览器: " + e.getMessage());
+                        }
+                    }).start();
                 }
             }
         });
 
+        // 加载首页
         webEngine.load("http://localhost:8080/");
 
         Scene scene = new Scene(webView, 1280, 800);
         primaryStage.setScene(scene);
         primaryStage.setTitle("电子邮件管理系统");
+
+        // 当点击右上角 X 关闭窗口时，彻底退出程序
+        primaryStage.setOnCloseRequest(event -> {
+            stop();
+        });
+
         primaryStage.show();
     }
 
     @Override
     public void stop() {
-        springContext.close();
+        // 确保彻底关闭 Spring Boot 和所有线程
+        if (springContext != null) {
+            springContext.close();
+        }
         Platform.exit();
         System.exit(0);
     }

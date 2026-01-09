@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <title>我的邮箱</title>
-<!--    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" rel="stylesheet">-->
+    <!--    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" rel="stylesheet">-->
     <link href="https://cdn.bootcdn.net/ajax/libs/font-awesome/5.15.4/css/all.min.css" rel="stylesheet">
     <style>
         /* ================== 基础样式 (保持原样) ================== */
@@ -106,16 +106,16 @@
         /* 侧边栏添加按钮 */
         .sidebar-action-btn { cursor: pointer; color: #0078d4; font-size: 14px; margin-right: 10px;}
         .sidebar-action-btn:hover { color: #005a9e; transform: scale(1.1); transition: 0.2s;}
-        
+
         /* 文件夹删除按钮 */
         .folder-del-icon { margin-left: auto; color: #ccc; font-size: 12px; padding: 5px; cursor: pointer; display: none; }
         .menu-item:hover .folder-del-icon { display: block; }
         .folder-del-icon:hover { color: #ff4d4f; }
-        
+
         /* 移动按钮 */
         .btn-move { color: #f39c12; margin-right: 8px; font-size: 14px; }
         .btn-move:hover { color: #d35400; transform: scale(1.1); transition: 0.2s; }
-        
+
         .btn-action { margin-right: 5px; text-decoration: none; }
 
         /* 在你的全局 CSS 中添加 */
@@ -178,7 +178,7 @@
         <hr style="border: 0; border-bottom: 1px dashed #ddd; margin: 15px 0; width: 100%;">
 
         <div class="menu-title" th:if="${currentEmailId != null}">当前邮箱文件夹</div>
-        
+
         <a href="/inbox" class="menu-item" th:if="${currentEmailId != null}" th:classappend="${currentFolder == null || currentFolder == '收件箱'} ? 'active'"><i class="fas fa-inbox"></i> 收件箱</a>
         <a href="/sent" class="menu-item" th:if="${currentEmailId != null}" th:classappend="${currentFolder == '已发送'} ? 'active'"><i class="fas fa-paper-plane"></i> 已发送</a>
         <a href="/drafts" class="menu-item" th:if="${currentEmailId != null}" th:classappend="${currentFolder == '草稿箱'} ? 'active'"><i class="fas fa-file-alt"></i> 草稿箱</a>
@@ -189,22 +189,22 @@
                 <span>我的文件夹</span>
                 <i class="fas fa-folder-plus sidebar-action-btn" onclick="openCreateFolderModal()" title="新建文件夹"></i>
             </div>
-            
+
             <div th:if="${customFolders != null}">
                 <div th:each="folder : ${customFolders}">
                     <a th:href="@{/inbox(folder=${folder})}"
                        class="menu-item"
                        th:classappend="${currentFolder == folder} ? 'active'"
                        style="justify-content: space-between;">
-                        
+
                         <div style="display: flex; align-items: center; overflow: hidden;">
                             <i class="fas fa-folder" style="color: #ffcc00; flex-shrink: 0;"></i>
                             <span th:text="${folder}" style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">Folder</span>
                         </div>
 
-                        <i class="fas fa-trash-alt folder-del-icon" 
+                        <i class="fas fa-trash-alt folder-del-icon"
                            th:data-folder="${folder}"
-                           onclick="deleteFolder(event, this)" 
+                           onclick="deleteFolder(event, this)"
                            title="删除此文件夹"></i>
                     </a>
                 </div>
@@ -291,7 +291,7 @@
                     <td class="date-col" th:text="${email.sendDate}">时间</td>
 
                     <td style="text-align: center; white-space: nowrap;" onclick="event.stopPropagation()">
-                        
+
                         <a th:if="${currentFolder != '已删除'}"
                            th:href="@{/sendPage(replyUid=${email.id}, folder=${(currentFolder == '收件箱' || currentFolder == null) ? 'INBOX' : currentFolder})}"
                            class="btn-action" title="回复" style="color: #0078d4;">
@@ -305,7 +305,7 @@
                             <i class="fas fa-share"></i>
                         </a>
 
-                        <a href="javascript:void(0)" 
+                        <a href="javascript:void(0)"
                            th:data-uid="${email.id}"
                            onclick="openMoveModal(this.getAttribute('data-uid'))"
                            class="btn-action btn-move" title="移动到文件夹">
@@ -393,9 +393,9 @@
             <div style="margin-bottom: 15px;">
                 <label style="display:block; color:#666; margin-bottom:5px; font-size:13px;">收件人：</label>
                 <div style="display: flex; gap: 8px;">
-                    <input type="text" id="fwdTo" placeholder="请输入收件人邮箱" 
+                    <input type="text" id="fwdTo" placeholder="请输入收件人邮箱"
                            style="flex: 1; padding: 10px; border: 1px solid #ddd; border-radius: 5px; box-sizing: border-box;">
-                    <button type="button" onclick="openFwdContactModal()" 
+                    <button type="button" onclick="openFwdContactModal()"
                             style="padding: 0 12px; background: #eee; border: 1px solid #ccc; border-radius: 5px; cursor: pointer; color: #333;">
                         <i class="fas fa-address-book"></i>
                     </button>
@@ -469,7 +469,7 @@
 </div>
 
 <script th:inline="javascript">
-/*<![CDATA[*/
+    /*<![CDATA[*/
     window.onload = function() {
         const savedTheme = localStorage.getItem('theme');
         if (savedTheme === 'dark') document.body.classList.add('dark-mode');
@@ -613,23 +613,16 @@
                         var filesHtml = "<div style='margin-top:20px; border-top:1px solid #eee; padding-top:15px;'>";
                         filesHtml += "<b style='font-size:14px; color:#333;'><i class='fas fa-paperclip'></i> 附件 (" + data.files.length + ") :</b><br>";
                         data.files.forEach(f => {
-                            var ext = f.split('.').pop().toLowerCase();
                             var downloadUrl = `/download?filename=${encodeURIComponent(f)}`;
-                            var previewUrl = `/preview?filename=${encodeURIComponent(f)}`;
-                            
+
+                            // 【修改点】移除了图片预览逻辑，只保留下载按钮
                             filesHtml += `<div style="margin-top:10px; padding:10px; background:#f9f9f9; border-radius:5px; border:1px solid #eee;">`;
                             filesHtml += `<div style="display:flex; align-items:center; justify-content:space-between;">
                                             <span style="font-weight:500; color:#333;">${f}</span>
                                             <div>
-                                                <a href="${downloadUrl}" style="color:#0078d4; text-decoration:none; font-size:13px; margin-left:10px;"><i class="fas fa-download"></i> 下载</a>`;
-                            if (['jpg', 'jpeg', 'png', 'gif', 'webp', 'pdf', 'txt'].includes(ext)) {
-                                filesHtml += `<a href="${previewUrl}" target="_blank" style="color:#28a745; text-decoration:none; font-size:13px; margin-left:15px;"><i class="fas fa-eye"></i> 新窗口预览</a>`;
-                            }
-                            filesHtml += `</div></div>`;
-                            if (['jpg', 'jpeg', 'png', 'gif', 'webp', 'bmp'].includes(ext)) {
-                                filesHtml += `<div style="margin-top:10px; text-align:center;"><img src="${previewUrl}" style="max-width:100%; max-height:300px; border-radius:4px;" alt="图片预览"></div>`;
-                            }
-                            filesHtml += `</div>`; 
+                                                <a href="${downloadUrl}" style="color:#0078d4; text-decoration:none; font-size:13px; margin-left:10px;"><i class="fas fa-download"></i> 下载</a>
+                                            </div></div>`;
+                            filesHtml += `</div>`;
                         });
                         filesHtml += "</div>";
                         contentDiv.innerHTML += filesHtml;
@@ -645,7 +638,7 @@
     }
 
     // ================== 【新增】文件夹与移动管理功能 ==================
-    
+
     // 1. 新建文件夹
     function openCreateFolderModal() {
         document.getElementById('newFolderName').value = '';
@@ -655,7 +648,7 @@
     function submitCreateFolder() {
         var name = document.getElementById('newFolderName').value.trim();
         if(!name) { alert("请输入名称"); return; }
-        
+
         var formData = new FormData();
         formData.append("folderName", name);
 
@@ -673,9 +666,9 @@
 
     // 2. 删除文件夹 (注意：通过事件对象传递参数，而非 th:onclick 拼接字符串，防止报错)
     function deleteFolder(event, element) {
-        event.preventDefault(); 
+        event.preventDefault();
         event.stopPropagation();
-        
+
         var folderName = element.getAttribute("data-folder");
         if(!confirm(`确定要删除文件夹 "${folderName}" 及其中的所有邮件吗？\n此操作不可恢复！`)) return;
 
@@ -706,7 +699,7 @@
         var folderInput = document.getElementById("currentFolderVal");
         var currentFolder = folderInput ? folderInput.value : '收件箱';
         if(!currentFolder) currentFolder = '收件箱';
-        
+
         if(currentFolder === toFolder) {
             alert("邮件已经在该文件夹中了");
             return;
@@ -728,7 +721,742 @@
                 }
             });
     }
-/*]]>*/
+    /*]]>*/
 </script>
 </body>
 </html>
+
+<!--<!DOCTYPE html>-->
+<!--<html xmlns:th="http://www.thymeleaf.org">-->
+<!--<head>-->
+<!--    <meta charset="UTF-8">-->
+<!--    <title>我的邮箱</title>-->
+<!--&lt;!&ndash;    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" rel="stylesheet">&ndash;&gt;-->
+<!--    <link href="https://cdn.bootcdn.net/ajax/libs/font-awesome/5.15.4/css/all.min.css" rel="stylesheet">-->
+<!--    <style>-->
+<!--        /* ================== 基础样式 (保持原样) ================== */-->
+<!--        :root {-->
+<!--            &#45;&#45;bg-image: url('/images/Inbox.png');-->
+<!--            &#45;&#45;glass-bg: rgba(255, 255, 255, 0.85);-->
+<!--            &#45;&#45;sidebar-bg: rgba(255, 255, 255, 0.5);-->
+<!--            &#45;&#45;main-bg: rgba(255, 255, 255, 0.3);-->
+<!--            &#45;&#45;toolbar-bg: rgba(255, 255, 255, 0.4);-->
+<!--            &#45;&#45;text-main: #333;-->
+<!--            &#45;&#45;text-sub: #666;-->
+<!--            &#45;&#45;border-color: rgba(255, 255, 255, 0.6);-->
+<!--            &#45;&#45;hover-bg: rgba(255, 255, 255, 0.8);-->
+<!--            &#45;&#45;table-header-bg: rgba(255, 255, 255, 0.9);-->
+<!--            &#45;&#45;input-bg: white;-->
+<!--            &#45;&#45;shadow-color: rgba(0, 0, 0, 0.1);-->
+<!--            &#45;&#45;modal-bg: white;-->
+<!--            &#45;&#45;pag-bg: #eef3f8; &#45;&#45;pag-border: #dce4ec; &#45;&#45;pag-text: #333; &#45;&#45;btn-bg: #fff; &#45;&#45;btn-border: #ccc; &#45;&#45;btn-hover: #f0f0f0;-->
+<!--        }-->
+<!--        body.dark-mode {-->
+<!--            &#45;&#45;glass-bg: rgba(30, 30, 30, 0.85);-->
+<!--            &#45;&#45;sidebar-bg: rgba(0, 0, 0, 0.3);-->
+<!--            &#45;&#45;main-bg: rgba(0, 0, 0, 0.2);-->
+<!--            &#45;&#45;toolbar-bg: rgba(0, 0, 0, 0.3);-->
+<!--            &#45;&#45;text-main: #e0e0e0;-->
+<!--            &#45;&#45;text-sub: #aaaaaa;-->
+<!--            &#45;&#45;border-color: rgba(255, 255, 255, 0.1);-->
+<!--            &#45;&#45;hover-bg: rgba(255, 255, 255, 0.1);-->
+<!--            &#45;&#45;table-header-bg: rgba(40, 40, 40, 0.9);-->
+<!--            &#45;&#45;input-bg: #444;-->
+<!--            &#45;&#45;shadow-color: rgba(0, 0, 0, 0.5);-->
+<!--            &#45;&#45;modal-bg: #2d2d2d;-->
+<!--            &#45;&#45;pag-bg: rgba(0, 0, 0, 0.2); &#45;&#45;pag-border: rgba(255, 255, 255, 0.1); &#45;&#45;pag-text: #aaa; &#45;&#45;btn-bg: #444; &#45;&#45;btn-border: #555; &#45;&#45;btn-hover: #555;-->
+<!--        }-->
+<!--        body {-->
+<!--            font-family: 'Segoe UI', sans-serif; margin: 0; padding: 0;-->
+<!--            background-image: var(&#45;&#45;bg-image); background-size: cover; background-position: center; background-attachment: fixed;-->
+<!--            height: 100vh; display: flex; justify-content: center; align-items: center; transition: background-image 0.5s;-->
+<!--        }-->
+<!--        .glass-container {-->
+<!--            width: 90%; height: 90vh; background: var(&#45;&#45;glass-bg); backdrop-filter: blur(12px);-->
+<!--            border: 1px solid var(&#45;&#45;border-color); border-radius: 20px; box-shadow: 0 15px 40px var(&#45;&#45;shadow-color);-->
+<!--            display: flex; overflow: hidden;-->
+<!--        }-->
+
+<!--        /* 侧边栏 */-->
+<!--        .sidebar { width: 260px; background: var(&#45;&#45;sidebar-bg); border-right: 1px solid rgba(0,0,0,0.05); display: flex; flex-direction: column; padding: 20px; overflow-y: auto; }-->
+<!--        .user-profile-area { margin-bottom: 20px; border-bottom: 1px dashed #ccc; padding-bottom: 15px; }-->
+<!--        .app-user-name { font-weight: bold; font-size: 16px; color: var(&#45;&#45;text-main); margin-bottom: 10px; display: flex; align-items: center; gap: 8px; }-->
+<!--        .account-list-title { font-size: 12px; color: #999; margin-bottom: 8px; font-weight: bold; }-->
+<!--        .account-switcher-item { display: flex; align-items: center; padding: 8px 12px; border-radius: 8px; cursor: pointer; transition: 0.2s; margin-bottom: 5px; text-decoration: none; color: var(&#45;&#45;text-sub); border: 1px solid transparent; }-->
+<!--        .account-switcher-item:hover { background: var(&#45;&#45;hover-bg); }-->
+<!--        .account-switcher-item.active { background: rgba(0, 120, 212, 0.1); border-color: rgba(0, 120, 212, 0.3); color: #0078d4; font-weight: bold; }-->
+<!--        .acc-icon { width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; border-radius: 50%; background: #eee; margin-right: 10px; font-size: 12px; }-->
+<!--        .active .acc-icon { background: #0078d4; color: white; }-->
+<!--        .add-acc-btn { font-size: 12px; color: #0078d4; text-decoration: none; padding-left: 10px; display: inline-block; margin-top: 5px;}-->
+<!--        .menu-item { display: flex; align-items: center; padding: 12px 15px; color: var(&#45;&#45;text-sub); text-decoration: none; border-radius: 10px; margin-bottom: 5px; transition: 0.3s; }-->
+<!--        .menu-item:hover { background: var(&#45;&#45;hover-bg); color: #0078d4; transform: translateX(5px); }-->
+<!--        .menu-item.active { background: #0078d4; color: white; box-shadow: 0 4px 10px rgba(0, 120, 212, 0.3); }-->
+<!--        .menu-item i { width: 25px; font-size: 18px; }-->
+<!--        .menu-title { font-size: 12px; color: #999; margin-top: 20px; margin-bottom: 10px; padding-left: 10px; display: flex; justify-content: space-between; align-items: center; }-->
+
+<!--        /* 主内容区 */-->
+<!--        .main-content { flex: 1; display: flex; flex-direction: column; background: var(&#45;&#45;main-bg); }-->
+<!--        .toolbar { padding: 15px 30px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(0,0,0,0.05); background: var(&#45;&#45;toolbar-bg); }-->
+<!--        .page-title { font-size: 20px; font-weight: bold; color: var(&#45;&#45;text-main); display: flex; align-items: center; gap: 10px; }-->
+
+<!--        .search-group { display: flex; align-items: center; background: var(&#45;&#45;input-bg); border-radius: 20px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); padding-right: 15px; }-->
+<!--        .search-select { border: none; background: transparent; padding: 8px 10px; font-size: 12px; color: #666; border-right: 1px solid #eee; outline: none; border-top-left-radius: 20px; border-bottom-left-radius: 20px; cursor: pointer; }-->
+<!--        .search-box { display: flex; align-items: center; padding: 5px 10px; width: 220px; }-->
+<!--        .search-box input { border: none; outline: none; margin-left: 5px; width: 100%; color: #666; background: transparent; }-->
+
+<!--        .email-list-wrapper { flex: 1; overflow-y: auto; padding: 0; }-->
+<!--        table { width: 100%; border-collapse: collapse; table-layout: fixed; }-->
+
+<!--        th { text-align: left; padding: 15px 30px; color: #888; font-size: 13px; font-weight: 500; position: sticky; top: 0; background: var(&#45;&#45;table-header-bg); z-index: 10; }-->
+<!--        th.sortable { cursor: pointer; transition: 0.2s; user-select: none; }-->
+<!--        th.sortable:hover { background: rgba(0,0,0,0.05); color: #0078d4; }-->
+
+<!--        td { padding: 15px 30px; border-bottom: 1px solid rgba(0,0,0,0.03); font-size: 14px; color: var(&#45;&#45;text-main); vertical-align: middle; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }-->
+<!--        tr:hover { background: var(&#45;&#45;hover-bg); cursor: pointer; }-->
+<!--        .sender-avatar { width: 35px; height: 35px; background: #e0e0e0; border-radius: 50%; display: inline-flex; justify-content: center; align-items: center; margin-right: 10px; font-size: 12px; color: #666; flex-shrink: 0; }-->
+<!--        .date-col { color: #999; font-size: 13px; text-align: right; width: 150px;}-->
+<!--        .sender-col { width: 30%; font-weight: 600; }-->
+
+<!--        .pagination-bar { background: var(&#45;&#45;pag-bg); border-top: 1px solid var(&#45;&#45;pag-border); color: var(&#45;&#45;pag-text); padding: 10px 20px; display: flex; justify-content: flex-end; align-items: center; font-size: 13px; }-->
+<!--        .pagination-bar a { text-decoration: none; color: #0078d4; margin: 0 5px; cursor: pointer; }-->
+<!--        .pagination-bar a:hover { text-decoration: underline; }-->
+<!--        .pagination-bar a.disabled { color: var(&#45;&#45;text-sub); cursor: default; text-decoration: none; }-->
+<!--        .page-input { width: 30px; height: 22px; margin: 0 5px; background: var(&#45;&#45;input-bg); border: 1px solid var(&#45;&#45;btn-border); color: var(&#45;&#45;text-main); text-align: center; font-size: 12px; }-->
+<!--        .btn-go { background: var(&#45;&#45;btn-bg); border: 1px solid var(&#45;&#45;btn-border); color: var(&#45;&#45;text-main); border-radius: 3px; padding: 2px 8px; font-size: 12px; cursor: pointer; }-->
+
+<!--        /* 弹窗通用样式 */-->
+<!--        .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; justify-content: center; align-items: center; backdrop-filter: blur(5px); }-->
+<!--        .modal-card { background: var(&#45;&#45;modal-bg); border-radius: 12px; display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 20px 50px rgba(0,0,0,0.3); border: 1px solid var(&#45;&#45;border-color); color: var(&#45;&#45;text-main); width: 60%; max-height: 80vh; }-->
+<!--        .modal-header { padding: 20px; border-bottom: 1px solid rgba(0,0,0,0.05); display: flex; justify-content: space-between; align-items: center; background: rgba(0,0,0,0.02); }-->
+<!--        .modal-close { border: none; background: none; font-size: 24px; cursor: pointer; color: #999; }-->
+
+<!--        /* === 增强功能的新样式 === */-->
+<!--        /* 侧边栏添加按钮 */-->
+<!--        .sidebar-action-btn { cursor: pointer; color: #0078d4; font-size: 14px; margin-right: 10px;}-->
+<!--        .sidebar-action-btn:hover { color: #005a9e; transform: scale(1.1); transition: 0.2s;}-->
+
+<!--        /* 文件夹删除按钮 */-->
+<!--        .folder-del-icon { margin-left: auto; color: #ccc; font-size: 12px; padding: 5px; cursor: pointer; display: none; }-->
+<!--        .menu-item:hover .folder-del-icon { display: block; }-->
+<!--        .folder-del-icon:hover { color: #ff4d4f; }-->
+
+<!--        /* 移动按钮 */-->
+<!--        .btn-move { color: #f39c12; margin-right: 8px; font-size: 14px; }-->
+<!--        .btn-move:hover { color: #d35400; transform: scale(1.1); transition: 0.2s; }-->
+
+<!--        .btn-action { margin-right: 5px; text-decoration: none; }-->
+
+<!--        /* 在你的全局 CSS 中添加 */-->
+
+<!--        /* 设置滚动条整体宽度 */-->
+<!--        ::-webkit-scrollbar {-->
+<!--            width: 12px; /* 设置一个固定宽度，强制占据布局空间 */-->
+<!--            background-color: #f1f1f1; /* 轨道颜色 */-->
+<!--        }-->
+
+<!--        /* 滚动条滑块样式 */-->
+<!--        ::-webkit-scrollbar-thumb {-->
+<!--            background-color: #c1c1c1;-->
+<!--            border-radius: 6px;-->
+<!--            border: 3px solid #f1f1f1; /* 增加一点边距让它更好看 */-->
+<!--        }-->
+
+<!--        /* 滚动条轨道样式 */-->
+<!--        ::-webkit-scrollbar-track {-->
+<!--            background-color: transparent;-->
+<!--        }-->
+<!--    </style>-->
+<!--</head>-->
+<!--<body>-->
+
+<!--<div class="glass-container">-->
+<!--    <div class="sidebar">-->
+<!--        <div class="user-profile-area">-->
+<!--            <div class="app-user-name">-->
+<!--                <img th:if="${session.appUser.avatar != null}" th:src="${session.appUser.avatar}" style="width:30px; height:30px; margin-right:5px; border-radius:50%; object-fit:cover;">-->
+<!--                <i th:if="${session.appUser.avatar == null}" class="fas fa-user-astronaut" style="color: #6c5ce7; margin-right:5px;"></i>-->
+<!--                <span th:text="${session.appUser.nickname}">主账号昵称</span>-->
+<!--            </div>-->
+<!--            <div style="font-size: 12px; color: #999;">-->
+<!--                <span th:text="${session.appUser.username}">admin</span>-->
+<!--                <a href="/logout" style="color: #ff4d4f; margin-left: 10px; text-decoration: none;">[退出]</a>-->
+<!--            </div>-->
+<!--        </div>-->
+
+<!--        <div class="account-list-title">切换邮箱账号</div>-->
+<!--        <a th:each="acc : ${myAccounts}" th:href="@{/account/switch(id=${acc.id})}" class="account-switcher-item" th:classappend="${acc.id == currentEmailId} ? 'active'">-->
+<!--            <div class="acc-icon">-->
+<!--                <i th:if="${acc.type == 'qq'}" class="fab fa-qq"></i>-->
+<!--                <i th:if="${acc.type == '163'}" class="fas fa-envelope"></i>-->
+<!--                <i th:if="${acc.type == 'hust'}" class="fas fa-university"></i>-->
+<!--            </div>-->
+<!--            <div style="display: flex; flex-direction: column; overflow: hidden;">-->
+<!--                <span th:text="${acc.email}" style="font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">user@qq.com</span>-->
+<!--                <span style="font-size: 11px; opacity: 0.7;" th:switch="${acc.type}">-->
+<!--                    <span th:case="'qq'">QQ邮箱</span>-->
+<!--                    <span th:case="'163'">网易邮箱</span>-->
+<!--                    <span th:case="'hust'">华中大邮箱</span>-->
+<!--                    <span th:case="*">其他邮箱</span>-->
+<!--                </span>-->
+<!--            </div>-->
+<!--            <i th:if="${acc.id == currentEmailId}" class="fas fa-check" style="margin-left: auto; font-size: 12px;"></i>-->
+<!--        </a>-->
+<!--        <a href="/settings" class="add-acc-btn"><i class="fas fa-plus-circle"></i> 绑定新邮箱</a>-->
+
+<!--        <hr style="border: 0; border-bottom: 1px dashed #ddd; margin: 15px 0; width: 100%;">-->
+
+<!--        <div class="menu-title" th:if="${currentEmailId != null}">当前邮箱文件夹</div>-->
+
+<!--        <a href="/inbox" class="menu-item" th:if="${currentEmailId != null}" th:classappend="${currentFolder == null || currentFolder == '收件箱'} ? 'active'"><i class="fas fa-inbox"></i> 收件箱</a>-->
+<!--        <a href="/sent" class="menu-item" th:if="${currentEmailId != null}" th:classappend="${currentFolder == '已发送'} ? 'active'"><i class="fas fa-paper-plane"></i> 已发送</a>-->
+<!--        <a href="/drafts" class="menu-item" th:if="${currentEmailId != null}" th:classappend="${currentFolder == '草稿箱'} ? 'active'"><i class="fas fa-file-alt"></i> 草稿箱</a>-->
+<!--        <a href="/trash" class="menu-item" th:if="${currentEmailId != null}" th:classappend="${currentFolder == '已删除'} ? 'active'"><i class="fas fa-trash-alt"></i> 垃圾箱</a>-->
+
+<!--        <div th:if="${currentEmailId != null}">-->
+<!--            <div class="menu-title" style="margin-top: 10px;">-->
+<!--                <span>我的文件夹</span>-->
+<!--                <i class="fas fa-folder-plus sidebar-action-btn" onclick="openCreateFolderModal()" title="新建文件夹"></i>-->
+<!--            </div>-->
+
+<!--            <div th:if="${customFolders != null}">-->
+<!--                <div th:each="folder : ${customFolders}">-->
+<!--                    <a th:href="@{/inbox(folder=${folder})}"-->
+<!--                       class="menu-item"-->
+<!--                       th:classappend="${currentFolder == folder} ? 'active'"-->
+<!--                       style="justify-content: space-between;">-->
+
+<!--                        <div style="display: flex; align-items: center; overflow: hidden;">-->
+<!--                            <i class="fas fa-folder" style="color: #ffcc00; flex-shrink: 0;"></i>-->
+<!--                            <span th:text="${folder}" style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">Folder</span>-->
+<!--                        </div>-->
+
+<!--                        <i class="fas fa-trash-alt folder-del-icon"-->
+<!--                           th:data-folder="${folder}"-->
+<!--                           onclick="deleteFolder(event, this)"-->
+<!--                           title="删除此文件夹"></i>-->
+<!--                    </a>-->
+<!--                </div>-->
+<!--            </div>-->
+<!--        </div>-->
+
+<!--        <div class="menu-title">管理</div>-->
+<!--        <a href="/contacts" class="menu-item"><i class="fas fa-address-book"></i> 通讯录</a>-->
+<!--        <a href="/settings" class="menu-item"><i class="fas fa-cog"></i> 设置</a>-->
+<!--    </div>-->
+
+<!--    <div class="main-content">-->
+<!--        <div class="toolbar">-->
+<!--            <div class="page-title">-->
+<!--                <i class="fas fa-envelope-open-text" style="color: #0078d4;"></i>-->
+<!--                <span th:text="${currentFolder != null ? currentFolder : '收件箱'}">收件箱</span>-->
+<!--            </div>-->
+
+<!--            <div class="search-group">-->
+<!--                <select id="searchType" class="search-select">-->
+<!--                    <option value="all" th:selected="${searchType == 'all'}">全部</option>-->
+<!--                    <option value="sender" th:selected="${searchType == 'sender'}">发件人</option>-->
+<!--                    <option value="title" th:selected="${searchType == 'title'}">主题</option>-->
+<!--                    <option value="date" th:selected="${searchType == 'date'}">日期</option>-->
+<!--                </select>-->
+<!--                <div class="search-box">-->
+<!--                    <i class="fas fa-search" style="color: #ccc; cursor: pointer;" onclick="doSearch()"></i>-->
+<!--                    <input type="text" id="searchInput" th:value="${keyword}" placeholder="搜索邮件..."-->
+<!--                           onkeydown="if(event.keyCode==13) doSearch()">-->
+<!--                </div>-->
+<!--            </div>-->
+
+<!--            <div style="display: flex; gap: 10px;">-->
+<!--                <a href="/inbox" class="menu-item" style="background: white; border:1px solid #eee;"><i class="fas fa-sync-alt"></i></a>-->
+<!--                <a href="/sendPage" class="menu-item active" style="background: #0078d4;"><i class="fas fa-pen"></i> 写信</a>-->
+<!--            </div>-->
+<!--        </div>-->
+
+<!--        <div class="email-list-wrapper">-->
+<!--            <table>-->
+<!--                <thead>-->
+<!--                <tr>-->
+<!--                    <th class="sender-col sortable"-->
+<!--                        th:classappend="${sort == 'sender'} ? 'active-sort'"-->
+<!--                        th:onclick="|location.href='@{${baseUrl}(page=1, sort='sender', order=${sort == 'sender' && order == 'asc' ? 'desc' : 'asc'}, keyword=${keyword}, searchType=${searchType}, folder=${currentFolder})}'|">-->
+<!--                        <span th:text="${currentFolder == '已发送'} ? '收件人' : '发件人'">发件人/收件人</span>-->
+<!--                        <i class="fas" th:classappend="${sort == 'sender'} ? (order == 'asc' ? 'fa-sort-up' : 'fa-sort-down') : 'fa-sort'"></i>-->
+<!--                    </th>-->
+
+<!--                    <th width="45%" class="sortable"-->
+<!--                        th:classappend="${sort == 'title'} ? 'active-sort'"-->
+<!--                        th:onclick="|location.href='@{${baseUrl}(page=1, sort='title', order=${sort == 'title' && order == 'asc' ? 'desc' : 'asc'}, keyword=${keyword}, searchType=${searchType}, folder=${currentFolder})}'|">-->
+<!--                        主题-->
+<!--                        <i class="fas" th:classappend="${sort == 'title'} ? (order == 'asc' ? 'fa-sort-up' : 'fa-sort-down') : 'fa-sort'"></i>-->
+<!--                    </th>-->
+
+<!--                    <th width="15%" style="text-align: right;" class="sortable"-->
+<!--                        th:classappend="${sort == 'date'} ? 'active-sort'"-->
+<!--                        th:onclick="|location.href='@{${baseUrl}(page=1, sort='date', order=${sort == 'date' && order == 'asc' ? 'desc' : 'asc'}, keyword=${keyword}, searchType=${searchType}, folder=${currentFolder})}'|">-->
+<!--                        时间-->
+<!--                        <i class="fas" th:classappend="${sort == 'date'} ? (order == 'asc' ? 'fa-sort-up' : 'fa-sort-down') : 'fa-sort'"></i>-->
+<!--                    </th>-->
+
+<!--                    <th width="15%" style="text-align: center;">操作</th>-->
+<!--                </tr>-->
+<!--                </thead>-->
+<!--                <tbody id="emailTableBody">-->
+<!--                <tr th:each="email : ${emails}"-->
+<!--                    th:data-uid="${email.id}"-->
+<!--                    th:data-folder="${currentFolder}"-->
+<!--                    onclick="showEmailDetail(this)">-->
+
+<!--                    <td class="sender-col">-->
+<!--                        <div style="display: flex; align-items: center;">-->
+<!--                            <span class="sender-avatar" th:text="${#strings.substring(email.sender, 0, 1)}">A</span>-->
+<!--                            <div style="display: flex; flex-direction: column; justify-content: center;">-->
+<!--                                <span th:text="${email.sender}" style="line-height: 1.2;">张三</span>-->
+<!--                                <span th:text="${email.address}" style="font-size: 12px; color: #999; font-weight: normal; line-height: 1.2;">zhangsan@qq.com</span>-->
+<!--                            </div>-->
+<!--                        </div>-->
+<!--                    </td>-->
+
+<!--                    <td th:text="${email.title}" style="font-weight: 500;">主题</td>-->
+<!--                    <td class="date-col" th:text="${email.sendDate}">时间</td>-->
+
+<!--                    <td style="text-align: center; white-space: nowrap;" onclick="event.stopPropagation()">-->
+
+<!--                        <a th:if="${currentFolder != '已删除'}"-->
+<!--                           th:href="@{/sendPage(replyUid=${email.id}, folder=${(currentFolder == '收件箱' || currentFolder == null) ? 'INBOX' : currentFolder})}"-->
+<!--                           class="btn-action" title="回复" style="color: #0078d4;">-->
+<!--                            <i class="fas fa-reply"></i>-->
+<!--                        </a>-->
+
+<!--                        <a href="javascript:void(0)"-->
+<!--                           th:data-uid="${email.id}"-->
+<!--                           onclick="openForwardModal(this.getAttribute('data-uid'))"-->
+<!--                           class="btn-action" title="转发" style="color: #28a745;">-->
+<!--                            <i class="fas fa-share"></i>-->
+<!--                        </a>-->
+
+<!--                        <a href="javascript:void(0)"-->
+<!--                           th:data-uid="${email.id}"-->
+<!--                           onclick="openMoveModal(this.getAttribute('data-uid'))"-->
+<!--                           class="btn-action btn-move" title="移动到文件夹">-->
+<!--                            <i class="fas fa-folder-open"></i>-->
+<!--                        </a>-->
+
+<!--                        <a th:if="${currentFolder == '已发送'}"-->
+<!--                           th:href="@{/deleteFromSent(id=${email.id})}"-->
+<!--                           class="btn-action btn-trash" title="移入垃圾箱" onclick="return confirm('确定要删除吗？')">-->
+<!--                            <i class="fas fa-trash"></i>-->
+<!--                        </a>-->
+
+<!--                        <a th:if="${currentFolder == '已删除'}"-->
+<!--                           th:href="@{/deleteForever(id=${email.id})}"-->
+<!--                           class="btn-action btn-trash" title="彻底删除" style="color: #ff4d4f;" onclick="return confirm('确定彻底删除吗？此操作无法恢复！')">-->
+<!--                            <i class="fas fa-times-circle"></i>-->
+<!--                        </a>-->
+
+<!--                        <a th:if="${currentFolder != '已发送' && currentFolder != '已删除'}"-->
+<!--                           th:href="@{/deleteFromInbox(id=${email.id})}"-->
+<!--                           class="btn-action btn-trash" title="移入垃圾箱" onclick="return confirm('确定要删除吗？')">-->
+<!--                            <i class="fas fa-trash"></i>-->
+<!--                        </a>-->
+<!--                    </td>-->
+<!--                </tr>-->
+<!--                <tr th:if="${emails.size() == 0}">-->
+<!--                    <td colspan="4" style="text-align: center; padding: 50px; color: #999;">-->
+<!--                        <i class="fas fa-coffee" style="font-size: 30px; margin-bottom: 10px;"></i><br>暂无邮件-->
+<!--                        <div th:if="${keyword != null}" style="font-size: 12px; margin-top: 5px;">-->
+<!--                            (搜索关键词: <span th:text="${keyword}"></span>)-->
+<!--                        </div>-->
+<!--                    </td>-->
+<!--                </tr>-->
+<!--                </tbody>-->
+<!--            </table>-->
+
+<!--            <div class="pagination-bar" th:if="${totalPages > 0}">-->
+<!--                <span style="margin-right: 15px;">-->
+<!--                    <span th:text="${currentPage}">1</span>/<span th:text="${totalPages}">1</span> 页-->
+<!--                </span>-->
+
+<!--                <a th:if="${currentPage > 1}"-->
+<!--                   th:href="@{${baseUrl}(page=${currentPage - 1}, sort=${sort}, order=${order}, keyword=${keyword}, searchType=${searchType}, folder=${currentFolder})}">上一页</a>-->
+<!--                <span th:if="${currentPage <= 1}" class="disabled">上一页</span>-->
+
+<!--                <a th:if="${currentPage < totalPages}"-->
+<!--                   th:href="@{${baseUrl}(page=${currentPage + 1}, sort=${sort}, order=${order}, keyword=${keyword}, searchType=${searchType}, folder=${currentFolder})}">下一页</a>-->
+<!--                <span th:if="${currentPage >= totalPages}" class="disabled">下一页</span>-->
+
+<!--                <span style="margin-left: 15px;">-->
+<!--                    跳转到第 <input type="text" id="jumpInput" class="page-input" th:value="${currentPage}"> 页-->
+<!--                    <button type="button" class="btn-go" onclick="jumpToPage()">确定</button>-->
+<!--                </span>-->
+
+<!--                <input type="hidden" id="maxPage" th:value="${totalPages}">-->
+<!--                <input type="hidden" id="currentBaseUrl" th:value="${baseUrl}">-->
+<!--                <input type="hidden" id="currentSort" th:value="${sort}">-->
+<!--                <input type="hidden" id="currentOrder" th:value="${order}">-->
+<!--                <input type="hidden" id="currentKeyword" th:value="${keyword}">-->
+<!--                <input type="hidden" id="currentSearchType" th:value="${searchType}">-->
+<!--                <input type="hidden" id="currentFolderVal" th:value="${currentFolder}">-->
+<!--            </div>-->
+<!--        </div>-->
+<!--    </div>-->
+<!--</div>-->
+
+<!--<div id="emailModal" class="modal-overlay">-->
+<!--    <div class="modal-card">-->
+<!--        <div class="modal-header">-->
+<!--            <span style="font-size: 18px; font-weight: bold;">邮件详情</span>-->
+<!--            <button class="modal-close" onclick="closeModal()">×</button>-->
+<!--        </div>-->
+<!--        <div id="modalContent" style="padding: 20px; overflow-y: auto; flex: 1;"></div>-->
+<!--    </div>-->
+<!--</div>-->
+
+<!--<div id="forwardModal" class="modal-overlay">-->
+<!--    <div class="modal-card" style="width: 500px; height: auto;">-->
+<!--        <div class="modal-header">-->
+<!--            <span style="font-size: 18px; font-weight: bold;">转发邮件</span>-->
+<!--            <button class="modal-close" onclick="closeForwardModal()">×</button>-->
+<!--        </div>-->
+<!--        <div style="padding: 20px;">-->
+<!--            <input type="hidden" id="fwdUid">-->
+<!--            <div style="margin-bottom: 15px;">-->
+<!--                <label style="display:block; color:#666; margin-bottom:5px; font-size:13px;">收件人：</label>-->
+<!--                <div style="display: flex; gap: 8px;">-->
+<!--                    <input type="text" id="fwdTo" placeholder="请输入收件人邮箱"-->
+<!--                           style="flex: 1; padding: 10px; border: 1px solid #ddd; border-radius: 5px; box-sizing: border-box;">-->
+<!--                    <button type="button" onclick="openFwdContactModal()"-->
+<!--                            style="padding: 0 12px; background: #eee; border: 1px solid #ccc; border-radius: 5px; cursor: pointer; color: #333;">-->
+<!--                        <i class="fas fa-address-book"></i>-->
+<!--                    </button>-->
+<!--                </div>-->
+<!--            </div>-->
+<!--            <div style="margin-bottom: 20px;">-->
+<!--                <label style="display:block; color:#666; margin-bottom:5px; font-size:13px;">附言 (可选)：</label>-->
+<!--                <textarea id="fwdComment" placeholder="请输入转发附言..."-->
+<!--                          style="width: 100%; height: 100px; padding: 10px; border: 1px solid #ddd; border-radius: 5px; box-sizing: border-box; resize: none;"></textarea>-->
+<!--            </div>-->
+<!--            <div style="text-align: right;">-->
+<!--                <button onclick="closeForwardModal()" style="padding: 8px 15px; border: 1px solid #ddd; background: white; border-radius: 5px; cursor: pointer; margin-right: 10px;">取消</button>-->
+<!--                <button onclick="submitForward()" id="btnSendFwd" style="padding: 8px 20px; border: none; background: #0078d4; color: white; border-radius: 5px; cursor: pointer;">发送</button>-->
+<!--            </div>-->
+<!--        </div>-->
+<!--    </div>-->
+<!--</div>-->
+
+<!--<div id="fwdContactModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 3000; justify-content: center; align-items: center;">-->
+<!--    <div style="background: white; width: 350px; max-height: 70vh; border-radius: 8px; padding: 15px; display: flex; flex-direction: column; box-shadow: 0 5px 20px rgba(0,0,0,0.3);">-->
+<!--        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; border-bottom: 1px solid #eee; padding-bottom: 5px;">-->
+<!--            <strong style="color: #333;">选择联系人</strong>-->
+<!--            <button onclick="document.getElementById('fwdContactModal').style.display='none'" style="border:none; background:none; font-size:18px; cursor:pointer;">×</button>-->
+<!--        </div>-->
+<!--        <div style="overflow-y: auto; flex: 1;">-->
+<!--            <div th:each="c : ${contacts}" style="padding: 8px 0; border-bottom: 1px dashed #eee; display: flex; align-items: center;">-->
+<!--                <input type="checkbox" name="fwdSelectedContact" th:value="${c.email}" style="margin-right: 8px; cursor: pointer;">-->
+<!--                <span th:text="${c.name} + ' <' + ${c.email} + '>'" style="font-size: 13px; color: #333;"></span>-->
+<!--            </div>-->
+<!--        </div>-->
+<!--        <div style="margin-top: 10px; text-align: right;">-->
+<!--            <button onclick="confirmFwdContacts()" style="padding: 6px 15px; background: #0078d4; color: white; border: none; border-radius: 4px; cursor: pointer;">确定</button>-->
+<!--        </div>-->
+<!--    </div>-->
+<!--</div>-->
+
+<!--<div id="createFolderModal" class="modal-overlay">-->
+<!--    <div class="modal-card" style="width: 350px; height: auto;">-->
+<!--        <div class="modal-header">-->
+<!--            <span style="font-weight: bold;">新建文件夹</span>-->
+<!--            <button class="modal-close" onclick="document.getElementById('createFolderModal').style.display='none'">×</button>-->
+<!--        </div>-->
+<!--        <div style="padding: 20px;">-->
+<!--            <input type="text" id="newFolderName" placeholder="请输入文件夹名称" class="form-input" style="width: 100%; padding: 10px; margin-bottom: 15px; border: 1px solid #ddd; border-radius: 5px; box-sizing: border-box;">-->
+<!--            <div style="text-align: right;">-->
+<!--                <button onclick="submitCreateFolder()" style="padding: 8px 15px; background: #0078d4; color: white; border: none; border-radius: 4px; cursor: pointer;">创建</button>-->
+<!--            </div>-->
+<!--        </div>-->
+<!--    </div>-->
+<!--</div>-->
+
+<!--<div id="moveMailModal" class="modal-overlay">-->
+<!--    <div class="modal-card" style="width: 350px; height: auto;">-->
+<!--        <div class="modal-header">-->
+<!--            <span style="font-weight: bold;">移动邮件到...</span>-->
+<!--            <button class="modal-close" onclick="document.getElementById('moveMailModal').style.display='none'">×</button>-->
+<!--        </div>-->
+<!--        <div style="padding: 20px;">-->
+<!--            <input type="hidden" id="moveMailUid">-->
+<!--            <select id="targetFolderSelect" style="width: 100%; padding: 10px; margin-bottom: 15px; border: 1px solid #ddd; border-radius: 5px;">-->
+<!--                <option value="INBOX">收件箱</option>-->
+<!--                <option value="Drafts">草稿箱</option>-->
+<!--                <option value="Trash">垃圾箱</option>-->
+<!--                <option th:if="${customFolders != null}" th:each="f : ${customFolders}" th:value="${f}" th:text="${f}"></option>-->
+<!--            </select>-->
+<!--            <div style="text-align: right;">-->
+<!--                <button onclick="submitMoveMail()" style="padding: 8px 15px; background: #f39c12; color: white; border: none; border-radius: 4px; cursor: pointer;">确定移动</button>-->
+<!--            </div>-->
+<!--        </div>-->
+<!--    </div>-->
+<!--</div>-->
+
+<!--<script th:inline="javascript">-->
+<!--/*<![CDATA[*/-->
+<!--    window.onload = function() {-->
+<!--        const savedTheme = localStorage.getItem('theme');-->
+<!--        if (savedTheme === 'dark') document.body.classList.add('dark-mode');-->
+<!--        const savedBg = localStorage.getItem('customBg');-->
+<!--        if (savedBg) document.body.style.setProperty('&#45;&#45;bg-image', `url(${savedBg})`);-->
+<!--    }-->
+
+<!--    // ================== 原有功能：搜索与分页 ==================-->
+<!--    function doSearch() {-->
+<!--        var input = document.getElementById("searchInput");-->
+<!--        var keyword = input.value;-->
+<!--        var searchType = document.getElementById("searchType").value;-->
+<!--        var baseUrl = document.getElementById("currentBaseUrl").value || "/inbox";-->
+<!--        var folderInput = document.getElementById("currentFolderVal");-->
+<!--        var folder = folderInput ? folderInput.value : "";-->
+
+<!--        var url = baseUrl + "?page=1&keyword=" + encodeURIComponent(keyword) + "&searchType=" + searchType;-->
+<!--        if(folder && folder !== '收件箱' && folder !== '已发送' && folder !== '已删除') {-->
+<!--            url += "&folder=" + encodeURIComponent(folder);-->
+<!--        }-->
+<!--        window.location.href = url;-->
+<!--    }-->
+
+<!--    function jumpToPage() {-->
+<!--        var p = parseInt(document.getElementById("jumpInput").value);-->
+<!--        var max = parseInt(document.getElementById("maxPage").value);-->
+<!--        var baseUrl = document.getElementById("currentBaseUrl").value || "/inbox";-->
+<!--        var sort = document.getElementById("currentSort").value || 'date';-->
+<!--        var order = document.getElementById("currentOrder").value || 'desc';-->
+<!--        var keyword = document.getElementById("currentKeyword").value || '';-->
+<!--        var searchType = document.getElementById("currentSearchType").value || 'all';-->
+<!--        var folderInput = document.getElementById("currentFolderVal");-->
+<!--        var folder = folderInput ? folderInput.value : "";-->
+
+<!--        if (isNaN(p) || p < 1) { alert("无效页码"); return; }-->
+<!--        if (p > max) { alert("超过最大页数"); return; }-->
+
+<!--        var url = baseUrl + "?page=" + p + "&sort=" + sort + "&order=" + order;-->
+<!--        if(keyword) {-->
+<!--            url += "&keyword=" + encodeURIComponent(keyword) + "&searchType=" + searchType;-->
+<!--        }-->
+<!--        if(folder && folder !== '收件箱' && folder !== '已发送' && folder !== '已删除') {-->
+<!--            url += "&folder=" + encodeURIComponent(folder);-->
+<!--        }-->
+<!--        window.location.href = url;-->
+<!--    }-->
+
+<!--    // ================== 原有功能：邮件详情与转发 ==================-->
+<!--    function closeModal() { document.getElementById('emailModal').style.display = 'none'; }-->
+<!--    function closeForwardModal() { document.getElementById('forwardModal').style.display = 'none'; }-->
+
+<!--    function openForwardModal(uid) {-->
+<!--        document.getElementById('fwdUid').value = uid;-->
+<!--        document.getElementById('fwdTo').value = '';-->
+<!--        document.getElementById('fwdComment').value = '';-->
+<!--        document.getElementById('forwardModal').style.display = 'flex';-->
+<!--    }-->
+
+<!--    function openFwdContactModal() {-->
+<!--        var checkboxes = document.querySelectorAll('input[name="fwdSelectedContact"]');-->
+<!--        if(checkboxes) checkboxes.forEach(el => el.checked = false);-->
+<!--        document.getElementById('fwdContactModal').style.display = 'flex';-->
+<!--    }-->
+
+<!--    function confirmFwdContacts() {-->
+<!--        var selected = [];-->
+<!--        var checkboxes = document.querySelectorAll('input[name="fwdSelectedContact"]:checked');-->
+<!--        if(checkboxes) {-->
+<!--            checkboxes.forEach(el => selected.push(el.value));-->
+<!--        }-->
+
+<!--        if (selected.length > 0) {-->
+<!--            var input = document.getElementById('fwdTo');-->
+<!--            var currentVal = input.value.trim();-->
+<!--            if (currentVal && !currentVal.endsWith(',') && !currentVal.endsWith(';')) {-->
+<!--                currentVal += ", ";-->
+<!--            } else if (currentVal === "") {-->
+<!--                currentVal = "";-->
+<!--            }-->
+<!--            input.value = currentVal + selected.join(", ");-->
+<!--        }-->
+<!--        document.getElementById('fwdContactModal').style.display = 'none';-->
+<!--    }-->
+
+<!--    function submitForward() {-->
+<!--        var uid = document.getElementById('fwdUid').value;-->
+<!--        var to = document.getElementById('fwdTo').value;-->
+<!--        var comment = document.getElementById('fwdComment').value;-->
+<!--        var folderInput = document.getElementById("currentFolderVal");-->
+<!--        var folder = folderInput ? folderInput.value : "收件箱";-->
+<!--        if(!folder) folder = "收件箱";-->
+
+<!--        if (!to) { alert("请输入收件人邮箱！"); return; }-->
+
+<!--        var btn = document.getElementById('btnSendFwd');-->
+<!--        var originalText = btn.innerText;-->
+<!--        btn.disabled = true;-->
+<!--        btn.innerText = "发送中...";-->
+
+<!--        var formData = new FormData();-->
+<!--        formData.append("folder", folder);-->
+<!--        formData.append("uid", uid);-->
+<!--        formData.append("to", to);-->
+<!--        formData.append("comment", comment);-->
+
+<!--        fetch("/mail/forward", { method: "POST", body: formData })-->
+<!--            .then(response => response.json())-->
+<!--            .then(data => {-->
+<!--                btn.disabled = false;-->
+<!--                btn.innerText = originalText;-->
+<!--                if (data.success) {-->
+<!--                    alert("转发成功！");-->
+<!--                    closeForwardModal();-->
+<!--                } else {-->
+<!--                    alert("转发失败：" + (data.error || "未知错误"));-->
+<!--                }-->
+<!--            })-->
+<!--            .catch(err => {-->
+<!--                btn.disabled = false;-->
+<!--                btn.innerText = originalText;-->
+<!--                console.error(err);-->
+<!--                alert("网络错误，请稍后重试");-->
+<!--            });-->
+<!--    }-->
+
+<!--    function showEmailDetail(element) {-->
+<!--        document.getElementById('emailModal').style.display = 'flex';-->
+<!--        var contentDiv = document.getElementById('modalContent');-->
+<!--        contentDiv.innerHTML = '<div style="text-align:center; padding:50px; color:#666;"><i class="fas fa-spinner fa-spin" style="font-size: 24px;"></i><br><br>正在加载邮件内容...</div>';-->
+
+<!--        var uid = element.getAttribute("data-uid");-->
+<!--        var folder = element.getAttribute("data-folder");-->
+<!--        if(!folder) folder = "收件箱";-->
+
+<!--        fetch(`/email/detail?folder=${encodeURIComponent(folder)}&uid=${uid}`)-->
+<!--            .then(response => response.json())-->
+<!--            .then(data => {-->
+<!--                if(data.success) {-->
+<!--                    contentDiv.innerHTML = data.content ? data.content : "<span style='color:#999'>（无正文内容）</span>";-->
+<!--                    if(data.files && data.files.length > 0) {-->
+<!--                        var filesHtml = "<div style='margin-top:20px; border-top:1px solid #eee; padding-top:15px;'>";-->
+<!--                        filesHtml += "<b style='font-size:14px; color:#333;'><i class='fas fa-paperclip'></i> 附件 (" + data.files.length + ") :</b><br>";-->
+<!--                        data.files.forEach(f => {-->
+<!--                            var ext = f.split('.').pop().toLowerCase();-->
+<!--                            var downloadUrl = `/download?filename=${encodeURIComponent(f)}`;-->
+<!--                            var previewUrl = `/preview?filename=${encodeURIComponent(f)}`;-->
+
+<!--                            filesHtml += `<div style="margin-top:10px; padding:10px; background:#f9f9f9; border-radius:5px; border:1px solid #eee;">`;-->
+<!--                            filesHtml += `<div style="display:flex; align-items:center; justify-content:space-between;">-->
+<!--                                            <span style="font-weight:500; color:#333;">${f}</span>-->
+<!--                                            <div>-->
+<!--                                                <a href="${downloadUrl}" style="color:#0078d4; text-decoration:none; font-size:13px; margin-left:10px;"><i class="fas fa-download"></i> 下载</a>`;-->
+<!--                            if (['jpg', 'jpeg', 'png', 'gif', 'webp', 'pdf', 'txt'].includes(ext)) {-->
+<!--                                filesHtml += `<a href="${previewUrl}" target="_blank" style="color:#28a745; text-decoration:none; font-size:13px; margin-left:15px;"><i class="fas fa-eye"></i> 新窗口预览</a>`;-->
+<!--                            }-->
+<!--                            filesHtml += `</div></div>`;-->
+<!--                            if (['jpg', 'jpeg', 'png', 'gif', 'webp', 'bmp'].includes(ext)) {-->
+<!--                                filesHtml += `<div style="margin-top:10px; text-align:center;"><img src="${previewUrl}" style="max-width:100%; max-height:300px; border-radius:4px;" alt="图片预览"></div>`;-->
+<!--                            }-->
+<!--                            filesHtml += `</div>`;-->
+<!--                        });-->
+<!--                        filesHtml += "</div>";-->
+<!--                        contentDiv.innerHTML += filesHtml;-->
+<!--                    }-->
+<!--                } else {-->
+<!--                    contentDiv.innerHTML = "<div style='text-align:center; padding:20px; color:red'>加载失败：" + (data.error || "未知错误") + "</div>";-->
+<!--                }-->
+<!--            })-->
+<!--            .catch(err => {-->
+<!--                console.error(err);-->
+<!--                contentDiv.innerHTML = "<div style='text-align:center; padding:20px; color:red'>网络请求错误</div>";-->
+<!--            });-->
+<!--    }-->
+
+<!--    // ================== 【新增】文件夹与移动管理功能 ==================-->
+
+<!--    // 1. 新建文件夹-->
+<!--    function openCreateFolderModal() {-->
+<!--        document.getElementById('newFolderName').value = '';-->
+<!--        document.getElementById('createFolderModal').style.display = 'flex';-->
+<!--    }-->
+
+<!--    function submitCreateFolder() {-->
+<!--        var name = document.getElementById('newFolderName').value.trim();-->
+<!--        if(!name) { alert("请输入名称"); return; }-->
+
+<!--        var formData = new FormData();-->
+<!--        formData.append("folderName", name);-->
+
+<!--        fetch("/folder/add", { method: "POST", body: formData })-->
+<!--            .then(res => res.json())-->
+<!--            .then(data => {-->
+<!--                if(data.success) {-->
+<!--                    alert("创建成功");-->
+<!--                    location.reload();-->
+<!--                } else {-->
+<!--                    alert("失败: " + data.error);-->
+<!--                }-->
+<!--            });-->
+<!--    }-->
+
+<!--    // 2. 删除文件夹 (注意：通过事件对象传递参数，而非 th:onclick 拼接字符串，防止报错)-->
+<!--    function deleteFolder(event, element) {-->
+<!--        event.preventDefault();-->
+<!--        event.stopPropagation();-->
+
+<!--        var folderName = element.getAttribute("data-folder");-->
+<!--        if(!confirm(`确定要删除文件夹 "${folderName}" 及其中的所有邮件吗？\n此操作不可恢复！`)) return;-->
+
+<!--        var formData = new FormData();-->
+<!--        formData.append("folderName", folderName);-->
+
+<!--        fetch("/folder/delete", { method: "POST", body: formData })-->
+<!--            .then(res => res.json())-->
+<!--            .then(data => {-->
+<!--                if(data.success) {-->
+<!--                    alert("删除成功");-->
+<!--                    location.href = "/inbox";-->
+<!--                } else {-->
+<!--                    alert("失败: " + data.error);-->
+<!--                }-->
+<!--            });-->
+<!--    }-->
+
+<!--    // 3. 移动邮件-->
+<!--    function openMoveModal(uid) {-->
+<!--        document.getElementById('moveMailUid').value = uid;-->
+<!--        document.getElementById('moveMailModal').style.display = 'flex';-->
+<!--    }-->
+
+<!--    function submitMoveMail() {-->
+<!--        var uid = document.getElementById('moveMailUid').value;-->
+<!--        var toFolder = document.getElementById('targetFolderSelect').value;-->
+<!--        var folderInput = document.getElementById("currentFolderVal");-->
+<!--        var currentFolder = folderInput ? folderInput.value : '收件箱';-->
+<!--        if(!currentFolder) currentFolder = '收件箱';-->
+
+<!--        if(currentFolder === toFolder) {-->
+<!--            alert("邮件已经在该文件夹中了");-->
+<!--            return;-->
+<!--        }-->
+
+<!--        var formData = new FormData();-->
+<!--        formData.append("uid", uid);-->
+<!--        formData.append("fromFolder", currentFolder);-->
+<!--        formData.append("toFolder", toFolder);-->
+
+<!--        fetch("/mail/move", { method: "POST", body: formData })-->
+<!--            .then(res => res.json())-->
+<!--            .then(data => {-->
+<!--                if(data.success) {-->
+<!--                    alert("移动成功");-->
+<!--                    location.reload();-->
+<!--                } else {-->
+<!--                    alert("移动失败: " + data.error);-->
+<!--                }-->
+<!--            });-->
+<!--    }-->
+<!--/*]]>*/-->
+<!--</script>-->
+<!--</body>-->
+<!--</html>-->
