@@ -531,7 +531,6 @@ public class HelloController {
                 activateEmailAccount(session, account);
             }
         });
-
         return "redirect:/inbox"; // 切换完直接跳回收件箱
     }
 }
