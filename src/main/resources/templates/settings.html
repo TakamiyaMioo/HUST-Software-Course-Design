@@ -5,7 +5,7 @@
     <title>设置中心</title>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" rel="stylesheet">
     <style>
-        /* ================== CSS 变量 (保持与 Inbox 一致) ================== */
+        /* ================== CSS 变量 ================== */
         :root {
             --bg-image: url('/images/bg.jpg');
             --glass-bg: rgba(255, 255, 255, 0.85);
@@ -52,6 +52,9 @@
         .user-profile-area { margin-bottom: 20px; border-bottom: 1px dashed #ccc; padding-bottom: 15px; }
         .app-user-name { font-weight: bold; font-size: 16px; color: var(--text-main); margin-bottom: 10px; display: flex; align-items: center; gap: 8px; }
         .account-list-title { font-size: 12px; color: #999; margin-bottom: 8px; font-weight: bold; }
+
+        /* 【修改】头像样式优化 */
+        .avatar-img { width: 24px; height: 24px; border-radius: 50%; object-fit: cover; }
 
         .account-switcher-item {
             display: flex; align-items: center; padding: 8px 12px;
@@ -116,8 +119,13 @@
         /* 添加表单样式 */
         .add-form { margin-top: 20px; padding-top: 20px; border-top: 1px dashed #ccc; }
         .form-input { width: 100%; padding: 10px; margin-bottom: 10px; border-radius: 5px; border: 1px solid #ddd; box-sizing: border-box; }
-        .btn-add { width: 100%; padding: 10px; background: #0078d4; color: white; border: none; border-radius: 5px; cursor: pointer; }
+        .btn-add { width: 100%; padding: 10px; background: #0078d4; color: white; border: none; border-radius: 5px; cursor: pointer; font-weight: bold;}
         .btn-add:hover { background: #005a9e; }
+
+        /* 提示消息样式 */
+        .alert-msg { padding: 12px; border-radius: 8px; margin-bottom: 20px; font-size: 14px; display: flex; align-items: center; gap: 10px; }
+        .alert-success { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .alert-error { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
 
         .fade-in { animation: fadeIn 0.3s ease; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
@@ -130,7 +138,9 @@
     <div class="sidebar">
         <div class="user-profile-area">
             <div class="app-user-name">
-                <i class="fas fa-user-astronaut" style="color: #6c5ce7;"></i>
+                <img th:if="${session.appUser.avatar != null}" th:src="${session.appUser.avatar}" class="avatar-img" style="width:30px; height:30px; margin-right:5px;">
+                <i th:if="${session.appUser.avatar == null}" class="fas fa-user-astronaut" style="color: #6c5ce7; margin-right:5px;"></i>
+                
                 <span th:text="${session.appUser.nickname}">主账号昵称</span>
             </div>
             <div style="font-size: 12px; color: #999;">
@@ -186,10 +196,18 @@
     <div class="main-content">
         <div class="settings-container fade-in">
 
+            <div th:if="${success}" class="alert-msg alert-success">
+                <i class="fas fa-check-circle"></i> <span th:text="${success}"></span>
+            </div>
+            <div th:if="${error}" class="alert-msg alert-error">
+                <i class="fas fa-exclamation-circle"></i> <span th:text="${error}"></span>
+            </div>
+
             <div id="settingsMain">
                 <div class="settings-header"><i class="fas fa-cog" style="color: #0078d4;"></i> 设置中心</div>
 
                 <div class="section-title">账号管理</div>
+                
                 <div class="setting-item" onclick="showSection('settingsAccount')">
                     <div style="display: flex; align-items: center;">
                         <div class="setting-icon" style="background: #00b894;"><i class="fas fa-at"></i></div>
@@ -201,11 +219,22 @@
                     <i class="fas fa-chevron-right" style="color:#ccc;"></i>
                 </div>
 
+                <div class="setting-item" onclick="showSection('settingsSecurity')">
+                    <div style="display: flex; align-items: center;">
+                        <div class="setting-icon" style="background: #ff7675;"><i class="fas fa-lock"></i></div>
+                        <div class="setting-text">
+                            <h4>账号安全</h4>
+                            <p>修改登录密码</p>
+                        </div>
+                    </div>
+                    <i class="fas fa-chevron-right" style="color:#ccc;"></i>
+                </div>
+
                 <div class="section-title">通用设置</div>
                 <div class="setting-item" onclick="showSection('settingsPersonalization')">
                     <div style="display: flex; align-items: center;">
                         <div class="setting-icon" style="background: #a29bfe;"><i class="fas fa-palette"></i></div>
-                        <div class="setting-text"><h4>个性化外观</h4><p>主题颜色、背景壁纸</p></div>
+                        <div class="setting-text"><h4>个性化外观</h4><p>主题颜色、背景壁纸、头像</p></div>
                     </div>
                     <i class="fas fa-chevron-right" style="color:#ccc;"></i>
                 </div>
@@ -246,6 +275,27 @@
                 </div>
             </div>
 
+            <div id="settingsSecurity" style="display:none;">
+                <div class="back-btn" onclick="goBack()"><i class="fas fa-arrow-left"></i> 返回上一级</div>
+                <div class="settings-header"><i class="fas fa-lock" style="color:#ff7675;"></i> 修改密码</div>
+
+                <form action="/settings/password" method="post" style="margin-top: 20px;">
+                    <div style="margin-bottom: 15px;">
+                        <label style="display:block; margin-bottom:5px; font-weight:500;">当前旧密码</label>
+                        <input type="password" name="oldPassword" class="form-input" required placeholder="请输入当前使用的密码">
+                    </div>
+                    <div style="margin-bottom: 15px;">
+                        <label style="display:block; margin-bottom:5px; font-weight:500;">新密码</label>
+                        <input type="password" name="newPassword" class="form-input" required placeholder="设置新密码">
+                    </div>
+                    <div style="margin-bottom: 20px;">
+                        <label style="display:block; margin-bottom:5px; font-weight:500;">确认新密码</label>
+                        <input type="password" name="confirmPassword" class="form-input" required placeholder="再次输入新密码">
+                    </div>
+                    <button type="submit" class="btn-add" style="background:#ff7675;">确认修改</button>
+                </form>
+            </div>
+
             <div id="settingsPersonalization" style="display:none;">
                 <div class="back-btn" onclick="goBack()"><i class="fas fa-arrow-left"></i> 返回上一级</div>
                 <div class="settings-header"><i class="fas fa-palette" style="color:#a29bfe;"></i> 个性化外观</div>
@@ -267,6 +317,17 @@
                 </div>
                 <input type="file" id="bgUploadInput" accept="image/*" style="display:none;" onchange="handleBgChange(this)">
 
+                <div class="setting-item" onclick="triggerAvatarUpload()">
+                    <div style="display: flex; align-items: center;">
+                        <div class="setting-icon" style="background: #0984e3;"><i class="fas fa-user-circle"></i></div>
+                        <div class="setting-text"><h4>修改头像</h4><p>设置个性化头像</p></div>
+                    </div>
+                    <i class="fas fa-upload" style="color:#ccc;"></i>
+                </div>
+                <form id="avatarForm" action="/settings/avatar" method="post" enctype="multipart/form-data" style="display:none;">
+                    <input type="file" name="avatarFile" id="avatarUploadInput" accept="image/*" onchange="document.getElementById('avatarForm').submit()">
+                </form>
+
                 <div class="setting-item" onclick="resetBg()">
                     <div style="display: flex; align-items: center;">
                         <div class="setting-icon" style="background: #ff6b6b;"><i class="fas fa-undo"></i></div>
@@ -280,7 +341,6 @@
 </div>
 
 <script>
-    // 初始化逻辑
     window.onload = function() {
         const savedTheme = localStorage.getItem('theme');
         if (savedTheme === 'dark') document.body.classList.add('dark-mode');
@@ -292,8 +352,12 @@
     // 菜单切换
     function showSection(id) {
         document.getElementById('settingsMain').style.display = 'none';
+        document.querySelectorAll('[id^="settings"]').forEach(el => {
+            if(el.id !== 'settingsMain') el.style.display = 'none';
+        });
         document.getElementById(id).style.display = 'block';
     }
+
     function goBack() {
         document.getElementById('settingsMain').style.display = 'block';
         document.querySelectorAll('[id^="settings"]').forEach(el => {
@@ -333,233 +397,12 @@
         document.body.style.removeProperty('--bg-image');
         alert("已恢复默认背景");
     }
+
+    // 【新增】头像上传逻辑
+    function triggerAvatarUpload() {
+        document.getElementById('avatarUploadInput').click();
+    }
 </script>
 
 </body>
 </html>
-
-
-
-<!--<!DOCTYPE html>-->
-<!--<html xmlns:th="http://www.thymeleaf.org">-->
-<!--<head>-->
-<!--    <meta charset="UTF-8">-->
-<!--    <title>设置中心</title>-->
-<!--    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" rel="stylesheet">-->
-<!--    <style>-->
-<!--        /* ================== CSS 变量 (保持与 Inbox 一致) ================== */-->
-<!--        :root {-->
-<!--            &#45;&#45;bg-image: url('/images/bg.jpg');-->
-<!--            &#45;&#45;glass-bg: rgba(255, 255, 255, 0.85);-->
-<!--            &#45;&#45;sidebar-bg: rgba(255, 255, 255, 0.5);-->
-<!--            &#45;&#45;main-bg: rgba(255, 255, 255, 0.3);-->
-<!--            &#45;&#45;text-main: #333;-->
-<!--            &#45;&#45;text-sub: #666;-->
-<!--            &#45;&#45;border-color: rgba(255, 255, 255, 0.6);-->
-<!--            &#45;&#45;hover-bg: rgba(255, 255, 255, 0.8);-->
-<!--            &#45;&#45;input-bg: white;-->
-<!--            &#45;&#45;shadow-color: rgba(0, 0, 0, 0.1);-->
-<!--            /* 设置页专用 */-->
-<!--            &#45;&#45;card-bg: rgba(255, 255, 255, 0.6);-->
-<!--        }-->
-
-<!--        body.dark-mode {-->
-<!--            &#45;&#45;glass-bg: rgba(30, 30, 30, 0.85);-->
-<!--            &#45;&#45;sidebar-bg: rgba(0, 0, 0, 0.3);-->
-<!--            &#45;&#45;main-bg: rgba(0, 0, 0, 0.2);-->
-<!--            &#45;&#45;text-main: #e0e0e0;-->
-<!--            &#45;&#45;text-sub: #aaaaaa;-->
-<!--            &#45;&#45;border-color: rgba(255, 255, 255, 0.1);-->
-<!--            &#45;&#45;hover-bg: rgba(255, 255, 255, 0.1);-->
-<!--            &#45;&#45;input-bg: #444;-->
-<!--            &#45;&#45;shadow-color: rgba(0, 0, 0, 0.5);-->
-<!--            &#45;&#45;card-bg: rgba(40, 40, 40, 0.6);-->
-<!--        }-->
-
-<!--        body {-->
-<!--            font-family: 'Segoe UI', sans-serif; margin: 0; padding: 0;-->
-<!--            background-image: var(&#45;&#45;bg-image); background-size: cover; background-position: center; background-attachment: fixed;-->
-<!--            height: 100vh; display: flex; justify-content: center; align-items: center; transition: background-image 0.5s;-->
-<!--        }-->
-
-<!--        .glass-container {-->
-<!--            width: 90%; height: 90vh; background: var(&#45;&#45;glass-bg); backdrop-filter: blur(12px);-->
-<!--            border: 1px solid var(&#45;&#45;border-color); border-radius: 20px; box-shadow: 0 15px 40px var(&#45;&#45;shadow-color);-->
-<!--            display: flex; overflow: hidden;-->
-<!--        }-->
-
-<!--        /* 侧边栏样式 */-->
-<!--        .sidebar { width: 260px; background: var(&#45;&#45;sidebar-bg); border-right: 1px solid rgba(0,0,0,0.05); display: flex; flex-direction: column; padding: 20px; }-->
-<!--        .user-card { text-align: center; margin-bottom: 30px; padding-bottom: 20px; border-bottom: 1px dashed #ccc; }-->
-<!--        .avatar { width: 80px; height: 80px; background: linear-gradient(135deg, #a18cd1 0%, #fbc2eb 100%); border-radius: 50%; margin: 0 auto 10px; display: flex; align-items: center; justify-content: center; font-size: 30px; color: white; }-->
-<!--        .username { font-weight: bold; color: var(&#45;&#45;text-main); font-size: 16px; margin-bottom: 5px;}-->
-<!--        .user-email { font-size: 12px; color: var(&#45;&#45;text-sub); word-break: break-all;}-->
-<!--        .menu-item { display: flex; align-items: center; padding: 12px 15px; color: var(&#45;&#45;text-sub); text-decoration: none; border-radius: 10px; margin-bottom: 5px; transition: 0.3s; cursor: pointer; }-->
-<!--        .menu-item i { width: 25px; font-size: 18px; }-->
-<!--        .menu-item:hover { background: var(&#45;&#45;hover-bg); color: #0078d4; transform: translateX(5px); }-->
-<!--        .menu-item.active { background: #0078d4; color: white; box-shadow: 0 4px 10px rgba(0, 120, 212, 0.3); }-->
-<!--        .menu-title { font-size: 12px; color: #999; margin-top: 20px; margin-bottom: 10px; padding-left: 10px; }-->
-
-<!--        /* 设置页主内容区 */-->
-<!--        .main-content { flex: 1; padding: 40px; overflow-y: auto; color: var(&#45;&#45;text-main); }-->
-<!--        -->
-<!--        .settings-container {-->
-<!--            max-width: 600px; margin: 0 auto;-->
-<!--            background: var(&#45;&#45;card-bg);-->
-<!--            border-radius: 15px; padding: 30px;-->
-<!--            box-shadow: 0 10px 30px rgba(0,0,0,0.05);-->
-<!--        }-->
-
-<!--        .settings-header { font-size: 24px; font-weight: bold; margin-bottom: 20px; display: flex; align-items: center; gap: 10px; }-->
-<!--        .section-title { font-size: 14px; color: #999; margin-bottom: 15px; font-weight: bold; }-->
-
-<!--        /* 列表项样式 */-->
-<!--        .setting-item {-->
-<!--            display: flex; align-items: center; justify-content: space-between;-->
-<!--            padding: 15px; background: rgba(0,0,0,0.05);-->
-<!--            border-radius: 10px; margin-bottom: 10px; cursor: pointer; transition: 0.2s;-->
-<!--        }-->
-<!--        .setting-item:hover { background: var(&#45;&#45;hover-bg); transform: translateY(-2px); }-->
-<!--        .setting-icon { width: 40px; height: 40px; border-radius: 8px; display: flex; align-items: center; justify-content: center; margin-right: 15px; font-size: 18px; color: white; }-->
-<!--        .setting-text h4 { margin: 0; font-size: 15px; }-->
-<!--        .setting-text p { margin: 3px 0 0 0; font-size: 12px; color: var(&#45;&#45;text-sub); }-->
-<!--        -->
-<!--        .back-btn { display: flex; align-items: center; gap: 8px; color: #666; font-size: 14px; margin-bottom: 20px; cursor: pointer; transition: 0.2s; }-->
-<!--        .back-btn:hover { color: #0078d4; transform: translateX(-3px); }-->
-<!--        .flex-row { display: flex; align-items: center; }-->
-<!--        -->
-<!--        #bgUploadInput { display: none; }-->
-<!--        /* 简单的淡入动画 */-->
-<!--        .fade-in { animation: fadeIn 0.3s ease; }-->
-<!--        @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }-->
-<!--    </style>-->
-<!--</head>-->
-<!--<body>-->
-
-<!--<div class="glass-container">-->
-<!--    <div class="sidebar">-->
-<!--        <div class="user-card">-->
-<!--            <div class="avatar"><i class="fas fa-user-astronaut"></i></div>-->
-<!--            <div class="username">我的账号</div>-->
-<!--            <div class="user-email" th:text="${session.currentUser != null ? session.currentUser.email : '未登录'}"></div>-->
-<!--        </div>-->
-
-<!--        <div class="menu-title">邮箱文件夹</div>-->
-<!--        <a href="/inbox" class="menu-item"><i class="fas fa-inbox"></i> 收件箱</a>-->
-<!--        <a href="/sent" class="menu-item"><i class="fas fa-paper-plane"></i> 已发送</a>-->
-<!--        <a href="/drafts" class="menu-item"><i class="fas fa-file-alt"></i> 草稿箱</a>-->
-<!--        <a href="/trash" class="menu-item"><i class="fas fa-trash-alt"></i> 垃圾箱</a>-->
-
-<!--        <div class="menu-title">管理</div>-->
-<!--        <a href="/contacts" class="menu-item"><i class="fas fa-address-book"></i> 通讯录</a>-->
-<!--        <a href="/settings" class="menu-item active"><i class="fas fa-cog"></i> 设置</a>-->
-<!--        <a href="/logout" class="menu-item" style="margin-top: auto; color: #ff4d4f;"><i class="fas fa-sign-out-alt"></i> 退出登录</a>-->
-<!--    </div>-->
-
-<!--    <div class="main-content">-->
-<!--        <div class="settings-container fade-in">-->
-<!--            -->
-<!--            <div id="settingsMain">-->
-<!--                <div class="settings-header"><i class="fas fa-cog" style="color: #0078d4;"></i> 设置中心</div>-->
-<!--                <div class="section-title">通用设置</div>-->
-<!--                -->
-<!--                <div class="setting-item" onclick="goToSubMenu()">-->
-<!--                    <div class="flex-row">-->
-<!--                        <div class="setting-icon" style="background: #a29bfe;"><i class="fas fa-palette"></i></div>-->
-<!--                        <div class="setting-text"><h4>个性化外观</h4><p>主题颜色、背景壁纸</p></div>-->
-<!--                    </div>-->
-<!--                    <i class="fas fa-chevron-right" style="color:#ccc;"></i>-->
-<!--                </div>-->
-<!--            </div>-->
-
-<!--            <div id="settingsPersonalization" style="display:none;">-->
-<!--                <div class="back-btn" onclick="goBack()"><i class="fas fa-arrow-left"></i> 返回上一级</div>-->
-<!--                <div class="settings-header"><i class="fas fa-palette" style="color:#a29bfe;"></i> 个性化外观</div>-->
-
-<!--                <div class="setting-item" onclick="toggleTheme()">-->
-<!--                    <div class="flex-row">-->
-<!--                        <div class="setting-icon" style="background: #2f3542;"><i class="fas fa-moon"></i></div>-->
-<!--                        <div class="setting-text"><h4>黑夜模式</h4><p id="themeStatusText">点击切换主题</p></div>-->
-<!--                    </div>-->
-<!--                    <i class="fas fa-toggle-on" id="themeToggleIcon" style="color:#ccc; font-size: 20px;"></i>-->
-<!--                </div>-->
-
-<!--                <div class="setting-item" onclick="triggerBgUpload()">-->
-<!--                    <div class="flex-row">-->
-<!--                        <div class="setting-icon" style="background: #ff9f43;"><i class="fas fa-image"></i></div>-->
-<!--                        <div class="setting-text"><h4>自定义背景</h4><p>上传图片作为壁纸</p></div>-->
-<!--                    </div>-->
-<!--                    <i class="fas fa-upload" style="color:#ccc;"></i>-->
-<!--                </div>-->
-<!--                <input type="file" id="bgUploadInput" accept="image/*" onchange="handleBgChange(this)">-->
-
-<!--                <div class="setting-item" onclick="resetBg()">-->
-<!--                    <div class="flex-row">-->
-<!--                        <div class="setting-icon" style="background: #ff6b6b;"><i class="fas fa-undo"></i></div>-->
-<!--                        <div class="setting-text"><h4>恢复默认外观</h4><p>清除自定义设置</p></div>-->
-<!--                    </div>-->
-<!--                </div>-->
-<!--            </div>-->
-
-<!--        </div>-->
-<!--    </div>-->
-<!--</div>-->
-
-<!--<script>-->
-<!--    // 初始化-->
-<!--    window.onload = function() {-->
-<!--        const savedTheme = localStorage.getItem('theme');-->
-<!--        if (savedTheme === 'dark') document.body.classList.add('dark-mode');-->
-<!--        -->
-<!--        const savedBg = localStorage.getItem('customBg');-->
-<!--        if (savedBg) document.body.style.setProperty('&#45;&#45;bg-image', `url(${savedBg})`);-->
-
-<!--        updateUI(savedTheme === 'dark');-->
-<!--    }-->
-
-<!--    // 菜单切换逻辑-->
-<!--    function goToSubMenu() {-->
-<!--        document.getElementById('settingsMain').style.display = 'none';-->
-<!--        document.getElementById('settingsPersonalization').style.display = 'block';-->
-<!--    }-->
-<!--    function goBack() {-->
-<!--        document.getElementById('settingsMain').style.display = 'block';-->
-<!--        document.getElementById('settingsPersonalization').style.display = 'none';-->
-<!--    }-->
-
-<!--    // 功能逻辑-->
-<!--    function toggleTheme() {-->
-<!--        document.body.classList.toggle('dark-mode');-->
-<!--        const isDark = document.body.classList.contains('dark-mode');-->
-<!--        localStorage.setItem('theme', isDark ? 'dark' : 'light');-->
-<!--        updateUI(isDark);-->
-<!--    }-->
-
-<!--    function updateUI(isDark) {-->
-<!--        const text = document.getElementById('themeStatusText');-->
-<!--        const icon = document.getElementById('themeToggleIcon');-->
-<!--        if(text) text.innerText = isDark ? "当前模式：黑夜 🌑" : "当前模式：日间 ☀️";-->
-<!--        if(icon) icon.style.color = isDark ? "#0078d4" : "#ccc";-->
-<!--    }-->
-
-<!--    function triggerBgUpload() { document.getElementById('bgUploadInput').click(); }-->
-<!--    function handleBgChange(input) {-->
-<!--        if (input.files && input.files[0]) {-->
-<!--            var reader = new FileReader();-->
-<!--            reader.onload = function (e) {-->
-<!--                var bgUrl = e.target.result;-->
-<!--                document.body.style.setProperty('&#45;&#45;bg-image', `url(${bgUrl})`);-->
-<!--                localStorage.setItem('customBg', bgUrl);-->
-<!--            };-->
-<!--            reader.readAsDataURL(input.files[0]);-->
-<!--        }-->
-<!--    }-->
-<!--    function resetBg() {-->
-<!--        localStorage.removeItem('customBg');-->
-<!--        document.body.style.removeProperty('&#45;&#45;bg-image');-->
-<!--        alert("已恢复默认背景");-->
-<!--    }-->
-<!--</script>-->
-
-<!--</body>-->
-<!--</html>-->

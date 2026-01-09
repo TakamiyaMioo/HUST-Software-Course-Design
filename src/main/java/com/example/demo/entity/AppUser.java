@@ -14,6 +14,8 @@ public class AppUser {
     private String password; // 登录软件的密码
     private String nickname; // 昵称
 
+    private String avatar;   // 【新增】头像路径 (例如: /images/avatar/xxx.jpg)
+
     public AppUser() {}
 
     public AppUser(String username, String password, String nickname) {
@@ -31,4 +33,8 @@ public class AppUser {
     public void setPassword(String password) { this.password = password; }
     public String getNickname() { return nickname; }
     public void setNickname(String nickname) { this.nickname = nickname; }
+    
+    // 【新增】Avatar 的 Getter/Setter
+    public String getAvatar() { return avatar; }
+    public void setAvatar(String avatar) { this.avatar = avatar; }
 }

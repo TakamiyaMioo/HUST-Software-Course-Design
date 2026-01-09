@@ -1,7 +1,6 @@
 package com.example.demo.controller;
 
 import com.example.demo.entity.AppUser;
-import com.example.demo.entity.Contact;
 import com.example.demo.entity.EmailAccount;
 import com.example.demo.entity.SentLog;
 import com.example.demo.model.EmailInfo;
@@ -22,15 +21,19 @@ import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.ModelAndView;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
+import java.io.File;
+import java.io.IOException;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Files; // 【修改点1：新增导入】
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 @Controller
 public class HelloController {
@@ -68,8 +71,9 @@ public class HelloController {
                              Model model) {
         if (appUserRepository.findByUsername(username) != null) {
             model.addAttribute("error", "用户名已存在");
-            return "login";
+            return "login"; 
         }
+
         AppUser newUser = new AppUser(username, password, nickname);
         appUserRepository.save(newUser);
         return "redirect:/";
@@ -106,12 +110,12 @@ public class HelloController {
     private void activateEmailAccount(HttpSession session, EmailAccount account) {
         String realAuthCode = AESUtil.decrypt(account.getPassword());
         UserAccount userAccount = new UserAccount(account.getEmail(), realAuthCode, account.getType());
-        session.setAttribute("currentUser", userAccount);
-        session.setAttribute("currentEmailId", account.getId());
+        session.setAttribute("currentUser", userAccount); 
+        session.setAttribute("currentEmailId", account.getId()); 
     }
 
-    // ================== 2. 邮件列表视图 ==================
 
+    // ================== 2. 邮件列表视图 ==================
     @GetMapping("/inbox")
     public ModelAndView inbox(HttpSession session,
                               @RequestParam(defaultValue = "1") int page,
@@ -119,7 +123,7 @@ public class HelloController {
                               @RequestParam(defaultValue = "desc") String order,
                               @RequestParam(required = false) String keyword,
                               @RequestParam(defaultValue = "all") String searchType,
-                              @RequestParam(required = false) String folder) {
+                              @RequestParam(required = false) String folder) { 
 
         if (session.getAttribute("appUser") == null) return new ModelAndView("redirect:/");
         if (session.getAttribute("currentUser") == null) return new ModelAndView("redirect:/settings");
@@ -180,6 +184,7 @@ public class HelloController {
         return mav;
     }
 
+
     // ================== 3. 邮件操作 ==================
 
     @GetMapping("/email/detail")
@@ -221,28 +226,17 @@ public class HelloController {
             return ResponseEntity.internalServerError().build();
         }
     }
-
-    // ================== 【修改点2：新增预览接口】 ==================
+    
     @GetMapping("/preview")
     public ResponseEntity<Resource> previewFile(@RequestParam String filename) {
         try {
-            // 安全检查：防止路径遍历
-            if (filename.contains("..")) {
-                return ResponseEntity.badRequest().build();
-            }
-
+            if (filename.contains("..")) return ResponseEntity.badRequest().build();
             Path path = Paths.get(MailService.SAVE_PATH + filename);
             Resource resource = new UrlResource(path.toUri());
-
             if (resource.exists() || resource.isReadable()) {
-                // 自动探测文件类型 (如 image/jpeg, application/pdf)
                 String contentType = Files.probeContentType(path);
-                if (contentType == null) {
-                    contentType = "application/octet-stream";
-                }
-
+                if (contentType == null) contentType = "application/octet-stream";
                 return ResponseEntity.ok()
-                        // inline 告诉浏览器直接显示，而不是下载
                         .header(HttpHeaders.CONTENT_DISPOSITION, "inline; filename=\"" + resource.getFilename() + "\"")
                         .contentType(MediaType.parseMediaType(contentType))
                         .body(resource);
@@ -254,13 +248,13 @@ public class HelloController {
             return ResponseEntity.internalServerError().build();
         }
     }
-    // =========================================================
 
     @GetMapping("/sendPage")
     public ModelAndView sendPage(HttpSession session,
                                  @RequestParam(required = false) Long draftId,
                                  @RequestParam(required = false) Long replyUid,
                                  @RequestParam(required = false) String folder) {
+
         UserAccount user = (UserAccount) session.getAttribute("currentUser");
         if (user == null) return new ModelAndView("redirect:/settings");
 
@@ -340,6 +334,7 @@ public class HelloController {
                             HttpSession session) {
         UserAccount user = (UserAccount) session.getAttribute("currentUser");
         if (user == null) return "redirect:/settings";
+
         draftRepository.save(new com.example.demo.entity.DraftEmail(user.getEmail(), to, subject, text));
         return "redirect:/drafts";
     }
@@ -391,12 +386,102 @@ public class HelloController {
     @GetMapping("/settings")
     public String settingsPage(HttpSession session, Model model) {
         AppUser appUser = (AppUser) session.getAttribute("appUser");
-        if (appUser == null) return "redirect:/";
+        if (appUser == null) {
+            return "redirect:/";
+        }
 
         List<EmailAccount> accounts = emailAccountRepository.findByAppUserId(appUser.getId());
         model.addAttribute("accounts", accounts);
+
         model.addAttribute("currentFolder", "设置");
         return "settings";
+    }
+
+    // 修改密码接口
+    @PostMapping("/settings/password")
+    public String changePassword(@RequestParam String oldPassword,
+                                 @RequestParam String newPassword,
+                                 @RequestParam String confirmPassword,
+                                 HttpSession session,
+                                 RedirectAttributes attributes) {
+        AppUser appUser = (AppUser) session.getAttribute("appUser");
+        if (appUser == null) return "redirect:/";
+
+        AppUser currentUser = appUserRepository.findById(appUser.getId()).orElse(null);
+        if (currentUser == null) return "redirect:/";
+
+        if (!currentUser.getPassword().equals(oldPassword)) {
+            attributes.addFlashAttribute("error", "旧密码错误，请重试");
+            return "redirect:/settings";
+        }
+        if (!newPassword.equals(confirmPassword)) {
+            attributes.addFlashAttribute("error", "两次输入的新密码不一致");
+            return "redirect:/settings";
+        }
+
+        currentUser.setPassword(newPassword);
+        appUserRepository.save(currentUser);
+        session.setAttribute("appUser", currentUser);
+
+        attributes.addFlashAttribute("success", "密码修改成功！下次登录请使用新密码。");
+        return "redirect:/settings";
+    }
+
+    // 【新增】修改头像接口
+    @PostMapping("/settings/avatar")
+    public String updateAvatar(@RequestParam("avatarFile") MultipartFile file, 
+                               HttpSession session, 
+                               RedirectAttributes attributes) {
+        AppUser appUser = (AppUser) session.getAttribute("appUser");
+        if (appUser == null) return "redirect:/";
+
+        if (file.isEmpty()) {
+            attributes.addFlashAttribute("error", "请选择要上传的图片");
+            return "redirect:/settings";
+        }
+
+        try {
+            // 1. 确定保存路径 (保存到 src/main/resources/static/images/avatar/ 下)
+            // 注意：开发环境下保存到 src 目录可以永久保存，但需要 IDE 重新编译才能立即访问
+            // 为了演示方便，我们这里计算一下 project root
+            String projectPath = System.getProperty("user.dir");
+            String uploadDir = projectPath + "/src/main/resources/static/images/avatar/";
+            
+            // 另外，为了让当前运行环境(target)也能立即访问，建议也保存一份到 target
+            String targetUploadDir = projectPath + "/target/classes/static/images/avatar/";
+
+            File dir = new File(uploadDir);
+            if (!dir.exists()) dir.mkdirs();
+            File targetDir = new File(targetUploadDir);
+            if (!targetDir.exists()) targetDir.mkdirs();
+
+            // 2. 生成新文件名
+            String originalFilename = file.getOriginalFilename();
+            String suffix = originalFilename.substring(originalFilename.lastIndexOf("."));
+            String newFilename = UUID.randomUUID().toString() + suffix;
+
+            // 3. 保存文件 (两处都存，确保开发环境立即生效且不丢失)
+            file.transferTo(new File(targetDir, newFilename)); // 存到 target 供立即访问
+            Files.copy(new File(targetDir, newFilename).toPath(), new File(uploadDir, newFilename).toPath()); // 复制到 src 供持久化
+
+            // 4. 更新数据库
+            AppUser currentUser = appUserRepository.findById(appUser.getId()).orElse(null);
+            if (currentUser != null) {
+                String avatarUrl = "/images/avatar/" + newFilename;
+                currentUser.setAvatar(avatarUrl);
+                appUserRepository.save(currentUser);
+                
+                // 更新 Session
+                session.setAttribute("appUser", currentUser);
+                attributes.addFlashAttribute("success", "头像修改成功！");
+            }
+
+        } catch (IOException e) {
+            e.printStackTrace();
+            attributes.addFlashAttribute("error", "头像上传失败：" + e.getMessage());
+        }
+
+        return "redirect:/settings";
     }
 
     @PostMapping("/account/add")
@@ -406,6 +491,7 @@ public class HelloController {
                              @RequestParam(required = false) String alias,
                              HttpSession session,
                              Model model) {
+
         AppUser appUser = (AppUser) session.getAttribute("appUser");
         if (appUser == null) return "redirect:/";
 
@@ -416,6 +502,7 @@ public class HelloController {
         if (session.getAttribute("currentUser") == null) {
             activateEmailAccount(session, newAccount);
         }
+
         return "redirect:/settings";
     }
 
@@ -427,10 +514,12 @@ public class HelloController {
         emailAccountRepository.findById(id).ifPresent(account -> {
             if (account.getAppUserId().equals(appUser.getId())) {
                 emailAccountRepository.delete(account);
+
                 Long currentId = (Long) session.getAttribute("currentEmailId");
                 if (currentId != null && currentId.equals(id)) {
                     session.removeAttribute("currentUser");
                     session.removeAttribute("currentEmailId");
+
                     List<EmailAccount> others = emailAccountRepository.findByAppUserId(appUser.getId());
                     if (!others.isEmpty()) {
                         activateEmailAccount(session, others.get(0));
@@ -438,6 +527,7 @@ public class HelloController {
                 }
             }
         });
+
         return "redirect:/settings";
     }
 
@@ -477,76 +567,5 @@ public class HelloController {
             }
         });
         return "redirect:/inbox";
-    }
-
-    // ... 在 HelloController 中添加以下方法 ...
-
-    // 1. 创建文件夹接口
-    @PostMapping("/folder/add")
-    @ResponseBody
-    public Map<String, Object> addFolder(@RequestParam String folderName, HttpSession session) {
-        UserAccount user = (UserAccount) session.getAttribute("currentUser");
-        Map<String, Object> resp = new HashMap<>();
-        if (user == null) {
-            resp.put("success", false);
-            resp.put("error", "未登录");
-            return resp;
-        }
-        try {
-            mailService.createFolder(user, folderName);
-            resp.put("success", true);
-        } catch (Exception e) {
-            e.printStackTrace();
-            resp.put("success", false);
-            resp.put("error", e.getMessage());
-        }
-        return resp;
-    }
-
-    // 2. 删除文件夹接口
-    @PostMapping("/folder/delete")
-    @ResponseBody
-    public Map<String, Object> deleteFolder(@RequestParam String folderName, HttpSession session) {
-        UserAccount user = (UserAccount) session.getAttribute("currentUser");
-        Map<String, Object> resp = new HashMap<>();
-        if (user == null) {
-            resp.put("success", false);
-            resp.put("error", "未登录");
-            return resp;
-        }
-        try {
-            mailService.deleteFolder(user, folderName);
-            resp.put("success", true);
-        } catch (Exception e) {
-            e.printStackTrace();
-            resp.put("success", false);
-            resp.put("error", e.getMessage());
-        }
-        return resp;
-    }
-
-    // 3. 移动邮件接口
-    @PostMapping("/mail/move")
-    @ResponseBody
-    public Map<String, Object> moveMail(@RequestParam String fromFolder,
-                                        @RequestParam String toFolder,
-                                        @RequestParam Long uid,
-                                        HttpSession session) {
-        UserAccount user = (UserAccount) session.getAttribute("currentUser");
-        Map<String, Object> resp = new HashMap<>();
-        if (user == null) {
-            resp.put("success", false);
-            resp.put("error", "未登录");
-            return resp;
-        }
-        try {
-            mailService.moveMessage(user, fromFolder, toFolder, uid);
-            resp.put("success", true);
-        } catch (Exception e) {
-            e.printStackTrace();
-            resp.put("success", false);
-            resp.put("error", e.getMessage());
-        }
-        return resp;
     }
 }
