@@ -65,31 +65,40 @@ public class DesktopLauncher extends Application {
                 if (!lowUrl.contains("/preview")) {
 
                     // =======================================================
-                    // 【情况 A】如果是 CSV 导出或需要鉴权的下载 -> 使用内部下载器
+                    // 【情况 A】导出/CSV：内部下载 (修复线程崩溃问题)
                     // =======================================================
                     if (lowUrl.contains("export") || lowUrl.endsWith(".csv")) {
 
-                        // 1. 获取当前 WebView 里的 Cookie (这是关键！有了它后端才知道你是谁)
-                        String cookie = (String) webEngine.executeScript("document.cookie");
-
-                        // 2. 防止 WebView 跳转白屏
+                        // 【关键修复】把所有逻辑包在 runLater 里，防止阻塞监听器导致 Crash
                         Platform.runLater(() -> {
+                            // 1. 尝试获取 Cookie (加了异常保护)
+                            String cookie = null;
+                            try {
+                                cookie = (String) webEngine.executeScript("document.cookie");
+                            } catch (Exception e) {
+                                System.err.println("获取Cookie失败(不影响下载尝试): " + e.getMessage());
+                            }
+
+                            // 2. 马上回退页面，防止白屏
                             if (oldUrl != null) webEngine.load(oldUrl);
+
+                            // 3. 弹出保存框 (这时候弹就不崩了)
+                            FileChooser fileChooser = new FileChooser();
+                            fileChooser.setTitle("导出通讯录");
+                            fileChooser.setInitialFileName("contacts.csv");
+                            fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("CSV 文件", "*.csv"));
+
+                            File file = fileChooser.showSaveDialog(primaryStage);
+
+                            // 4. 启动下载线程
+                            if (file != null) {
+                                String finalCookie = cookie;
+                                new Thread(() -> downloadFileInternally(newUrl, file, finalCookie)).start();
+                            }
                         });
-
-                        // 3. 弹出保存文件对话框 (必须在 JavaFX 线程)
-                        FileChooser fileChooser = new FileChooser();
-                        fileChooser.setTitle("保存文件");
-                        fileChooser.setInitialFileName("contacts.csv");
-                        File file = fileChooser.showSaveDialog(primaryStage);
-
-                        // 4. 如果用户选了位置，开始下载
-                        if (file != null) {
-                            new Thread(() -> downloadFileInternally(newUrl, file, cookie)).start();
-                        }
                     }
                     // =======================================================
-                    // 【情况 B】如果是普通附件 -> 依然调用系统浏览器 (体验更好)
+                    // 【情况 B】普通附件：调用系统浏览器
                     // =======================================================
                     else if (lowUrl.contains("/download") ||
                             lowUrl.endsWith(".zip") || lowUrl.endsWith(".rar") ||
@@ -123,44 +132,49 @@ public class DesktopLauncher extends Application {
     }
 
     /**
-     * 【新增】内部下载器方法
-     * 它会带上 Cookie 发起请求，并将文件保存到用户指定的位置
+     * 内部下载器
      */
     private void downloadFileInternally(String urlStr, File saveFile, String cookie) {
         try {
             URL url = new URL(urlStr);
             HttpURLConnection conn = (HttpURLConnection) url.openConnection();
             conn.setRequestMethod("GET");
-            // 关键：把 WebView 的 Cookie 塞给请求头
-            if (cookie != null) {
+            conn.setConnectTimeout(10000);
+
+            // 带上 Cookie
+            if (cookie != null && !cookie.isEmpty()) {
                 conn.setRequestProperty("Cookie", cookie);
             }
 
-            // 开始读取数据并写入文件
+            // 检查响应码，防止下载了 404/500 错误页面
+            int responseCode = conn.getResponseCode();
+            if (responseCode != HttpURLConnection.HTTP_OK) {
+                throw new RuntimeException("服务器返回错误代码: " + responseCode);
+            }
+
             try (BufferedInputStream in = new BufferedInputStream(conn.getInputStream());
                  FileOutputStream out = new FileOutputStream(saveFile)) {
 
-                byte[] buffer = new byte[1024];
+                byte[] buffer = new byte[4096]; // 稍微大一点的缓冲区
                 int bytesRead;
-                while ((bytesRead = in.read(buffer, 0, 1024)) != -1) {
+                while ((bytesRead = in.read(buffer)) != -1) {
                     out.write(buffer, 0, bytesRead);
                 }
             }
 
-            // 下载完成后提示用户
             Platform.runLater(() -> {
                 Alert alert = new Alert(Alert.AlertType.INFORMATION);
-                alert.setTitle("下载完成");
+                alert.setTitle("导出成功");
                 alert.setHeaderText(null);
-                alert.setContentText("文件已成功保存到:\n" + saveFile.getAbsolutePath());
-                alert.show();
+                alert.setContentText("文件已保存至:\n" + saveFile.getAbsolutePath());
+                alert.show(); // 使用 show() 而不是 showAndWait() 防止极少数情况下的阻塞
             });
 
         } catch (Exception e) {
             e.printStackTrace();
             Platform.runLater(() -> {
                 Alert alert = new Alert(Alert.AlertType.ERROR);
-                alert.setTitle("下载失败");
+                alert.setTitle("导出失败");
                 alert.setContentText("错误信息: " + e.getMessage());
                 alert.show();
             });
