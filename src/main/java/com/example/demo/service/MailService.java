@@ -618,6 +618,19 @@ public class MailService {
                 return "垃圾邮件"; // 对应你列表里的 "垃圾邮件"
         }
 
+        if ("hust".equals(mailType)) {
+            // Coremail 系统通常直接使用中文文件夹名
+            if ("已发送".equals(uiFolderName))
+                return "Sent Items";
+            if ("已删除".equals(uiFolderName))
+                return "Trash";
+            if ("草稿箱".equals(uiFolderName))
+                return "Drafts";
+            // Coremail 的垃圾箱通常叫 "垃圾邮件" 或 "Spam"，这里以 "垃圾邮件" 为例
+            if ("垃圾箱".equals(uiFolderName))
+                return "Junk E-mail";
+        }
+
         // 4. 其他情况返回原名
         return uiFolderName;
     }
@@ -635,8 +648,9 @@ public class MailService {
         props.put("mail.smtp.auth", "true");
         props.put("mail.smtp.ssl.trust", "*");
 
-        // 【修复】163 和 QQ 使用 465 端口时，都必须开启 SSL
-        if ("qq".equals(user.getType()) || "163".equals(user.getType())) {
+        // 【修复】163、QQ 和 HUST 使用 465 端口时，都必须开启 SSL
+        // 原代码漏掉了 "hust"，导致无法连接 465 端口
+        if ("qq".equals(user.getType()) || "163".equals(user.getType()) || "hust".equals(user.getType())) {
             props.put("mail.smtp.ssl.enable", "true");
         }
         return sender;
