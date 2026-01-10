@@ -122,7 +122,15 @@ public class DesktopLauncher extends Application {
             }
         });
 
-        webEngine.load("http://localhost:8080/");
+        // 1. 动态获取 Spring Boot 实际启动的端口号
+        String port = springContext.getEnvironment().getProperty("local.server.port");
+
+        // 2. 拼接成正确的 URL
+        String url = "http://localhost:" + port + "/";
+
+        // 3. 加载页面
+        webEngine.load(url);
+        System.out.println("正在访问动态端口: " + port); // (可选) 打印一下方便调试
 
         Scene scene = new Scene(webView, 1280, 800);
         primaryStage.setScene(scene);

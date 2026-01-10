@@ -52,6 +52,10 @@ public class HelloController {
     @Autowired
     private EmailAccountRepository emailAccountRepository;
 
+    // 在 HelloController 类内部最上方添加
+    private static final String AVATAR_STORE_PATH = System.getProperty("user.dir") + File.separator + "data"
+            + File.separator + "avatars" + File.separator;
+
     // ================== 1. 认证与注册模块 ==================
 
     @GetMapping("/")
@@ -429,11 +433,12 @@ public class HelloController {
 
     // 【新增】修改头像接口
     @PostMapping("/settings/avatar")
-    public String updateAvatar(@RequestParam("avatarFile") MultipartFile file, 
-                               HttpSession session, 
-                               RedirectAttributes attributes) {
+    public String updateAvatar(@RequestParam("avatarFile") MultipartFile file,
+            HttpSession session,
+            RedirectAttributes attributes) {
         AppUser appUser = (AppUser) session.getAttribute("appUser");
-        if (appUser == null) return "redirect:/";
+        if (appUser == null)
+            return "redirect:/";
 
         if (file.isEmpty()) {
             attributes.addFlashAttribute("error", "请选择要上传的图片");
@@ -441,37 +446,33 @@ public class HelloController {
         }
 
         try {
-            // 1. 确定保存路径 (保存到 src/main/resources/static/images/avatar/ 下)
-            // 注意：开发环境下保存到 src 目录可以永久保存，但需要 IDE 重新编译才能立即访问
-            // 为了演示方便，我们这里计算一下 project root
-            String projectPath = System.getProperty("user.dir");
-            String uploadDir = projectPath + "/src/main/resources/static/images/avatar/";
-            
-            // 另外，为了让当前运行环境(target)也能立即访问，建议也保存一份到 target
-            String targetUploadDir = projectPath + "/target/classes/static/images/avatar/";
+            // 1. 确保外部存储目录存在 (EXE运行目录/data/avatars/)
+            File dir = new File(AVATAR_STORE_PATH);
+            if (!dir.exists()) {
+                dir.mkdirs();
+            }
 
-            File dir = new File(uploadDir);
-            if (!dir.exists()) dir.mkdirs();
-            File targetDir = new File(targetUploadDir);
-            if (!targetDir.exists()) targetDir.mkdirs();
-
-            // 2. 生成新文件名
+            // 2. 生成唯一文件名
             String originalFilename = file.getOriginalFilename();
-            String suffix = originalFilename.substring(originalFilename.lastIndexOf("."));
+            String suffix = ".jpg"; // 默认后缀
+            if (originalFilename != null && originalFilename.contains(".")) {
+                suffix = originalFilename.substring(originalFilename.lastIndexOf("."));
+            }
             String newFilename = UUID.randomUUID().toString() + suffix;
 
-            // 3. 保存文件 (两处都存，确保开发环境立即生效且不丢失)
-            file.transferTo(new File(targetDir, newFilename)); // 存到 target 供立即访问
-            Files.copy(new File(targetDir, newFilename).toPath(), new File(uploadDir, newFilename).toPath()); // 复制到 src 供持久化
+            // 3. 保存文件到外部文件夹
+            file.transferTo(new File(dir, newFilename));
 
-            // 4. 更新数据库
+            // 4. 更新用户信息
             AppUser currentUser = appUserRepository.findById(appUser.getId()).orElse(null);
             if (currentUser != null) {
-                String avatarUrl = "/images/avatar/" + newFilename;
+                // 【关键】URL 指向我们刚才写的读取接口，而不是静态资源路径
+                String avatarUrl = "/avatar/show?filename=" + newFilename;
+
                 currentUser.setAvatar(avatarUrl);
                 appUserRepository.save(currentUser);
-                
-                // 更新 Session
+
+                // 更新 session，让页面立即刷新变化
                 session.setAttribute("appUser", currentUser);
                 attributes.addFlashAttribute("success", "头像修改成功！");
             }
@@ -648,5 +649,36 @@ public class HelloController {
             return List.of("请先登录邮箱！");
         }
         return mailService.getAllFolders(user);
+    }
+
+    // 【新增】读取外部头像文件的接口
+    @GetMapping("/avatar/show")
+    public ResponseEntity<Resource> showAvatar(@RequestParam String filename) {
+        try {
+            // 防止路径遍历攻击
+            if (filename.contains("..") || filename.contains("/") || filename.contains("\\")) {
+                return ResponseEntity.badRequest().build();
+            }
+
+            Path path = Paths.get(AVATAR_STORE_PATH + filename);
+            Resource resource = new UrlResource(path.toUri());
+
+            if (resource.exists() || resource.isReadable()) {
+                // 简单的类型判断
+                String contentType = "image/jpeg";
+                if (filename.toLowerCase().endsWith(".png"))
+                    contentType = "image/png";
+                if (filename.toLowerCase().endsWith(".gif"))
+                    contentType = "image/gif";
+
+                return ResponseEntity.ok()
+                        .contentType(MediaType.parseMediaType(contentType))
+                        .body(resource);
+            } else {
+                return ResponseEntity.notFound().build();
+            }
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError().build();
+        }
     }
 }
