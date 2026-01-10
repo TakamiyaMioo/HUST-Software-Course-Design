@@ -9,7 +9,6 @@ import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVParser;
-import org.apache.commons.csv.CSVPrinter;
 import org.apache.commons.csv.CSVRecord;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
@@ -19,7 +18,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.ModelAndView;
 
-import java.io.OutputStreamWriter;
+import java.io.PrintWriter;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
@@ -67,7 +66,7 @@ public class ContactController {
         return "redirect:/contacts";
     }
 
-    // 【新增修改点】：更新联系人接口
+    // 更新联系人接口
     @PostMapping("/contact/update")
     public String update(@RequestParam Long id, @RequestParam String name, @RequestParam String email, HttpSession session) {
         AppUser appUser = (AppUser) session.getAttribute("appUser");
@@ -90,7 +89,7 @@ public class ContactController {
         return "redirect:/contacts";
     }
 
-    // ================== CSV 导入导出功能 (保持不变) ==================
+    // ================== CSV 导出功能 (核心修复) ==================
 
     @GetMapping("/contacts/export")
     public void exportCsv(HttpServletResponse response, HttpSession session) {
@@ -98,24 +97,43 @@ public class ContactController {
         if (appUser == null) return;
 
         try {
+            // 1. 关键：设置响应头，告诉浏览器这是文件下载
             response.setContentType("text/csv; charset=UTF-8");
+            response.setCharacterEncoding("UTF-8");
             response.setHeader("Content-Disposition", "attachment; filename=\"contacts.csv\"");
 
+            // 2. 获取数据
             List<Contact> contacts = contactRepository.findByAppUserId(appUser.getId());
 
-            OutputStreamWriter writer = new OutputStreamWriter(response.getOutputStream(), StandardCharsets.UTF_8);
-            writer.write('\ufeff'); // BOM
+            // 3. 使用 PrintWriter 直接写入，确保数据刷入响应流
+            PrintWriter writer = response.getWriter();
 
-            CSVPrinter printer = new CSVPrinter(writer, CSVFormat.DEFAULT.withHeader("姓名", "邮箱"));
+            // 写入 BOM 防止 Excel 打开乱码
+            writer.write('\ufeff');
+
+            // 写入表头
+            writer.println("姓名,邮箱");
+
+            // 4. 遍历并写入每一行 (手动处理 CSV 格式比库更轻量且可控)
             for (Contact c : contacts) {
-                printer.printRecord(c.getName(), c.getEmail());
+                // 处理可能存在的英文逗号和引号，防止 CSV 格式错乱
+                String name = c.getName() != null ? c.getName().replace("\"", "\"\"") : "";
+                String email = c.getEmail() != null ? c.getEmail().replace("\"", "\"\"") : "";
+
+                // CSV 标准格式："值","值"
+                writer.println("\"" + name + "\",\"" + email + "\"");
             }
-            printer.flush();
+
+            // 5. 强制刷新缓冲区，确保浏览器收到数据
+            writer.flush();
             writer.close();
+
         } catch (Exception e) {
             e.printStackTrace();
         }
     }
+
+    // ================== CSV 导入功能 (保持不变) ==================
 
     @PostMapping("/contacts/import")
     public String importCsv(@RequestParam("file") MultipartFile file, HttpSession session) {
