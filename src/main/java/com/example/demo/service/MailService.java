@@ -705,17 +705,27 @@ public class MailService {
             }
         }
         // 4. 处理附件
-        else if (Part.ATTACHMENT.equalsIgnoreCase(part.getDisposition()) ||
-                (part.getFileName() != null && !part.getFileName().isEmpty())) {
-            String fileName = MimeUtility.decodeText(part.getFileName());
-            File saveDir = new File(SAVE_PATH);
-            if (!saveDir.exists())
-                saveDir.mkdirs();
-            try (InputStream is = part.getInputStream()) {
-                Files.copy(is, new File(SAVE_PATH + fileName).toPath(), StandardCopyOption.REPLACE_EXISTING);
-            }
-            attachments.add(fileName);
-        }
+        // --- 找到这段代码 ---
+                else if (Part.ATTACHMENT.equalsIgnoreCase(part.getDisposition()) ||
+                        (part.getFileName() != null && !part.getFileName().isEmpty())) {
+                    String fileName = MimeUtility.decodeText(part.getFileName());
+                    
+                    // 【核心修复点】：提取纯文件名，防止包含路径
+                    if (fileName.contains("/") || fileName.contains("\\")) {
+                        // 取最后一个斜杠或反斜杠之后的内容
+                        int lastIndex = Math.max(fileName.lastIndexOf("/"), fileName.lastIndexOf("\\"));
+                        fileName = fileName.substring(lastIndex + 1);
+                    }
+
+                    File saveDir = new File(SAVE_PATH);
+                    if (!saveDir.exists()) saveDir.mkdirs();
+                    
+                    try (InputStream is = part.getInputStream()) {
+                        // 现在 fileName 只是 "xxx.jpg"，拼接后路径合法
+                        Files.copy(is, new File(SAVE_PATH + fileName).toPath(), StandardCopyOption.REPLACE_EXISTING);
+                    }
+                    attachments.add(fileName);
+}
     }
 
     private void closeQuietly(Folder folder, Store store) {
