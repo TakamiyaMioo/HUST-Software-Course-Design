@@ -1,5 +1,7 @@
 # Software-Course-Design
 
+## 电子邮件管理系统
+
 这是一个基于 **Spring Boot** 和 **JavaFX** 开发的混合架构（Hybrid）桌面邮件客户端。它结合了 Web 开发的高效性（Thymeleaf + Spring MVC）和桌面应用的本地体验（JavaFX WebView），邮件收发基于imap、SMTP协议，旨在提供一个轻量、安全且功能丰富的邮件管理解决方案。
 
 软件功能设计参考outlook。
